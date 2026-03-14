@@ -19,12 +19,30 @@ import { useApp } from "@/context/AppContext";
 import { INTERVENTIONS, THERAPY_COLORS } from "@/data/interventions";
 
 export default function InterventionScreen() {
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const { id, practice: practiceParam } = useLocalSearchParams<{ id: string; practice?: string }>();
   const colors = Colors.light;
   const insets = useSafeAreaInsets();
   const { markInterventionViewed, profile } = useApp();
 
-  const intervention = INTERVENTIONS.find((i) => i.id === id);
+  // Support plan practices (passed as JSON param) or static interventions
+  const planPractice = practiceParam ? (() => {
+    try { return JSON.parse(practiceParam); } catch { return null; }
+  })() : null;
+
+  const builtInIntervention = INTERVENTIONS.find((i) => i.id === id);
+
+  const intervention = builtInIntervention ?? (planPractice ? {
+    id: id ?? "plan",
+    therapy: planPractice.abordagem as any,
+    title: planPractice.nome,
+    description: planPractice.justificativa,
+    steps: planPractice.passos ?? [],
+    duration: planPractice.frequencia,
+    fromAdjectives: [],
+    toAdjectives: [],
+    icon: "activity",
+  } : null);
+
   const [currentStep, setCurrentStep] = useState(0);
   const [completed, setCompleted] = useState(
     profile.interventionsViewed.includes(id ?? "")
@@ -40,7 +58,7 @@ export default function InterventionScreen() {
     );
   }
 
-  const therapyColor = THERAPY_COLORS[intervention.therapy];
+  const therapyColor = (intervention.therapy && THERAPY_COLORS[intervention.therapy as keyof typeof THERAPY_COLORS]) ?? { bg: "#F5F5F5", text: "#333" };
   const isLastStep = currentStep === intervention.steps.length - 1;
 
   const handleNext = () => {

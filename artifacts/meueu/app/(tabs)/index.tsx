@@ -3,13 +3,13 @@ import { router } from "expo-router";
 import React, { useMemo } from "react";
 import {
   Platform,
+  Pressable,
   ScrollView,
   StyleSheet,
   Text,
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { InterventionCard } from "@/components/InterventionCard";
 import { StreakBadge } from "@/components/StreakBadge";
 import Colors from "@/constants/colors";
 import { useApp } from "@/context/AppContext";
@@ -22,10 +22,19 @@ function getGreeting(): string {
   return "Boa noite";
 }
 
+const APPROACH_COLORS: Record<string, { bg: string; text: string; icon: string }> = {
+  TCC: { bg: "#EFF6FF", text: "#1D4ED8", icon: "edit-3" },
+  ACT: { bg: "#F0FDF4", text: "#166534", icon: "compass" },
+  "Psicologia Positiva": { bg: "#FAF5FF", text: "#6B21A8", icon: "star" },
+  Mindfulness: { bg: "#FFF7ED", text: "#9A3412", icon: "wind" },
+  DBT: { bg: "#FFF7ED", text: "#9A3412", icon: "wind" },
+};
+
 export default function TodayScreen() {
   const colors = Colors.light;
   const insets = useSafeAreaInsets();
   const { profile } = useApp();
+  const plan = profile.generatedPlan;
 
   const interventions = useMemo(
     () =>
@@ -53,177 +62,238 @@ export default function TodayScreen() {
       showsVerticalScrollIndicator={false}
       contentInsetAdjustmentBehavior="automatic"
     >
+      {/* Header */}
       <View style={styles.topRow}>
         <View style={styles.greeting}>
-          <Text
-            style={[
-              styles.greetingText,
-              { color: colors.textSecondary, fontFamily: "Inter_400Regular" },
-            ]}
-          >
+          <Text style={[styles.greetingText, { color: colors.textSecondary, fontFamily: "Inter_400Regular" }]}>
             {getGreeting()}
           </Text>
-          <Text
-            style={[
-              styles.heading,
-              { color: colors.text, fontFamily: "Inter_700Bold" },
-            ]}
-          >
+          <Text style={[styles.heading, { color: colors.text, fontFamily: "Inter_700Bold" }]}>
             Sua jornada
           </Text>
         </View>
         <StreakBadge days={profile.streakDays} />
       </View>
 
-      {profile.currentAdjectives.length > 0 && (
-        <View
-          style={[
-            styles.progressCard,
-            { backgroundColor: colors.primary },
-          ]}
-        >
-          <View style={styles.progressRow}>
-            <Feather name="target" size={18} color="rgba(255,255,255,0.8)" />
-            <Text
-              style={[
-                styles.progressLabel,
-                { fontFamily: "Inter_500Medium" },
-              ]}
-            >
-              Progresso de hoje
-            </Text>
-          </View>
-          <Text style={[styles.progressNumber, { fontFamily: "Inter_700Bold" }]}>
-            {todayDone} / {Math.min(interventions.length, 5)}
-          </Text>
-          <View style={styles.progressBarOuter}>
-            <View
-              style={[
-                styles.progressBarInner,
-                {
-                  width: `${(todayDone / Math.min(interventions.length, 5)) * 100}%`,
-                },
-              ]}
-            />
-          </View>
-          <Text
-            style={[
-              styles.progressSub,
-              { fontFamily: "Inter_400Regular" },
-            ]}
-          >
-            {todayDone === 0
-              ? "Escolha uma prática para começar"
-              : todayDone < 3
-                ? "Ótimo começo! Continue."
-                : "Excelente dedicação hoje!"}
+      {/* Intention phrase */}
+      {plan?.fraseIntencao && (
+        <View style={[styles.intentionBanner, { backgroundColor: colors.primary }]}>
+          <Feather name="zap" size={16} color="rgba(255,255,255,0.8)" />
+          <Text style={[styles.intentionText, { fontFamily: "Inter_500Medium" }]}>
+            {plan.fraseIntencao}
           </Text>
         </View>
       )}
 
-      <View style={styles.section}>
-        <Text
-          style={[
-            styles.sectionTitle,
-            { color: colors.text, fontFamily: "Inter_600SemiBold" },
-          ]}
-        >
-          Práticas para você
+      {/* Generated Plan */}
+      {plan?.praticas && (
+        <View style={styles.section}>
+          <Text style={[styles.sectionTitle, { color: colors.text, fontFamily: "Inter_600SemiBold" }]}>
+            Seu plano personalizado
+          </Text>
+          <Text style={[styles.sectionSub, { color: colors.textSecondary, fontFamily: "Inter_400Regular" }]}>
+            Gerado por IA com base no seu perfil
+          </Text>
+
+          {plan.praticas.map((practice, i) => {
+            const aColor = APPROACH_COLORS[practice.abordagem] ?? {
+              bg: "#F5F5F5",
+              text: "#333",
+              icon: "activity",
+            };
+            return (
+              <View
+                key={i}
+                style={[styles.practiceCard, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}
+              >
+                <View style={styles.practiceTop}>
+                  <View style={[styles.practiceIconBox, { backgroundColor: aColor.bg }]}>
+                    <Feather name={aColor.icon as any} size={16} color={aColor.text} />
+                  </View>
+                  <View style={styles.practiceTopText}>
+                    <View style={[styles.badgeSmall, { backgroundColor: aColor.bg }]}>
+                      <Text style={[styles.badgeSmallText, { color: aColor.text, fontFamily: "Inter_600SemiBold" }]}>
+                        {practice.abordagem}
+                      </Text>
+                    </View>
+                    <Text style={[styles.practiceName, { color: colors.text, fontFamily: "Inter_600SemiBold" }]}>
+                      {practice.nome}
+                    </Text>
+                  </View>
+                </View>
+                <Text style={[styles.justificativa, { color: colors.textSecondary, fontFamily: "Inter_400Regular" }]}>
+                  {practice.justificativa}
+                </Text>
+                <View style={styles.frequencyRow}>
+                  <Feather name="clock" size={12} color={colors.textMuted} />
+                  <Text style={[styles.frequencyText, { color: colors.textMuted, fontFamily: "Inter_400Regular" }]}>
+                    {practice.frequencia}
+                  </Text>
+                  <Pressable
+                    onPress={() => router.push({ pathname: "/intervention/[id]", params: { id: `plan-${i}`, practice: JSON.stringify(practice) } })}
+                    style={[styles.detailsBtn, { backgroundColor: aColor.bg }]}
+                  >
+                    <Text style={[styles.detailsBtnText, { color: aColor.text, fontFamily: "Inter_600SemiBold" }]}>
+                      Ver passos
+                    </Text>
+                    <Feather name="arrow-right" size={12} color={aColor.text} />
+                  </Pressable>
+                </View>
+              </View>
+            );
+          })}
+        </View>
+      )}
+
+      {/* Progress Card */}
+      <View style={[styles.progressCard, { backgroundColor: colors.primary }]}>
+        <View style={styles.progressRow}>
+          <Feather name="target" size={16} color="rgba(255,255,255,0.8)" />
+          <Text style={[styles.progressLabel, { fontFamily: "Inter_500Medium" }]}>
+            Práticas extras exploradas
+          </Text>
+        </View>
+        <Text style={[styles.progressNumber, { fontFamily: "Inter_700Bold" }]}>
+          {todayDone} / {Math.min(interventions.length, 5)}
         </Text>
-        <Text
-          style={[
-            styles.sectionSub,
-            { color: colors.textSecondary, fontFamily: "Inter_400Regular" },
-          ]}
-        >
-          Baseadas no seu perfil e objetivos
+        <View style={styles.progressBarOuter}>
+          <View
+            style={[
+              styles.progressBarInner,
+              { width: `${(todayDone / Math.min(interventions.length, 5)) * 100}%` },
+            ]}
+          />
+        </View>
+      </View>
+
+      {/* Extra interventions */}
+      <View style={styles.section}>
+        <Text style={[styles.sectionTitle, { color: colors.text, fontFamily: "Inter_600SemiBold" }]}>
+          Mais práticas para você
+        </Text>
+        <Text style={[styles.sectionSub, { color: colors.textSecondary, fontFamily: "Inter_400Regular" }]}>
+          Explore além do seu plano gerado
         </Text>
       </View>
 
-      {interventions.map((intervention) => (
-        <InterventionCard
+      {interventions.slice(0, 5).map((intervention) => (
+        <Pressable
           key={intervention.id}
-          intervention={intervention}
-          isViewed={profile.interventionsViewed.includes(intervention.id)}
-          onPress={() =>
-            router.push({
-              pathname: "/intervention/[id]",
-              params: { id: intervention.id },
-            })
-          }
-        />
+          onPress={() => router.push({ pathname: "/intervention/[id]", params: { id: intervention.id } })}
+          style={({ pressed }) => [
+            styles.miniCard,
+            {
+              backgroundColor: colors.card,
+              borderColor: colors.cardBorder,
+              opacity: pressed ? 0.9 : 1,
+            },
+          ]}
+        >
+          <View style={styles.miniRow}>
+            <Text style={[styles.miniTitle, { color: colors.text, fontFamily: "Inter_600SemiBold" }]}>
+              {intervention.title}
+            </Text>
+            {profile.interventionsViewed.includes(intervention.id) && (
+              <Feather name="check-circle" size={14} color={colors.success} />
+            )}
+          </View>
+          <Text style={[styles.miniTherapy, { color: colors.textMuted, fontFamily: "Inter_400Regular" }]}>
+            {intervention.therapy} · {intervention.duration}
+          </Text>
+        </Pressable>
       ))}
     </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  scroll: {
-    flex: 1,
-  },
-  content: {
-    paddingHorizontal: 20,
-  },
+  scroll: { flex: 1 },
+  content: { paddingHorizontal: 20, gap: 16 },
   topRow: {
     flexDirection: "row",
     alignItems: "flex-start",
     justifyContent: "space-between",
-    marginBottom: 24,
   },
-  greeting: {
-    gap: 2,
+  greeting: { gap: 2 },
+  greetingText: { fontSize: 14 },
+  heading: { fontSize: 26, lineHeight: 32 },
+  intentionBanner: {
+    borderRadius: 14,
+    padding: 16,
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: 10,
   },
-  greetingText: {
+  intentionText: {
+    flex: 1,
+    color: "#fff",
     fontSize: 14,
+    lineHeight: 21,
   },
-  heading: {
-    fontSize: 26,
-    lineHeight: 32,
+  section: { gap: 4 },
+  sectionTitle: { fontSize: 17 },
+  sectionSub: { fontSize: 13 },
+  practiceCard: {
+    borderRadius: 16,
+    borderWidth: 1,
+    padding: 16,
+    gap: 10,
   },
-  progressCard: {
-    borderRadius: 20,
-    padding: 20,
-    marginBottom: 28,
-    gap: 8,
+  practiceTop: { flexDirection: "row", gap: 10, alignItems: "center" },
+  practiceIconBox: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    alignItems: "center",
+    justifyContent: "center",
   },
-  progressRow: {
+  practiceTopText: { flex: 1, gap: 4 },
+  badgeSmall: {
+    alignSelf: "flex-start",
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 5,
+  },
+  badgeSmallText: { fontSize: 10 },
+  practiceName: { fontSize: 14, lineHeight: 19 },
+  justificativa: { fontSize: 13, lineHeight: 19 },
+  frequencyRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 6,
+    gap: 5,
   },
-  progressLabel: {
-    fontSize: 13,
-    color: "rgba(255,255,255,0.8)",
+  frequencyText: { fontSize: 12, flex: 1 },
+  detailsBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 8,
   },
-  progressNumber: {
-    fontSize: 36,
-    color: "#fff",
-    lineHeight: 44,
+  detailsBtnText: { fontSize: 12 },
+  progressCard: {
+    borderRadius: 18,
+    padding: 18,
+    gap: 8,
   },
+  progressRow: { flexDirection: "row", alignItems: "center", gap: 6 },
+  progressLabel: { fontSize: 13, color: "rgba(255,255,255,0.8)" },
+  progressNumber: { fontSize: 32, color: "#fff", lineHeight: 40 },
   progressBarOuter: {
     height: 4,
     backgroundColor: "rgba(255,255,255,0.2)",
     borderRadius: 2,
     overflow: "hidden",
   },
-  progressBarInner: {
-    height: 4,
-    backgroundColor: "#fff",
-    borderRadius: 2,
-  },
-  progressSub: {
-    fontSize: 13,
-    color: "rgba(255,255,255,0.75)",
-    marginTop: 2,
-  },
-  section: {
-    marginBottom: 16,
+  progressBarInner: { height: 4, backgroundColor: "#fff", borderRadius: 2 },
+  miniCard: {
+    borderRadius: 14,
+    borderWidth: 1,
+    padding: 14,
     gap: 4,
   },
-  sectionTitle: {
-    fontSize: 18,
-  },
-  sectionSub: {
-    fontSize: 13,
-  },
+  miniRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
+  miniTitle: { fontSize: 14 },
+  miniTherapy: { fontSize: 12 },
 });

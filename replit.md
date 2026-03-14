@@ -1,96 +1,96 @@
-# Workspace
+# MeuEu — App de Transformação Pessoal
 
-## Overview
-
-pnpm workspace monorepo using TypeScript. Each package manages its own dependencies.
+## Visão Geral
+Aplicativo mobile Expo (React Native) em português (pt-BR) para transformação pessoal. Usuários selecionam adjetivos que descrevem o "eu atual" e o "eu futuro" e recebem intervenções terapêuticas personalizadas geradas por IA (Claude Haiku via Anthropic).
 
 ## Stack
+- **Frontend**: Expo (React Native + Web) com Expo Router
+- **Backend API**: Express.js (api-server)
+- **AI**: Anthropic Claude Haiku-4-5 via Replit AI Integrations
+- **Persistência**: AsyncStorage (local no dispositivo)
+- **Navegação**: Expo Router (file-based routing)
+- **UI**: @expo/vector-icons (Feather only), Inter font, sem emojis
+- **Tabs**: NativeTabs (iOS 26+ liquid glass) ou ClassicTabs (blurred tab bar)
 
-- **Monorepo tool**: pnpm workspaces
-- **Node.js version**: 24
-- **Package manager**: pnpm
-- **TypeScript version**: 5.9
-- **API framework**: Express 5
-- **Database**: PostgreSQL + Drizzle ORM
-- **Validation**: Zod (`zod/v4`), `drizzle-zod`
-- **API codegen**: Orval (from OpenAPI spec)
-- **Build**: esbuild (CJS bundle)
-
-## Structure
-
-```text
-artifacts-monorepo/
-├── artifacts/              # Deployable applications
-│   └── api-server/         # Express API server
-├── lib/                    # Shared libraries
-│   ├── api-spec/           # OpenAPI spec + Orval codegen config
-│   ├── api-client-react/   # Generated React Query hooks
-│   ├── api-zod/            # Generated Zod schemas from OpenAPI
-│   └── db/                 # Drizzle ORM schema + DB connection
-├── scripts/                # Utility scripts (single workspace package)
-│   └── src/                # Individual .ts scripts, run via `pnpm --filter @workspace/scripts run <script>`
-├── pnpm-workspace.yaml     # pnpm workspace (artifacts/*, lib/*, lib/integrations/*, scripts)
-├── tsconfig.base.json      # Shared TS options (composite, bundler resolution, es2022)
-├── tsconfig.json           # Root TS project references
-└── package.json            # Root package with hoisted devDeps
+## Arquitetura
+```
+artifacts/
+  meueu/           # Expo app (previewPath: "/")
+  api-server/      # Express API
+lib/
+  integrations-anthropic-ai/  # Anthropic client wrapper
+  db/                          # Drizzle ORM + PostgreSQL
+  api-zod/                     # Shared Zod schemas
 ```
 
-## TypeScript & Composite Projects
+## Fluxo de Navegação
+```
+index → onboarding/welcome → onboarding/current → onboarding/future → onboarding/plan → (tabs)
+```
+- `index.tsx`: Redireciona para welcome (novo usuário) ou tabs (usuário com onboarding completo)
+- `onboarding/welcome`: Apresenta o app, abordagens terapêuticas e como funciona
+- `onboarding/current`: Seleção de adjetivos "Eu Hoje" com filtro por categoria
+- `onboarding/future`: Seleção de adjetivos "Eu Futuro" com filtro por categoria
+- `onboarding/plan`: Geração do plano personalizado via IA (Claude Haiku)
+- `(tabs)/index`: Dashboard "Hoje" com plano gerado e práticas recomendadas
+- `(tabs)/profile`: Perfil, estatísticas, progresso e reset de jornada
+- `intervention/[id]`: Tela step-by-step de uma prática (suporta intervenções estáticas e práticas do plano gerado)
 
-Every package extends `tsconfig.base.json` which sets `composite: true`. The root `tsconfig.json` lists all packages as project references. This means:
+## API Endpoints
+- `POST /api/plan/generate` — Gera plano personalizado via Claude Haiku
+  - Body: `{ currentAdjectives: string[], futureAdjectives: string[] }`
+  - Response: `{ success: true, plan: { sintese, fraseIntencao, praticas[] } }`
 
-- **Always typecheck from the root** — run `pnpm run typecheck` (which runs `tsc --build --emitDeclarationOnly`). This builds the full dependency graph so that cross-package imports resolve correctly. Running `tsc` inside a single package will fail if its dependencies haven't been built yet.
-- **`emitDeclarationOnly`** — we only emit `.d.ts` files during typecheck; actual JS bundling is handled by esbuild/tsx/vite...etc, not `tsc`.
-- **Project references** — when package A depends on package B, A's `tsconfig.json` must list B in its `references` array. `tsc --build` uses this to determine build order and skip up-to-date packages.
+## Dados
+### Adjetivos (data/adjectives.ts)
+62 adjetivos em 5 categorias: Emocional, Cognitivo, Social, Comportamental, Valores
+- `CURRENT_ADJECTIVES`: adjetivos do "eu atual"
+- `FUTURE_ADJECTIVES`: adjetivos do "eu futuro"
+- Cada categoria tem cor e ícone próprios
 
-## Root Scripts
+### Intervenções (data/interventions.ts)
+10 intervenções pré-construídas com scoring por relevância de adjetivos
+- Abordagens: TCC, ACT, Mindfulness, Psicologia Positiva, Terapia Narrativa, Focada em Compaixão
+- `getRelevantInterventions()`: Ordena por relevância cross-referenciando adjetivos
 
-- `pnpm run build` — runs `typecheck` first, then recursively runs `build` in all packages that define it
-- `pnpm run typecheck` — runs `tsc --build --emitDeclarationOnly` using project references
+### Plano Gerado por IA
+Estrutura: `{ sintese, fraseIntencao, praticas: [{ abordagem, nome, justificativa, passos[], frequencia }] }`
+- Sempre 3 práticas: TCC, ACT, Psicologia Positiva
+- Salvo em AppContext e AsyncStorage
 
-## Packages
+## Contexto (context/AppContext.tsx)
+- `profile.currentAdjectives`: adjetivos atuais selecionados
+- `profile.futureAdjectives`: adjetivos futuros selecionados
+- `profile.generatedPlan`: plano gerado pela IA
+- `profile.onboardingComplete`: flag de onboarding
+- `profile.interventionsViewed[]`: práticas concluídas
+- `profile.streakDays`: dias consecutivos de uso
+- Storage key: `@meueu_profile_v2`
 
-### `artifacts/api-server` (`@workspace/api-server`)
+## Variáveis de Ambiente
+- `AI_INTEGRATIONS_ANTHROPIC_BASE_URL` — Auto-set pelo Replit AI Integration
+- `AI_INTEGRATIONS_ANTHROPIC_API_KEY` — Auto-set pelo Replit AI Integration
+- `EXPO_PUBLIC_DOMAIN` — Domínio público para chamadas da API no Expo
 
-Express 5 API server. Routes live in `src/routes/` and use `@workspace/api-zod` for request and response validation and `@workspace/db` for persistence.
+## Tema de Cores
+- Primary: `#1B6B5A` (teal escuro)
+- Accent: `#E8A838` (dourado)
+- Background: `#F5F8F6`
+- Card: `#FFFFFF`
+- Text: `#0F1F1B`
 
-- Entry: `src/index.ts` — reads `PORT`, starts Express
-- App setup: `src/app.ts` — mounts CORS, JSON/urlencoded parsing, routes at `/api`
-- Routes: `src/routes/index.ts` mounts sub-routers; `src/routes/health.ts` exposes `GET /health` (full path: `/api/health`)
-- Depends on: `@workspace/db`, `@workspace/api-zod`
-- `pnpm --filter @workspace/api-server run dev` — run the dev server
-- `pnpm --filter @workspace/api-server run build` — production esbuild bundle (`dist/index.cjs`)
-- Build bundles an allowlist of deps (express, cors, pg, drizzle-orm, zod, etc.) and externalizes the rest
+## Componentes Principais
+- `CategoryPicker`: Filtro por categoria + chips de adjetivos
+- `ProgressBar`: Barra de progresso do onboarding
+- `StreakBadge`: Badge de sequência de dias
+- `InterventionCard`: Card de intervenção (legado)
+- `AdjectiveChip`: Chip individual (legado, integrado no CategoryPicker)
+- `ErrorBoundary`: Boundary de erros
 
-### `lib/db` (`@workspace/db`)
-
-Database layer using Drizzle ORM with PostgreSQL. Exports a Drizzle client instance and schema models.
-
-- `src/index.ts` — creates a `Pool` + Drizzle instance, exports schema
-- `src/schema/index.ts` — barrel re-export of all models
-- `src/schema/<modelname>.ts` — table definitions with `drizzle-zod` insert schemas (no models definitions exist right now)
-- `drizzle.config.ts` — Drizzle Kit config (requires `DATABASE_URL`, automatically provided by Replit)
-- Exports: `.` (pool, db, schema), `./schema` (schema only)
-
-Production migrations are handled by Replit when publishing. In development, we just use `pnpm --filter @workspace/db run push`, and we fallback to `pnpm --filter @workspace/db run push-force`.
-
-### `lib/api-spec` (`@workspace/api-spec`)
-
-Owns the OpenAPI 3.1 spec (`openapi.yaml`) and the Orval config (`orval.config.ts`). Running codegen produces output into two sibling packages:
-
-1. `lib/api-client-react/src/generated/` — React Query hooks + fetch client
-2. `lib/api-zod/src/generated/` — Zod schemas
-
-Run codegen: `pnpm --filter @workspace/api-spec run codegen`
-
-### `lib/api-zod` (`@workspace/api-zod`)
-
-Generated Zod schemas from the OpenAPI spec (e.g. `HealthCheckResponse`). Used by `api-server` for response validation.
-
-### `lib/api-client-react` (`@workspace/api-client-react`)
-
-Generated React Query hooks and fetch client from the OpenAPI spec (e.g. `useHealthCheck`, `healthCheck`).
-
-### `scripts` (`@workspace/scripts`)
-
-Utility scripts package. Each script is a `.ts` file in `src/` with a corresponding npm script in `package.json`. Run scripts via `pnpm --filter @workspace/scripts run <script>`. Scripts can import any workspace package (e.g., `@workspace/db`) by adding it as a dependency in `scripts/package.json`.
+## Preferências do Usuário
+- Todo texto em pt-BR
+- Nunca usar emojis — usar @expo/vector-icons (Feather)
+- paddingTop: 67 (web), insets.top (native)
+- paddingBottom: 34 (web), insets.bottom (native)
+- Fonte: Inter (400, 500, 600, 700)
+- API calls: usar `process.env.EXPO_PUBLIC_DOMAIN` (nunca hardcode)

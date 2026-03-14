@@ -13,7 +13,7 @@ export default function EntryScreen() {
     if (profile.onboardingComplete) {
       router.replace("/(tabs)");
     } else {
-      router.replace("/onboarding/current");
+      router.replace("/onboarding/welcome");
     }
   }, [isLoading, profile.onboardingComplete]);
 

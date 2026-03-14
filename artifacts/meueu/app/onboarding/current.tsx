@@ -11,11 +11,11 @@ import {
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { AdjectiveChip } from "@/components/AdjectiveChip";
+import { CategoryPicker } from "@/components/CategoryPicker";
 import { ProgressBar } from "@/components/ProgressBar";
 import Colors from "@/constants/colors";
 import { useApp } from "@/context/AppContext";
-import { CURRENT_ADJECTIVES } from "@/data/interventions";
+import { CURRENT_ADJECTIVES } from "@/data/adjectives";
 
 export default function CurrentScreen() {
   const colors = Colors.light;
@@ -23,12 +23,9 @@ export default function CurrentScreen() {
   const { setCurrentAdjectives } = useApp();
   const [selected, setSelected] = useState<string[]>([]);
 
-  const toggle = (adj: string) => {
-    if (Platform.OS !== "web") {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    }
+  const toggle = (label: string) => {
     setSelected((prev) =>
-      prev.includes(adj) ? prev.filter((a) => a !== adj) : [...prev, adj]
+      prev.includes(label) ? prev.filter((a) => a !== label) : [...prev, label]
     );
   };
 
@@ -52,10 +49,15 @@ export default function CurrentScreen() {
       ]}
     >
       <View style={styles.header}>
+        <View style={styles.headerRow}>
+          <Pressable onPress={() => router.back()}>
+            <Feather name="arrow-left" size={20} color={colors.text} />
+          </Pressable>
+          <Text style={[styles.step, { color: colors.textMuted, fontFamily: "Inter_500Medium" }]}>
+            Etapa 1 de 2
+          </Text>
+        </View>
         <ProgressBar progress={1} total={2} />
-        <Text style={[styles.step, { color: colors.textMuted, fontFamily: "Inter_500Medium" }]}>
-          1 de 2
-        </Text>
       </View>
 
       <ScrollView
@@ -64,31 +66,22 @@ export default function CurrentScreen() {
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.topSection}>
-          <View style={[styles.iconCircle, { backgroundColor: colors.chip.default }]}>
-            <Feather name="user" size={28} color={colors.primary} />
+          <View style={[styles.iconCircle, { backgroundColor: "#EFF6FF" }]}>
+            <Feather name="user" size={26} color="#1D4ED8" />
           </View>
-          <Text
-            style={[styles.title, { color: colors.text, fontFamily: "Inter_700Bold" }]}
-          >
-            Como você se vê{"\n"}hoje?
+          <Text style={[styles.title, { color: colors.text, fontFamily: "Inter_700Bold" }]}>
+            Eu Hoje
           </Text>
-          <Text
-            style={[styles.subtitle, { color: colors.textSecondary, fontFamily: "Inter_400Regular" }]}
-          >
-            Escolha os adjetivos que melhor te descrevem agora. Seja honesto — sem julgamentos.
+          <Text style={[styles.subtitle, { color: colors.textSecondary, fontFamily: "Inter_400Regular" }]}>
+            Selecione os adjetivos que melhor descrevem como você se vê agora. Use as categorias para filtrar.
           </Text>
         </View>
 
-        <View style={styles.chipsContainer}>
-          {CURRENT_ADJECTIVES.map((adj) => (
-            <AdjectiveChip
-              key={adj}
-              label={adj}
-              selected={selected.includes(adj)}
-              onPress={() => toggle(adj)}
-            />
-          ))}
-        </View>
+        <CategoryPicker
+          adjectives={CURRENT_ADJECTIVES}
+          selected={selected}
+          onToggle={toggle}
+        />
 
         <View style={{ height: 100 }} />
       </ScrollView>
@@ -97,23 +90,35 @@ export default function CurrentScreen() {
         style={[
           styles.footer,
           {
-            paddingBottom: Platform.OS === "web" ? 34 : insets.bottom + 16,
+            paddingBottom: Platform.OS === "web" ? 34 : insets.bottom + 12,
             backgroundColor: colors.background,
           },
         ]}
       >
         {selected.length > 0 && (
-          <Text style={[styles.count, { color: colors.textMuted, fontFamily: "Inter_400Regular" }]}>
-            {selected.length} selecionado{selected.length !== 1 ? "s" : ""}
-          </Text>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.selectedPreview}
+          >
+            {selected.map((adj) => (
+              <View key={adj} style={[styles.selectedChip, { backgroundColor: colors.chip.default }]}>
+                <Text style={[styles.selectedChipText, { color: colors.primary, fontFamily: "Inter_500Medium" }]}>
+                  {adj}
+                </Text>
+                <Pressable onPress={() => toggle(adj)}>
+                  <Feather name="x" size={12} color={colors.textMuted} />
+                </Pressable>
+              </View>
+            ))}
+          </ScrollView>
         )}
         <Pressable
           onPress={handleNext}
           style={({ pressed }) => [
             styles.button,
             {
-              backgroundColor:
-                selected.length > 0 ? colors.primary : colors.chip.default,
+              backgroundColor: selected.length > 0 ? colors.primary : colors.chip.default,
               opacity: pressed ? 0.85 : 1,
             },
           ]}
@@ -127,13 +132,9 @@ export default function CurrentScreen() {
               },
             ]}
           >
-            Continuar
+            {selected.length > 0 ? `Continuar com ${selected.length} selecionado${selected.length !== 1 ? "s" : ""}` : "Selecione ao menos um"}
           </Text>
-          <Feather
-            name="arrow-right"
-            size={18}
-            color={selected.length > 0 ? "#fff" : colors.textMuted}
-          />
+          {selected.length > 0 && <Feather name="arrow-right" size={18} color="#fff" />}
         </Pressable>
       </View>
     </View>
@@ -141,69 +142,59 @@ export default function CurrentScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
+  container: { flex: 1 },
   header: {
     paddingHorizontal: 24,
-    paddingTop: 16,
-    paddingBottom: 8,
-    gap: 8,
-  },
-  step: {
-    fontSize: 12,
-    textAlign: "right",
-  },
-  scroll: {
-    flex: 1,
-  },
-  scrollContent: {
-    paddingHorizontal: 24,
-    paddingTop: 8,
-  },
-  topSection: {
+    paddingTop: 12,
+    paddingBottom: 12,
     gap: 12,
-    marginBottom: 32,
   },
+  headerRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  step: { fontSize: 13 },
+  scroll: { flex: 1 },
+  scrollContent: { paddingHorizontal: 20, paddingTop: 8, gap: 20 },
+  topSection: { gap: 10 },
   iconCircle: {
-    width: 56,
-    height: 56,
-    borderRadius: 16,
+    width: 50,
+    height: 50,
+    borderRadius: 14,
     alignItems: "center",
     justifyContent: "center",
   },
-  title: {
-    fontSize: 30,
-    lineHeight: 38,
-  },
-  subtitle: {
-    fontSize: 15,
-    lineHeight: 22,
-  },
-  chipsContainer: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-  },
+  title: { fontSize: 28, lineHeight: 34 },
+  subtitle: { fontSize: 14, lineHeight: 21 },
   footer: {
-    paddingHorizontal: 24,
-    paddingTop: 16,
-    gap: 8,
+    paddingHorizontal: 20,
+    paddingTop: 12,
+    gap: 10,
     borderTopWidth: 1,
     borderTopColor: "rgba(0,0,0,0.06)",
   },
-  count: {
-    fontSize: 13,
-    textAlign: "center",
+  selectedPreview: {
+    flexDirection: "row",
+    gap: 6,
+    paddingBottom: 4,
   },
+  selectedChip: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 100,
+  },
+  selectedChipText: { fontSize: 13 },
   button: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
     gap: 8,
-    paddingVertical: 16,
-    borderRadius: 16,
+    paddingVertical: 15,
+    borderRadius: 14,
   },
-  buttonText: {
-    fontSize: 16,
-  },
+  buttonText: { fontSize: 15 },
 });

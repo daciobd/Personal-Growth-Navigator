@@ -7,6 +7,20 @@ import React, {
   useState,
 } from "react";
 
+export type Practice = {
+  abordagem: string;
+  nome: string;
+  justificativa: string;
+  passos: string[];
+  frequencia: string;
+};
+
+export type GeneratedPlan = {
+  sintese: string;
+  fraseIntencao: string;
+  praticas: Practice[];
+};
+
 export type UserProfile = {
   currentAdjectives: string[];
   futureAdjectives: string[];
@@ -14,6 +28,7 @@ export type UserProfile = {
   interventionsViewed: string[];
   lastInterventionDate: string | null;
   streakDays: number;
+  generatedPlan: GeneratedPlan | null;
 };
 
 type AppContextType = {
@@ -23,6 +38,7 @@ type AppContextType = {
   completeOnboarding: () => void;
   markInterventionViewed: (id: string) => void;
   resetProfile: () => void;
+  setPlan: (plan: GeneratedPlan) => void;
   isLoading: boolean;
 };
 
@@ -33,9 +49,10 @@ const defaultProfile: UserProfile = {
   interventionsViewed: [],
   lastInterventionDate: null,
   streakDays: 0,
+  generatedPlan: null,
 };
 
-const STORAGE_KEY = "@meueu_profile";
+const STORAGE_KEY = "@meueu_profile_v2";
 
 const AppContext = createContext<AppContextType | null>(null);
 
@@ -49,7 +66,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         const raw = await AsyncStorage.getItem(STORAGE_KEY);
         if (raw) {
           const parsed = JSON.parse(raw) as UserProfile;
-          setProfile(parsed);
+          setProfile({ ...defaultProfile, ...parsed });
         }
       } catch {}
       setIsLoading(false);
@@ -74,6 +91,13 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const setFutureAdjectives = useCallback(
     (adjs: string[]) => {
       save({ ...profile, futureAdjectives: adjs });
+    },
+    [profile, save]
+  );
+
+  const setPlan = useCallback(
+    (plan: GeneratedPlan) => {
+      save({ ...profile, generatedPlan: plan });
     },
     [profile, save]
   );
@@ -112,7 +136,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   );
 
   const resetProfile = useCallback(() => {
-    save(defaultProfile);
+    save({ ...defaultProfile });
   }, [save]);
 
   return (
@@ -124,6 +148,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         completeOnboarding,
         markInterventionViewed,
         resetProfile,
+        setPlan,
         isLoading,
       }}
     >

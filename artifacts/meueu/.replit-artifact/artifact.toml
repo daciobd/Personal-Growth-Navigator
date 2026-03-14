@@ -1,0 +1,27 @@
+kind = "mobile"
+previewPath = "/"
+title = "MeuEu - Transformação Pessoal"
+version = "1.0.0"
+id = "artifacts/meueu"
+router = "expo-domain"
+
+[[integratedSkills]]
+name = "expo"
+version = "1.0.0"
+
+[[services]]
+ensurePreviewReachable = "/status"
+localPort = 24626
+name = "expo"
+paths = ["/"]
+
+[services.development]
+run = "pnpm --filter @workspace/meueu run dev"
+
+[services.env]
+PORT = "24626"
+BASE_PATH = "/"
+
+[services.production]
+build = ["pnpm", "--filter", "@workspace/meueu", "run", "build"]
+run = ["pnpm", "--filter", "@workspace/meueu", "run", "serve"]

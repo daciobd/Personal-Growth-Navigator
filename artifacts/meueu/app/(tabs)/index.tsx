@@ -10,7 +10,7 @@ import {
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { DailyChallenge } from "@/components/DailyChallenge";
+import { UnifiedCheckin } from "@/components/UnifiedCheckin";
 import { StreakBadge } from "@/components/StreakBadge";
 import { XPBar } from "@/components/XPBar";
 import Colors from "@/constants/colors";
@@ -79,8 +79,8 @@ export default function TodayScreen() {
         <StreakBadge days={streak || profile.streakDays} />
       </View>
 
-      {/* Daily Challenge */}
-      <DailyChallenge />
+      {/* Daily Check-in unificado */}
+      <UnifiedCheckin />
 
       {/* XP Bar */}
       <XPBar />

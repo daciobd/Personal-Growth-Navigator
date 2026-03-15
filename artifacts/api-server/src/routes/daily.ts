@@ -2,6 +2,7 @@ import { Router, type IRouter } from "express";
 import { anthropic } from "@workspace/integrations-anthropic-ai";
 import { db, dailyCheckinsTable } from "@workspace/db";
 import { eq, and, desc, gte } from "drizzle-orm";
+import { analyzeProgress, type AdaptiveSignal } from "../adaptiveEngine";
 
 const router: IRouter = Router();
 
@@ -64,6 +65,8 @@ router.post("/daily/challenge", async (req, res) => {
 
   let aiAction =
     "Dedique 10 minutos hoje para explorar esta prática com intenção e presença plena.";
+  let adaptiveSignal: AdaptiveSignal = "neutral";
+  let adaptiveDisplayMessage: string | null = null;
 
   if (practice) {
     try {
@@ -73,6 +76,17 @@ router.post("/daily/challenge", async (req, res) => {
         .where(eq(dailyCheckinsTable.deviceId, deviceId))
         .orderBy(desc(dailyCheckinsTable.createdAt))
         .limit(7);
+
+      // Análise adaptativa com base no histórico
+      const adaptive = analyzeProgress(
+        recentHistory.map((h) => ({
+          date: h.date,
+          completed: h.completed,
+          rating: h.rating,
+        }))
+      );
+      adaptiveSignal = adaptive.signal;
+      adaptiveDisplayMessage = adaptive.displayMessage;
 
       const historyContext =
         recentHistory.length > 0
@@ -85,9 +99,13 @@ router.post("/daily/challenge", async (req, res) => {
               .join("\n")
           : "\nSem histórico anterior — é o primeiro desafio do usuário.";
 
+      const adaptiveInstruction = adaptive.promptModifier
+        ? `\n\nINSTRUÇÃO DE ADAPTAÇÃO (prioridade máxima): ${adaptive.promptModifier}`
+        : "";
+
       const message = await anthropic.messages.create({
         model: "claude-haiku-4-5",
-        max_tokens: 150,
+        max_tokens: 180,
         messages: [
           {
             role: "user",
@@ -96,13 +114,13 @@ router.post("/daily/challenge", async (req, res) => {
 Prática: ${practice.nome} (${practice.abordagem})
 Passos: ${practice.passos.slice(0, 2).join("; ")}
 Frequência: ${practice.frequencia}
-${historyContext}
+${historyContext}${adaptiveInstruction}
 
 A proposição deve ser:
 - Específica e realizável em um dia
 - Em português, máximo 2 frases
 - Começando com um verbo de ação (Ex: "Hoje, reserve...", "Ao acordar...", "Em algum momento...")
-- Adaptada ao histórico do usuário
+- Adaptada ao histórico e às instruções de adaptação acima
 
 Responda APENAS com a proposição de ação, sem introdução ou explicação.`,
           },
@@ -123,6 +141,8 @@ Responda APENAS com a proposição de ação, sem introdução ou explicação.`
     aiAction,
     practiceIndex: getPracticeIndexForDate(today),
     date: today,
+    adaptiveSignal,
+    adaptiveDisplayMessage,
   });
 });
 
@@ -195,6 +215,14 @@ router.post("/daily/checkin", async (req, res) => {
   let aiTip = "Ótimo trabalho hoje! Continue assim amanhã.";
 
   try {
+    const adaptive = analyzeProgress(
+      recentHistory.map((h) => ({
+        date: h.date,
+        completed: h.completed,
+        rating: h.rating,
+      }))
+    );
+
     const recentRatings = recentHistory.map((h) => h.rating ?? 0).filter(Boolean);
     const lowRatings = recentRatings.filter((r) => r <= 3);
 
@@ -209,6 +237,10 @@ router.post("/daily/checkin", async (req, res) => {
       tipContext = "encorajamento para continuar";
     }
 
+    const adaptiveNote = adaptive.promptModifier
+      ? `\nContexto adaptativo: ${adaptive.promptModifier}`
+      : "";
+
     const message = await anthropic.messages.create({
       model: "claude-haiku-4-5",
       max_tokens: 120,
@@ -221,7 +253,7 @@ router.post("/daily/checkin", async (req, res) => {
 - Nota: ${rating ?? "Não informada"}/5
 - Notas livres: ${note ?? "Nenhuma"}
 - Sequência de dias: ${streak} dia(s)
-- Contexto: ${tipContext}
+- Contexto: ${tipContext}${adaptiveNote}
 
 Gere uma mensagem curta (máximo 2 frases) em português, empática e personalizada.
 Responda APENAS com a mensagem, sem introdução.`,

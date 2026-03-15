@@ -56,16 +56,25 @@ export default function RootLayout() {
     }
   }, [fontsLoaded, fontError]);
 
-  // Registra service worker no web
+  // Registra service worker apenas em produção
   useEffect(() => {
     if (Platform.OS !== "web") return;
     if (typeof window === "undefined") return;
     if (!("serviceWorker" in navigator)) return;
 
-    navigator.serviceWorker
-      .register("/sw.js")
-      .then(() => console.log("[SW] Registrado"))
-      .catch((err) => console.warn("[SW] Falha ao registrar:", err));
+    if (process.env.NODE_ENV === "production") {
+      navigator.serviceWorker
+        .register("/sw.js")
+        .then(() => console.log("[SW] Registrado"))
+        .catch((err) => console.warn("[SW] Falha ao registrar:", err));
+    } else {
+      // Em dev: desregistra qualquer SW ativo para evitar cache obsoleto
+      navigator.serviceWorker.getRegistrations().then((regs) => {
+        for (const reg of regs) {
+          reg.unregister();
+        }
+      });
+    }
   }, []);
 
   if (!fontsLoaded && !fontError) return null;

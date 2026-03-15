@@ -1,0 +1,145 @@
+Excelente material. São 8 abordagens distintas do "eu futuro" — cada uma com uma linguagem, pergunta-chave e objetivo diferentes. A forma mais elegante de instruir a IA a usá-las alternadamente é por **seleção automática baseada no perfil Big Five + adjetivos escolhidos**. Veja como implementar:
+
+**Estratégia 1 — Seleção baseada no perfil (mais precisa)**
+
+Cada abordagem do "eu futuro" tem uma indicação clínica natural:
+
+- Alta Abertura + adjetivos criativos → **Narrativa** (re-autoria da história)
+- Alto Neuroticismo + autocrítica → **CFT** (eu compassivo ideal)
+- Baixa Conscienciosidade → **TFS** (pergunta do milagre + pequenos passos)
+- Padrões rígidos detectados → **Terapia do Esquema** (adulto saudável)
+- Alta Conscienciosidade + valores → **ACT** (direções de vida)
+- Perfil equilibrado → **TCC** (visualização + custo-benefício)
+- Alta Extroversão + relações → **Gestalt** (aqui-e-agora + cadeira vazia)
+
+**Estratégia 2 — Rotação semanal (mais simples de implementar)**
+
+A cada sessão de reavaliação ou nova jornada, a IA usa uma abordagem diferente. Isso expõe o usuário a múltiplas linguagens ao longo do tempo.
+
+Aqui está o bloco de código pronto para adicionar ao `routes/plan.ts`:
+
+```typescript
+// artifacts/api-server/src/routes/plan.ts
+// Adicionar ANTES do prompt principal
+
+type FutureApproach = {
+  key: string;
+  name: string;
+  instruction: string;
+  question: string;
+};
+
+const FUTURE_SELF_APPROACHES: FutureApproach[] = [
+  {
+    key: "tcc",
+    name: "TCC — Visualização e consequências",
+    instruction: `Use a abordagem da TCC para o "eu futuro": peça ao usuário para visualizar com riqueza de detalhes situações futuras onde age de forma adaptativa. Contraste o "eu futuro" que sofrerá consequências negativas com o "eu futuro" que colherá benefícios das escolhas saudáveis de hoje. Use o futuro como ensaio mental da mudança.`,
+    question: "Como seria sua vida concreta daqui a 1 ano se você já fosse essa pessoa?",
+  },
+  {
+    key: "esquema",
+    name: "Terapia do Esquema — Adulto Saudável",
+    instruction: `Use a abordagem da Terapia do Esquema: o "eu futuro" é o "Adulto Saudável" — a parte capaz de nutrir, proteger e estabelecer limites saudáveis. As práticas devem fortalecer progressivamente esse modo funcional. Fale diretamente ao Adulto Saudável que está emergindo.`,
+    question: "Que parte de você, quando está no seu melhor, já se parece com quem você quer ser?",
+  },
+  {
+    key: "cft",
+    name: "CFT — Eu Compassivo Ideal",
+    instruction: `Use a abordagem da Terapia Focada na Compaixão: o "eu futuro" é o "eu compassivo ideal" — sábio, forte e caloroso. As práticas devem ajudar o usuário a se visualizar no futuro já tendo integrado compaixão por si mesmo, e imaginar o que esse eu diria para ele hoje. Especialmente indicado se há autocrítica ou vergonha no perfil.`,
+    question: "O que sua versão mais sábia e compassiva diria para você agora sobre esse caminho?",
+  },
+  {
+    key: "narrativa",
+    name: "Terapia Narrativa — Re-autoria",
+    instruction: `Use a abordagem da Terapia Narrativa: a identidade é construída pelas histórias que contamos. O "eu futuro" é o protagonista de uma história alternativa ainda sendo escrita. Identifique "resultados únicos" — momentos em que o usuário já resistiu ao problema — e teça uma nova narrativa que aponte para esse futuro. Use linguagem de "tornar-se", não de "ser".`,
+    question: "Em quais momentos recentes você já agiu como a pessoa que quer se tornar?",
+  },
+  {
+    key: "tfs",
+    name: "TFS — Pergunta do Milagre",
+    instruction: `Use a abordagem da Terapia Focada na Solução: ignore a análise do problema e foque exclusivamente na construção da solução. Aplique a lógica da "pergunta do milagre" — como seria a manhã seguinte se o problema já estivesse resolvido? Identifique pequenos fragmentos desse futuro já presentes no presente e proponha ações para ampliá-los.`,
+    question: "Se ao acordar amanhã o problema já estivesse resolvido, o que você faria de diferente logo cedo?",
+  },
+  {
+    key: "act",
+    name: "ACT — Valores e Ação Comprometida",
+    instruction: `Use a abordagem da ACT: em vez de um "eu futuro" fixo, o foco são os valores (direções de vida). O futuro emerge como consequência de viver esses valores agora. Não pergunte "quem você quer ser", mas "o que é verdadeiramente importante para você e que direção você quer tomar". As práticas são ações comprometidas no presente que constroem esse futuro.`,
+    question: "O que é verdadeiramente importante para você — não o que deveria ser, mas o que realmente importa?",
+  },
+  {
+    key: "gestalt",
+    name: "Gestalt — Emergência no aqui-e-agora",
+    instruction: `Use a abordagem da Gestalt: o "eu futuro" não é distante — é uma potencialidade que emerge no presente. As práticas devem ajudar o usuário a perceber como já "ensaia" seu futuro na sua postura, tom de voz e escolhas cotidianas. O foco é na expansão da consciência no momento presente, não na projeção futura.`,
+    question: "Onde, no seu dia de hoje, você já experimenta um pequeno sinal de quem está se tornando?",
+  },
+  {
+    key: "humanista",
+    name: "Centrada na Pessoa — Tendência Atualizante",
+    instruction: `Use a abordagem Centrada na Pessoa de Rogers: existe uma "tendência atualizante" inata — a capacidade natural de crescer em direção a um eu mais autêntico e pleno. As práticas devem criar condições de empatia, aceitação e congruência para que essa tendência floresça naturalmente. O "eu futuro" não é construído, é descoberto.`,
+    question: "Quando você se sente mais verdadeiramente você mesmo, sem máscaras — como é essa sensação?",
+  },
+];
+
+// Função de seleção automática por perfil Big Five
+function selectApproach(
+  big5?: { dims: Record<string, number> },
+  futureAdjectives?: string[],
+  sessionCount = 1
+): FutureApproach {
+  if (!big5) {
+    // Sem Big Five: rotação pela sessão
+    return FUTURE_SELF_APPROACHES[(sessionCount - 1) % FUTURE_SELF_APPROACHES.length];
+  }
+
+  const { N, E, O, A, C } = big5.dims as Record<string, number>;
+
+  // Alta autocrítica/vergonha → CFT
+  if (N >= 70) return FUTURE_SELF_APPROACHES.find(a => a.key === "cft")!;
+
+  // Baixa Conscienciosidade → TFS (foco em pequenos passos concretos)
+  if (C < 35) return FUTURE_SELF_APPROACHES.find(a => a.key === "tfs")!;
+
+  // Alta Abertura → Narrativa (receptivo a metáforas e re-autoria)
+  if (O >= 70) return FUTURE_SELF_APPROACHES.find(a => a.key === "narrativa")!;
+
+  // Alta Amabilidade + baixo N → ACT (orientado a valores)
+  if (A >= 65 && N < 50) return FUTURE_SELF_APPROACHES.find(a => a.key === "act")!;
+
+  // Alta Conscienciosidade → Esquema (padrões profundos de desempenho)
+  if (C >= 70) return FUTURE_SELF_APPROACHES.find(a => a.key === "esquema")!;
+
+  // Alta Extroversão → Gestalt (presença e contato)
+  if (E >= 65) return FUTURE_SELF_APPROACHES.find(a => a.key === "gestalt")!;
+
+  // Padrão → TCC
+  return FUTURE_SELF_APPROACHES.find(a => a.key === "tcc")!;
+}
+```
+
+Depois, no prompt do Claude, adicione:
+
+```typescript
+// Dentro da função que monta o prompt em plan.ts:
+const approach = selectApproach(big5Scores, futureAdjectives, assessmentNumber);
+
+// Adicionar ao prompt:
+`=== ABORDAGEM DO EU FUTURO ===
+${approach.instruction}
+
+Pergunta-chave para esta sessão: "${approach.question}"
+
+Use essa perspectiva para fundamentar a síntese e a frase de intenção.
+As práticas devem ENCARNAR essa abordagem específica — não apenas mencioná-la.`
+```
+
+E para retornar a abordagem usada ao frontend (para exibir ao usuário):
+
+```typescript
+res.json({
+  success: true,
+  plan: planData,
+  approach: { name: approach.name, question: approach.question },
+});
+```
+
+Isso faz com que o usuário veja, na tela do plano, algo como "Nesta jornada estamos usando a perspectiva da **Terapia Narrativa** — *Em quais momentos recentes você já agiu como a pessoa que quer se tornar?*" — o que tem valor educativo e torna cada reavaliação mensal genuinamente diferente das anteriores.

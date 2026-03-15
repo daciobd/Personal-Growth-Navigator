@@ -15,7 +15,7 @@ import Animated, { FadeInDown } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Colors from "@/constants/colors";
 import { useApp } from "@/context/AppContext";
-import { generatePlan as generatePlanWithBig5 } from "@/hooks/usePlanGeneration";
+import { generatePlan as generatePlanWithBig5, type PlanApproach } from "@/hooks/usePlanGeneration";
 
 type Practice = {
   abordagem: string;
@@ -43,6 +43,7 @@ const APPROACH_COLORS: Record<string, { bg: string; text: string; icon: string }
 
 const LOADING_MESSAGES = [
   "Analisando seu perfil...",
+  "Identificando perspectiva terapêutica ideal...",
   "Cruzando adjetivos com abordagens terapêuticas...",
   "Selecionando práticas personalizadas...",
   "Formulando sua frase de intenção...",
@@ -55,6 +56,7 @@ export default function PlanScreen() {
   const { profile, completeOnboarding, setPlan } = useApp();
 
   const [plan, setPlanLocal] = useState<Plan | null>(null);
+  const [approach, setApproach] = useState<PlanApproach | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [loadingMsg, setLoadingMsg] = useState(LOADING_MESSAGES[0]);
@@ -79,6 +81,7 @@ export default function PlanScreen() {
 
       setPlanLocal(data.plan as Plan);
       setPlan(data.plan as Plan);
+      if (data.approach) setApproach(data.approach);
       if (Platform.OS !== "web") {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       }
@@ -190,6 +193,31 @@ export default function PlanScreen() {
                 </Text>
               </View>
             </Animated.View>
+
+            {/* Therapeutic approach */}
+            {approach && (
+              <Animated.View entering={FadeInDown.delay(100).duration(500)}>
+                <View style={[styles.approachCard, { backgroundColor: "#F0FDF4", borderColor: "#BBF7D0" }]}>
+                  <View style={styles.approachHeader}>
+                    <View style={[styles.approachIconWrap, { backgroundColor: "#16A34A" }]}>
+                      <Feather name="book-open" size={13} color="#fff" />
+                    </View>
+                    <Text style={[styles.approachLabel, { color: "#166534", fontFamily: "Inter_500Medium" }]}>
+                      Perspectiva desta jornada
+                    </Text>
+                  </View>
+                  <Text style={[styles.approachName, { color: "#14532D", fontFamily: "Inter_700Bold" }]}>
+                    {approach.name}
+                  </Text>
+                  <View style={styles.approachQuestionRow}>
+                    <Feather name="message-circle" size={13} color="#16A34A" />
+                    <Text style={[styles.approachQuestion, { color: "#166534", fontFamily: "Inter_400Regular" }]}>
+                      {approach.question}
+                    </Text>
+                  </View>
+                </View>
+              </Animated.View>
+            )}
 
             {/* Intention phrase */}
             <Animated.View entering={FadeInDown.delay(150).duration(500)}>
@@ -397,6 +425,33 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   practiceHeaderText: { flex: 1, gap: 6 },
+  approachCard: {
+    borderRadius: 16,
+    borderWidth: 1,
+    padding: 14,
+    gap: 8,
+  },
+  approachHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 7,
+  },
+  approachIconWrap: {
+    width: 22,
+    height: 22,
+    borderRadius: 6,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  approachLabel: { fontSize: 12 },
+  approachName: { fontSize: 15, lineHeight: 21 },
+  approachQuestionRow: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: 6,
+    paddingTop: 2,
+  },
+  approachQuestion: { flex: 1, fontSize: 13, lineHeight: 19, fontStyle: "italic" },
   approachBadge: {
     alignSelf: "flex-start",
     paddingHorizontal: 10,

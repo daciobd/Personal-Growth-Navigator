@@ -1,0 +1,39 @@
+Entendido — tudo está instalado, mas no link de preview o botão de login não aparece. Isso é um problema de visibilidade na UI, não de backend. Manda para o Replit Agent:
+
+---
+
+> "O sistema de auth está instalado mas o usuário não consegue encontrar onde fazer login no preview. Preciso verificar e corrigir a visibilidade:
+>
+> 1. Abra `artifacts/meueu/app/(tabs)/profile.tsx` (ou o arquivo da tab de Perfil, seja qual for o nome)
+> 2. Verifique se o card 'Salvar progresso na nuvem' realmente aparece quando `isAuthenticated === false`
+> 3. Se o componente usa `useAuth()`, confirme que o `AuthProvider` envolve as tabs no `_layout.tsx` — não apenas o Stack raiz
+> 4. Adicione temporariamente um log: `console.log('isAuthenticated:', isAuthenticated)` na tab de Perfil para confirmar o valor
+>
+> Se o card não estiver aparecendo, adicione diretamente no topo da tab de Perfil, antes de qualquer ScrollView:
+>
+> ```tsx
+> import { useAuth } from '../../context/AuthContext';
+> const { isAuthenticated, user } = useAuth();
+>
+> // Logo no início do return, antes de qualquer outro conteúdo:
+> {!isAuthenticated && (
+>   <Pressable
+>     onPress={() => router.push('/auth/login')}
+>     style={{ backgroundColor: '#1B6B5A', margin: 16, padding: 16, borderRadius: 14, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+>     <View>
+>       <Text style={{ color: '#fff', fontSize: 15, fontWeight: '700' }}>Entrar ou criar conta</Text>
+>       <Text style={{ color: 'rgba(255,255,255,0.7)', fontSize: 13, marginTop: 2 }}>Salve seu progresso na nuvem</Text>
+>     </View>
+>     <Feather name='arrow-right' size={20} color='#fff' />
+>   </Pressable>
+> )}
+>
+> {isAuthenticated && (
+>   <View style={{ margin: 16, padding: 16, backgroundColor: '#fff', borderRadius: 14, borderWidth: 1, borderColor: '#E8F0ED' }}>
+>     <Text style={{ fontSize: 15, fontWeight: '700', color: '#0F1F1B' }}>{user?.name}</Text>
+>     <Text style={{ fontSize: 13, color: '#6B8F7E', marginTop: 2 }}>{user?.email}</Text>
+>   </View>
+> )}
+> ```
+>
+> Reinicie o Expo após a mudança e confirme que o botão aparece no preview."

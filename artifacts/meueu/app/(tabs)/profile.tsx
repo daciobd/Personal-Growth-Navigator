@@ -119,6 +119,54 @@ export default function ProfileScreen() {
 
       <XPBar />
 
+      {/* Auth card — sempre visível no topo */}
+      {isLoggedIn ? (
+        <View style={[styles.authCard, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>
+          <View style={styles.authRow}>
+            <View style={[styles.authAvatar, { backgroundColor: "#EAF2EF" }]}>
+              <Feather name="user" size={18} color={colors.primary} />
+            </View>
+            <View style={styles.authTexts}>
+              <Text style={[styles.authName, { color: colors.text, fontFamily: "Inter_600SemiBold" }]}>
+                {user?.name}
+              </Text>
+              <Text style={[styles.authEmail, { color: colors.textMuted, fontFamily: "Inter_400Regular" }]}>
+                {user?.email}
+              </Text>
+            </View>
+          </View>
+          <Pressable
+            onPress={() => logout()}
+            style={[styles.logoutBtn, { borderColor: colors.cardBorder }]}
+          >
+            <Feather name="log-out" size={14} color={colors.danger} />
+            <Text style={[styles.logoutText, { color: colors.danger, fontFamily: "Inter_500Medium" }]}>
+              Sair da conta
+            </Text>
+          </Pressable>
+        </View>
+      ) : (
+        <Pressable
+          onPress={() => router.push("/auth/login")}
+          style={[styles.authCard, { backgroundColor: colors.primary }]}
+        >
+          <View style={styles.authRow}>
+            <View style={[styles.authAvatar, { backgroundColor: "rgba(255,255,255,0.15)" }]}>
+              <Feather name="cloud" size={18} color="#fff" />
+            </View>
+            <View style={styles.authTexts}>
+              <Text style={[styles.authName, { color: "#fff", fontFamily: "Inter_600SemiBold" }]}>
+                Entrar ou criar conta
+              </Text>
+              <Text style={[styles.authEmail, { color: "rgba(255,255,255,0.75)", fontFamily: "Inter_400Regular" }]}>
+                Salve seu progresso na nuvem
+              </Text>
+            </View>
+            <Feather name="arrow-right" size={18} color="rgba(255,255,255,0.7)" />
+          </View>
+        </Pressable>
+      )}
+
       <Pressable
         onPress={() => router.push("/coach")}
         style={[styles.coachCard, { backgroundColor: colors.primary }]}
@@ -288,54 +336,6 @@ export default function ProfileScreen() {
           }
         )}
       </View>
-
-      {/* Auth section */}
-      {isLoggedIn ? (
-        <View style={[styles.authCard, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>
-          <View style={styles.authRow}>
-            <View style={[styles.authAvatar, { backgroundColor: "#EAF2EF" }]}>
-              <Feather name="user" size={18} color={colors.primary} />
-            </View>
-            <View style={styles.authTexts}>
-              <Text style={[styles.authName, { color: colors.text, fontFamily: "Inter_600SemiBold" }]}>
-                {user?.name}
-              </Text>
-              <Text style={[styles.authEmail, { color: colors.textMuted, fontFamily: "Inter_400Regular" }]}>
-                {user?.email}
-              </Text>
-            </View>
-          </View>
-          <Pressable
-            onPress={() => logout()}
-            style={[styles.logoutBtn, { borderColor: colors.cardBorder }]}
-          >
-            <Feather name="log-out" size={14} color={colors.danger} />
-            <Text style={[styles.logoutText, { color: colors.danger, fontFamily: "Inter_500Medium" }]}>
-              Sair da conta
-            </Text>
-          </Pressable>
-        </View>
-      ) : (
-        <Pressable
-          onPress={() => router.push("/auth/register")}
-          style={[styles.authCard, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}
-        >
-          <View style={styles.authRow}>
-            <View style={[styles.authAvatar, { backgroundColor: "#EAF2EF" }]}>
-              <Feather name="cloud" size={18} color={colors.primary} />
-            </View>
-            <View style={styles.authTexts}>
-              <Text style={[styles.authName, { color: colors.text, fontFamily: "Inter_600SemiBold" }]}>
-                Salvar progresso na nuvem
-              </Text>
-              <Text style={[styles.authEmail, { color: colors.textMuted, fontFamily: "Inter_400Regular" }]}>
-                Crie uma conta gratuita
-              </Text>
-            </View>
-            <Feather name="arrow-right" size={16} color={colors.textMuted} />
-          </View>
-        </Pressable>
-      )}
 
       <Pressable
         onPress={handleReset}

@@ -12,14 +12,18 @@ import {
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { BadgeGrid } from "@/components/BadgeGrid";
+import { XPBar } from "@/components/XPBar";
 import Colors from "@/constants/colors";
 import { useApp } from "@/context/AppContext";
+import { useGamification } from "@/context/GamificationContext";
 import { THERAPY_COLORS, Therapy } from "@/data/interventions";
 
 export default function ProfileScreen() {
   const colors = Colors.light;
   const insets = useSafeAreaInsets();
   const { profile, resetProfile } = useApp();
+  const { streak } = useGamification();
 
   const therapiesDone = new Set(
     profile.interventionsViewed
@@ -84,10 +88,10 @@ export default function ProfileScreen() {
       >
         <View style={styles.stat}>
           <Text style={[styles.statNumber, { fontFamily: "Inter_700Bold" }]}>
-            {profile.streakDays}
+            {streak || profile.streakDays}
           </Text>
           <Text style={[styles.statLabel, { fontFamily: "Inter_400Regular" }]}>
-            {profile.streakDays === 1 ? "dia seguido" : "dias seguidos"}
+            {(streak || profile.streakDays) === 1 ? "dia seguido" : "dias seguidos"}
           </Text>
         </View>
         <View style={styles.statDivider} />
@@ -109,6 +113,30 @@ export default function ProfileScreen() {
           </Text>
         </View>
       </View>
+
+      <XPBar />
+
+      <Pressable
+        onPress={() => router.push("/coach")}
+        style={[styles.coachCard, { backgroundColor: colors.primary }]}
+      >
+        <View style={styles.coachCardLeft}>
+          <View style={[styles.coachIcon, { backgroundColor: "rgba(255,255,255,0.15)" }]}>
+            <Feather name="message-circle" size={20} color="#fff" />
+          </View>
+          <View>
+            <Text style={[styles.coachTitle, { fontFamily: "Inter_700Bold" }]}>
+              Coach
+            </Text>
+            <Text style={[styles.coachSub, { fontFamily: "Inter_400Regular" }]}>
+              Converse e ganhe XP
+            </Text>
+          </View>
+        </View>
+        <Feather name="arrow-right" size={18} color="rgba(255,255,255,0.7)" />
+      </Pressable>
+
+      <BadgeGrid />
 
       <View style={styles.section}>
         <Text
@@ -352,5 +380,33 @@ const styles = StyleSheet.create({
   },
   resetText: {
     fontSize: 15,
+  },
+  coachCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    borderRadius: 16,
+    padding: 16,
+    justifyContent: "space-between",
+  },
+  coachCardLeft: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+  },
+  coachIcon: {
+    width: 42,
+    height: 42,
+    borderRadius: 13,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  coachTitle: {
+    fontSize: 15,
+    color: "#fff",
+  },
+  coachSub: {
+    fontSize: 12,
+    color: "rgba(255,255,255,0.75)",
+    marginTop: 2,
   },
 });

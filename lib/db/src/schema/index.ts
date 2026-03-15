@@ -20,3 +20,5 @@
 export * from "./conversations";
 export * from "./messages";
 export * from "./plan-logs";
+export * from "./daily-checkins";
+export * from "./coach-messages";

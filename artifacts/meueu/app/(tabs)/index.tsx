@@ -10,9 +10,12 @@ import {
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { DailyChallenge } from "@/components/DailyChallenge";
 import { StreakBadge } from "@/components/StreakBadge";
+import { XPBar } from "@/components/XPBar";
 import Colors from "@/constants/colors";
 import { useApp } from "@/context/AppContext";
+import { useGamification } from "@/context/GamificationContext";
 import { getRelevantInterventions } from "@/data/interventions";
 
 function getGreeting(): string {
@@ -34,6 +37,7 @@ export default function TodayScreen() {
   const colors = Colors.light;
   const insets = useSafeAreaInsets();
   const { profile } = useApp();
+  const { streak } = useGamification();
   const plan = profile.generatedPlan;
 
   const interventions = useMemo(
@@ -72,8 +76,14 @@ export default function TodayScreen() {
             Sua jornada
           </Text>
         </View>
-        <StreakBadge days={profile.streakDays} />
+        <StreakBadge days={streak || profile.streakDays} />
       </View>
+
+      {/* Daily Challenge */}
+      <DailyChallenge />
+
+      {/* XP Bar */}
+      <XPBar />
 
       {/* Intention phrase */}
       {plan?.fraseIntencao && (

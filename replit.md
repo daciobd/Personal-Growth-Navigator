@@ -44,10 +44,31 @@ index → onboarding/welcome → onboarding/current → onboarding/future → on
 - `(tabs)/profile`: Perfil, estatísticas, progresso e reset de jornada
 - `intervention/[id]`: Tela step-by-step de uma prática (suporta intervenções estáticas e práticas do plano gerado)
 
+## Gamificação
+- `data/gamification.ts`: 10 níveis (Iniciante → Pleno), tabela de XP por ação, 15 badges com condições
+- `context/GamificationContext.tsx`: estado em AsyncStorage, deviceId gerado na primeira abertura, calcula streaks e badges automaticamente
+- `components/DailyChallenge.tsx`: card com 3 estados (desafio → check-in → concluído), rotaciona as 3 práticas por dia da semana (weekday % 3)
+- `components/XPBar.tsx`: barra de progresso com nível atual e título
+- `components/BadgeGrid.tsx`: grade de 15 conquistas (coloridas = desbloqueadas, cinza = bloqueadas)
+- `app/coach/index.tsx`: tela de chat com Claude Haiku, histórico persistido, +2 XP por mensagem
+- `hooks/useNotifications.ts`: agendamento de notificação diária às 9h (nativa)
+- AsyncStorage key: `@meueu_gamification_v1`
+
 ## API Endpoints
 - `POST /api/plan/generate` — Gera plano personalizado via Claude Haiku
   - Body: `{ currentAdjectives: string[], futureAdjectives: string[] }`
   - Response: `{ success: true, plan: { sintese, fraseIntencao, praticas[] } }`
+- `POST /api/daily/challenge` — Gera ação concreta do dia via IA
+  - Body: `{ deviceId, date, practice? }`
+  - Response: `{ alreadyCheckedIn, aiAction, practiceIndex, date }`
+- `POST /api/daily/checkin` — Registra check-in diário, calcula XP, gera tip via IA
+  - Body: `{ deviceId, date, practiceIndex, practiceName, completed, rating?, note? }`
+  - Response: `{ xpEarned, aiTip, streakDays, alreadyDone }`
+- `GET /api/daily/history?deviceId=xxx` — Histórico de check-ins
+- `POST /api/coach/message` — Envia mensagem ao coach IA, retorna resposta + XP
+  - Body: `{ deviceId, message, history? }`
+  - Response: `{ response, xpEarned: 2 }`
+- `GET /api/coach/history?deviceId=xxx` — Histórico de mensagens do coach
 
 ## Dados
 ### Adjetivos (data/adjectives.ts)

@@ -48,7 +48,7 @@ const SIGNAL_LABELS: Record<string, string> = {
 type Step = "loading" | "challenge" | "checkin" | "done";
 
 export default function UnifiedCheckin({ onComplete }: Props) {
-  const { recordCheckin, addXP, gam } = useGamification();
+  const { recordCheckin, addXP, streak } = useGamification();
 
   const [step, setStep]               = useState<Step>("loading");
   const [source, setSource]           = useState<CheckinSource>("plan");
@@ -177,8 +177,16 @@ export default function UnifiedCheckin({ onComplete }: Props) {
       }
 
       // Atualiza gamificação local
-      const { newBadges } = await recordCheckin(completed, completed ? note : undefined);
+      const today = new Date().toISOString().split("T")[0];
       const xp = completed ? 10 + (note >= 5 ? 5 : note >= 4 ? 3 : 0) : 0;
+      recordCheckin({
+        date: today,
+        completed,
+        rating: completed ? note : undefined,
+        hasNote: !!comment,
+        xpEarned: xp,
+        streak: streak + (completed ? 1 : 0),
+      });
       setXpResult(xp);
       setStep("done");
       onComplete?.(xp);
@@ -239,7 +247,7 @@ export default function UnifiedCheckin({ onComplete }: Props) {
 
       <View style={styles.streakRow}>
         <Feather name="zap" size={13} color="#E8A838" />
-        <Text style={styles.streakText}>{gam.currentStreak} dias seguidos</Text>
+        <Text style={styles.streakText}>{streak} dias seguidos</Text>
       </View>
     </View>
   );

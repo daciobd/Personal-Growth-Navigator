@@ -296,7 +296,7 @@ export function UnifiedCheckin() {
             </View>
           </View>
           <Pressable
-            onPress={() => router.push("/onboarding/adjectives")}
+            onPress={() => router.push("/onboarding/welcome")}
             style={[styles.btn, { backgroundColor: colors.primary }]}
           >
             <Feather name="arrow-right" size={16} color="#fff" />

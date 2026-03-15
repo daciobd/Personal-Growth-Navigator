@@ -10,28 +10,20 @@ const KEYS = {
   USER: "@meueu_auth_user",
 };
 
-async function secureGet(key: string): Promise<string | null> {
-  if (Platform.OS === "web") {
-    return localStorage.getItem(key);
-  }
-  return SecureStore.getItemAsync(key);
-}
-
-async function secureSet(key: string, value: string): Promise<void> {
-  if (Platform.OS === "web") {
-    localStorage.setItem(key, value);
-    return;
-  }
-  return SecureStore.setItemAsync(key, value);
-}
-
-async function secureDel(key: string): Promise<void> {
-  if (Platform.OS === "web") {
-    localStorage.removeItem(key);
-    return;
-  }
-  return SecureStore.deleteItemAsync(key);
-}
+const storage = {
+  getItem: (key: string): Promise<string | null> =>
+    Platform.OS === "web"
+      ? Promise.resolve(localStorage.getItem(key))
+      : SecureStore.getItemAsync(key),
+  setItem: (key: string, value: string): Promise<void> =>
+    Platform.OS === "web"
+      ? Promise.resolve(localStorage.setItem(key, value))
+      : SecureStore.setItemAsync(key, value),
+  deleteItem: (key: string): Promise<void> =>
+    Platform.OS === "web"
+      ? Promise.resolve(localStorage.removeItem(key))
+      : SecureStore.deleteItemAsync(key),
+};
 
 function decodeJwtExpiry(token: string): number | null {
   try {
@@ -75,7 +67,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [state, setState] = useState<AuthState>({ user: null, isLoggedIn: false, isLoading: true });
 
   const refreshAccessToken = useCallback(async (): Promise<string | null> => {
-    const storedRefresh = await secureGet(KEYS.REFRESH_TOKEN);
+    const storedRefresh = await storage.getItem(KEYS.REFRESH_TOKEN);
     if (!storedRefresh) return null;
 
     try {
@@ -89,8 +81,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return null;
       }
       const data = await res.json();
-      await secureSet(KEYS.ACCESS_TOKEN, data.accessToken);
-      await secureSet(KEYS.REFRESH_TOKEN, data.refreshToken);
+      await storage.setItem(KEYS.ACCESS_TOKEN, data.accessToken);
+      await storage.setItem(KEYS.REFRESH_TOKEN, data.refreshToken);
       return data.accessToken;
     } catch {
       return null;
@@ -98,7 +90,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const getAccessToken = useCallback(async (): Promise<string | null> => {
-    const token = await secureGet(KEYS.ACCESS_TOKEN);
+    const token = await storage.getItem(KEYS.ACCESS_TOKEN);
     if (!token) return null;
     if (isTokenExpiringSoon(token)) {
       return refreshAccessToken();
@@ -107,16 +99,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [refreshAccessToken]);
 
   const clearTokens = async () => {
-    await secureDel(KEYS.ACCESS_TOKEN);
-    await secureDel(KEYS.REFRESH_TOKEN);
-    await secureDel(KEYS.USER);
+    await storage.deleteItem(KEYS.ACCESS_TOKEN);
+    await storage.deleteItem(KEYS.REFRESH_TOKEN);
+    await storage.deleteItem(KEYS.USER);
     setState({ user: null, isLoggedIn: false, isLoading: false });
   };
 
   useEffect(() => {
     (async () => {
-      const userRaw = await secureGet(KEYS.USER);
-      const accessToken = await secureGet(KEYS.ACCESS_TOKEN);
+      const userRaw = await storage.getItem(KEYS.USER);
+      const accessToken = await storage.getItem(KEYS.ACCESS_TOKEN);
 
       if (!userRaw || !accessToken) {
         setState({ user: null, isLoggedIn: false, isLoading: false });
@@ -150,9 +142,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const data = await res.json();
       if (!res.ok || !data.success) return { success: false, error: data.error ?? "Erro ao fazer login." };
 
-      await secureSet(KEYS.ACCESS_TOKEN, data.accessToken);
-      await secureSet(KEYS.REFRESH_TOKEN, data.refreshToken);
-      await secureSet(KEYS.USER, JSON.stringify(data.user));
+      await storage.setItem(KEYS.ACCESS_TOKEN, data.accessToken);
+      await storage.setItem(KEYS.REFRESH_TOKEN, data.refreshToken);
+      await storage.setItem(KEYS.USER, JSON.stringify(data.user));
       setState({ user: data.user, isLoggedIn: true, isLoading: false });
       return { success: true };
     } catch {
@@ -170,9 +162,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const data = await res.json();
       if (!res.ok || !data.success) return { success: false, error: data.error ?? "Erro ao criar conta." };
 
-      await secureSet(KEYS.ACCESS_TOKEN, data.accessToken);
-      await secureSet(KEYS.REFRESH_TOKEN, data.refreshToken);
-      await secureSet(KEYS.USER, JSON.stringify(data.user));
+      await storage.setItem(KEYS.ACCESS_TOKEN, data.accessToken);
+      await storage.setItem(KEYS.REFRESH_TOKEN, data.refreshToken);
+      await storage.setItem(KEYS.USER, JSON.stringify(data.user));
       setState({ user: data.user, isLoggedIn: true, isLoading: false });
       return { success: true };
     } catch {
@@ -181,7 +173,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const logout = useCallback(async () => {
-    const refreshToken = await secureGet(KEYS.REFRESH_TOKEN);
+    const refreshToken = await storage.getItem(KEYS.REFRESH_TOKEN);
     if (refreshToken) {
       fetch(`${domain}/api/auth/logout`, {
         method: "POST",

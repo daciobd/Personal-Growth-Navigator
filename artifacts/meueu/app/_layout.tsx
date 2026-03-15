@@ -7,11 +7,11 @@ import {
 } from "@expo-google-fonts/inter";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Stack } from "expo-router";
-import Head from "expo-router/head";
 import * as SplashScreen from "expo-splash-screen";
 import React, { useEffect } from "react";
 import { Platform } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
+import { PwaHead } from "@/components/PwaHead";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 
 import { ErrorBoundary } from "@/components/ErrorBoundary";
@@ -78,23 +78,7 @@ export default function RootLayout() {
             <AppProvider>
               <AuthProvider>
                 <GamificationProvider>
-                  {Platform.OS === "web" && (
-                    <Head>
-                      <meta charSet="utf-8" />
-                      <meta name="application-name" content="MeuEu" />
-                      <meta name="theme-color" content="#1B6B5A" />
-                      <meta name="background-color" content="#F5F8F6" />
-                      <meta name="mobile-web-app-capable" content="yes" />
-                      <meta name="apple-mobile-web-app-capable" content="yes" />
-                      <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-                      <meta name="apple-mobile-web-app-title" content="MeuEu" />
-                      <meta name="format-detection" content="telephone=no" />
-                      <link rel="manifest" href="/manifest.json" />
-                      <link rel="apple-touch-icon" href="/icons/icon-192.png" />
-                      <link rel="icon" type="image/png" sizes="192x192" href="/icons/icon-192.png" />
-                      <link rel="icon" type="image/png" sizes="512x512" href="/icons/icon-512.png" />
-                    </Head>
-                  )}
+                  <PwaHead />
                   <RootLayoutNav />
                 </GamificationProvider>
               </AuthProvider>

@@ -1,3 +1,4 @@
+import { getApiUrl } from "@/utils/api";
 /**
  * UnifiedCheckin — substitui <DailyChallenge />.
  *
@@ -137,7 +138,7 @@ export function UnifiedCheckin() {
   const [note, setNote] = useState("");
   const checkedRef = useRef(false);
 
-  const domain = process.env.EXPO_PUBLIC_DOMAIN ?? "";
+  const domain = getApiUrl();
 
   useEffect(() => {
     if (checkedRef.current) return;

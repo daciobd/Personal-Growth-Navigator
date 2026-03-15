@@ -16,6 +16,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Colors from "@/constants/colors";
 import { useApp } from "@/context/AppContext";
 import { generatePlan as generatePlanWithBig5, type PlanApproach } from "@/hooks/usePlanGeneration";
+import { getApiUrl } from "@/utils/api";
 
 type Practice = {
   abordagem: string;
@@ -66,7 +67,7 @@ export default function PlanScreen() {
     setLoading(true);
     setError(null);
 
-    const domain = process.env.EXPO_PUBLIC_DOMAIN ?? "";
+    const domain = getApiUrl();
 
     try {
       const data = await generatePlanWithBig5(

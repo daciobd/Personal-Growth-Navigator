@@ -24,9 +24,10 @@ import {
   type FacetKey,
   type StoredBig5,
 } from "@/data/big5";
+import { getApiUrl } from "@/utils/api";
 
 const DIMENSIONS: Dimension[] = ["O", "C", "E", "A", "N"];
-const domain = process.env.EXPO_PUBLIC_DOMAIN ?? "";
+const domain = getApiUrl();
 
 type Tab = "overview" | "facets";
 

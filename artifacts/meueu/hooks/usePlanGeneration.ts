@@ -1,5 +1,6 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { BIG5_STORAGE_KEY, type StoredBig5 } from "@/data/big5";
+import { getApiUrl } from "@/utils/api";
 
 const PLAN_COUNT_KEY = "@meueu_plan_count_v1";
 
@@ -12,9 +13,10 @@ export type PlanApproach = {
 export async function generatePlan(
   currentAdjectives: string[],
   futureAdjectives: string[],
-  domain: string,
+  _legacyDomain?: string,
   sessionId?: string
 ): Promise<{ success: boolean; plan?: any; approach?: PlanApproach; error?: string }> {
+  const domain = getApiUrl();
   let big5Scores: StoredBig5["scores"] | null = null;
   let sessionCount = 1;
 

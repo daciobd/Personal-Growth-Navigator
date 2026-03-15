@@ -15,6 +15,7 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Colors from "@/constants/colors";
 import { useGamification } from "@/context/GamificationContext";
+import { getApiUrl } from "@/utils/api";
 
 type Message = {
   role: "user" | "assistant";
@@ -32,7 +33,7 @@ export default function CoachScreen() {
   const [loadingHistory, setLoadingHistory] = useState(true);
   const listRef = useRef<FlatList>(null);
 
-  const domain = process.env.EXPO_PUBLIC_DOMAIN ?? "";
+  const domain = getApiUrl();
 
   useEffect(() => {
     fetch(`${domain}/api/coach/history?deviceId=${encodeURIComponent(deviceId)}`)

@@ -1,5 +1,6 @@
 import { Feather } from "@expo/vector-icons";
 import React, { useEffect, useRef, useState } from "react";
+import { getApiUrl } from "@/utils/api";
 import {
   ActivityIndicator,
   Platform,
@@ -83,7 +84,7 @@ export function DailyChallenge() {
   const [note, setNote] = useState("");
   const checkedRef = useRef(false);
 
-  const domain = process.env.EXPO_PUBLIC_DOMAIN ?? "";
+  const domain = getApiUrl();
 
   useEffect(() => {
     if (checkedRef.current) return;

@@ -1,8 +1,9 @@
 import * as SecureStore from "expo-secure-store";
 import React, { createContext, useContext, useEffect, useState, useCallback } from "react";
 import { Platform } from "react-native";
+import { getApiUrl } from "@/utils/api";
 
-const domain = process.env.EXPO_PUBLIC_DOMAIN ?? "";
+const domain = getApiUrl();
 
 const KEYS = {
   ACCESS_TOKEN: "@meueu_access_token",

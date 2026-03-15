@@ -5,6 +5,7 @@ import Library from "@/pages/Library";
 import Adjectives from "@/pages/Adjectives";
 import Simulator from "@/pages/Simulator";
 import Logs from "@/pages/Logs";
+import TabRelatorio from "@/pages/TabRelatorio";
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { staleTime: 15000 } },
@@ -16,6 +17,7 @@ const NAV = [
   { href: "/adjectives", label: "Adjetivos", icon: "🏷️" },
   { href: "/logs", label: "Logs de Planos", icon: "📋" },
   { href: "/simulator", label: "Simulador", icon: "🧪" },
+  { href: "/relatorio", label: "Relatórios", icon: "📄" },
 ];
 
 function Sidebar() {
@@ -77,6 +79,7 @@ function Router() {
       <Route path="/adjectives" component={Adjectives} />
       <Route path="/logs" component={Logs} />
       <Route path="/simulator" component={Simulator} />
+      <Route path="/relatorio" component={TabRelatorio} />
       <Route>
         <div className="text-center py-24 text-muted-foreground">Página não encontrada</div>
       </Route>

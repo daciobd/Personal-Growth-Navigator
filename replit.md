@@ -5,9 +5,19 @@ Aplicativo mobile Expo (React Native) em português (pt-BR) para transformação
 
 ## Painel Admin
 - URL: `/admin/` — artifact React + Vite separado
-- 5 seções: Dashboard, Intervenções, Adjetivos, Logs de Planos, Simulador de Perfil
-- API: rotas `/api/admin/stats`, `/api/admin/logs`, `/api/admin/interventions`, `/api/admin/adjectives`, `/api/admin/simulate`
+- 6 seções: Dashboard, Intervenções, Adjetivos, Logs de Planos, Simulador de Perfil, **Relatórios**
+- API: rotas `/api/admin/stats`, `/api/admin/logs`, `/api/admin/interventions`, `/api/admin/adjectives`, `/api/admin/simulate`, `/api/admin/report/:deviceId`
 - Logs: cada plano gerado é salvo automaticamente em `plan_logs` no banco de dados
+- Relatórios: busca por deviceId, exibe check-ins/coach/planos, perfil Big Five + interpretação IA, exporta PDF via print
+
+## Autenticação
+- Backend: `routes/auth.ts` — register/login/refresh/logout/migrate
+- Tokens: JWT access (15min) + refresh opaque 30 dias com rotação
+- Frontend Expo: `context/AuthContext.tsx` — SecureStore (mobile) + localStorage (web), auto-refresh
+- Telas: `app/auth/login.tsx`, `app/auth/register.tsx`
+- Perfil: botão de login/logout no tab de perfil
+- DB: tabelas `users` + `refresh_tokens` no PostgreSQL (Drizzle schema em `lib/db/src/schema/users.ts`)
+- JWT_SECRET: env var `JWT_SECRET` setada no ambiente shared (auto-gerada 32 bytes hex)
 
 ## Stack
 - **Frontend**: Expo (React Native + Web) com Expo Router

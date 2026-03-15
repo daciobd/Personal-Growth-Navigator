@@ -17,6 +17,7 @@ import { BadgeGrid } from "@/components/BadgeGrid";
 import { XPBar } from "@/components/XPBar";
 import Colors from "@/constants/colors";
 import { useApp } from "@/context/AppContext";
+import { useAuth } from "@/context/AuthContext";
 import { useGamification } from "@/context/GamificationContext";
 import { THERAPY_COLORS, Therapy } from "@/data/interventions";
 
@@ -25,6 +26,7 @@ export default function ProfileScreen() {
   const insets = useSafeAreaInsets();
   const { profile, resetProfile } = useApp();
   const { streak } = useGamification();
+  const { user, isLoggedIn, logout } = useAuth();
 
   const therapiesDone = new Set(
     profile.interventionsViewed
@@ -267,6 +269,54 @@ export default function ProfileScreen() {
         )}
       </View>
 
+      {/* Auth section */}
+      {isLoggedIn ? (
+        <View style={[styles.authCard, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>
+          <View style={styles.authRow}>
+            <View style={[styles.authAvatar, { backgroundColor: "#EAF2EF" }]}>
+              <Feather name="user" size={18} color={colors.primary} />
+            </View>
+            <View style={styles.authTexts}>
+              <Text style={[styles.authName, { color: colors.text, fontFamily: "Inter_600SemiBold" }]}>
+                {user?.name}
+              </Text>
+              <Text style={[styles.authEmail, { color: colors.textMuted, fontFamily: "Inter_400Regular" }]}>
+                {user?.email}
+              </Text>
+            </View>
+          </View>
+          <Pressable
+            onPress={() => logout()}
+            style={[styles.logoutBtn, { borderColor: colors.cardBorder }]}
+          >
+            <Feather name="log-out" size={14} color={colors.danger} />
+            <Text style={[styles.logoutText, { color: colors.danger, fontFamily: "Inter_500Medium" }]}>
+              Sair da conta
+            </Text>
+          </Pressable>
+        </View>
+      ) : (
+        <Pressable
+          onPress={() => router.push("/auth/register")}
+          style={[styles.authCard, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}
+        >
+          <View style={styles.authRow}>
+            <View style={[styles.authAvatar, { backgroundColor: "#EAF2EF" }]}>
+              <Feather name="cloud" size={18} color={colors.primary} />
+            </View>
+            <View style={styles.authTexts}>
+              <Text style={[styles.authName, { color: colors.text, fontFamily: "Inter_600SemiBold" }]}>
+                Salvar progresso na nuvem
+              </Text>
+              <Text style={[styles.authEmail, { color: colors.textMuted, fontFamily: "Inter_400Regular" }]}>
+                Crie uma conta gratuita
+              </Text>
+            </View>
+            <Feather name="arrow-right" size={16} color={colors.textMuted} />
+          </View>
+        </Pressable>
+      )}
+
       <Pressable
         onPress={handleReset}
         style={({ pressed }) => [
@@ -384,6 +434,37 @@ const styles = StyleSheet.create({
   resetText: {
     fontSize: 15,
   },
+  authCard: {
+    borderRadius: 16,
+    borderWidth: 1,
+    padding: 14,
+    gap: 10,
+  },
+  authRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+  },
+  authAvatar: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  authTexts: { flex: 1 },
+  authName: { fontSize: 14 },
+  authEmail: { fontSize: 12, marginTop: 1 },
+  logoutBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
+    paddingVertical: 8,
+    borderRadius: 10,
+    borderWidth: 1,
+  },
+  logoutText: { fontSize: 13 },
   coachCard: {
     flexDirection: "row",
     alignItems: "center",

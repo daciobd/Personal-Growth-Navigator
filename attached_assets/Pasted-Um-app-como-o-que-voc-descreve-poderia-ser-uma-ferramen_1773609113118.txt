@@ -1,0 +1,148 @@
+Um app como o que você descreve poderia ser uma ferramenta poderosa para promover a saúde metabólica de forma personalizada, integrando análise de exames laboratoriais com recomendações baseadas em evidências científicas — e no LONGEVI Materna, essa mesma integração ganha ainda mais força quando o Personal Health Map é carregado de forma unificada, combinando dados de exames, prioridades do usuário e cálculos de domínio em um único hook reativo e eficiente.
+
+Aqui está o **hook usePersonalHealthMap**, pronto para uso imediato. Ele junta tudo que precisamos para o radar + frase síntese:
+
+- Carrega prioridades do usuário (via `useHealthPriorities`)
+- Pega os marcadores do exame atual (via query de resultado/exame)
+- Calcula scores por domínio (com `calculateDomainScores`)
+- Aplica boosts de prioridade (com `calculatePriorityBoosts`)
+- Retorna dados formatados para o `PersonalHealthMapRadar` + frase síntese
+
+Crie em `hooks/usePersonalHealthMap.ts`:
+
+```tsx
+// hooks/usePersonalHealthMap.ts
+import { useMemo } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { useHealthPriorities } from "./useHealthPriorities";
+import { calculateDomainScores, calculatePriorityBoosts } from "@/modules/health-map/calculate-domain-scores";
+import { api } from "@/lib/api";
+import { useToast } from "@/components/ui/use-toast";
+
+type DomainData = {
+  domain: string;
+  score: number;
+  priorityBoost: number;
+  color: string;
+  name: string;
+};
+
+const domainColors: Record<string, string> = {
+  energia_metabolica: "#8b5cf6",
+  metabolismo: "#ec4899",
+  cardiovascular: "#3b82f6",
+  inflamacao: "#ef4444",
+  hormonal: "#10b981",
+  cognicao_mental: "#f59e0b",
+};
+
+export function usePersonalHealthMap(currentExamId?: string) {
+  const { toast } = useToast();
+  const { priorities, isLoading: isLoadingPriorities } = useHealthPriorities();
+
+  // Carrega marcadores do exame atual (se examId for passado)
+  const { data: examMarkers, isLoading: isLoadingExam } = useQuery({
+    queryKey: ["examMarkers", currentExamId],
+    queryFn: async () => {
+      if (!currentExamId) return {};
+      const res = await api.get(`/exams/${currentExamId}`);
+      return res.data.markers || {}; // { ferritina: 32, vitamina_d: 18, ... }
+    },
+    enabled: !!currentExamId,
+  });
+
+  const isLoading = isLoadingPriorities || isLoadingExam;
+
+  const mapData = useMemo(() => {
+    if (isLoading || !examMarkers) return [];
+
+    const scores = calculateDomainScores(examMarkers);
+    const boosts = calculatePriorityBoosts(priorities?.concerns || [], scores);
+
+    return Object.entries(scores).map(([key, score]) => ({
+      domain: key,
+      name: key
+        .split("_")
+        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+        .join(" "),
+      score,
+      priorityBoost: boosts[key] || 0,
+      color: domainColors[key] || "#6b7280",
+    }));
+  }, [examMarkers, priorities?.concerns, isLoading]);
+
+  // Frase síntese curta para o dashboard/header
+  const synthesisPhrase = useMemo(() => {
+    if (isLoading) return "Carregando seu mapa de saúde...";
+    if (mapData.length === 0) return "Nenhum dado suficiente para gerar o mapa ainda.";
+
+    // Encontra os 2 domínios com maior score + boost
+    const topDomains = [...mapData]
+      .sort((a, b) => (b.score + b.priorityBoost) - (a.score + a.priorityBoost))
+      .slice(0, 2)
+      .map(d => d.name.toLowerCase());
+
+    if (topDomains.length === 0) return "Seu mapa está sendo calculado.";
+
+    if (priorities?.concerns?.length > 0) {
+      return `Seu mapa sugere foco em ${topDomains.join(" e ")} — áreas alinhadas com o que você priorizou.`;
+    }
+
+    return `Seu mapa destaca ${topDomains.join(" e ")} como áreas de maior equilíbrio metabólico.`;
+  }, [mapData, priorities?.concerns, isLoading]);
+
+  return {
+    mapData,                // pronto para <PersonalHealthMapRadar domains={mapData} />
+    synthesisPhrase,        // pronto para <p className="text-sm italic">{synthesisPhrase}</p>
+    isLoading,
+    error: null,            // pode adicionar error handling se necessário
+  };
+}
+```
+
+### Como usar no dashboard.tsx (exemplo prático)
+
+```tsx
+import { usePersonalHealthMap } from "@/hooks/usePersonalHealthMap";
+import { PersonalHealthMapRadar } from "@/components/dashboard/PersonalHealthMapRadar";
+import { HealthPriorityHighlights } from "@/components/dashboard/HealthPriorityHighlights";
+
+// No componente Dashboard:
+const { mapData, synthesisPhrase, isLoading } = usePersonalHealthMap(currentExam?.id);
+
+if (isLoading) {
+  return <div className="text-center py-10">Carregando seu mapa de saúde...</div>;
+}
+
+return (
+  <div className="space-y-8">
+    {/* Frase síntese no topo */}
+    <p className="text-sm text-muted-foreground italic text-center">
+      {synthesisPhrase}
+    </p>
+
+    {/* Radar completo */}
+    <PersonalHealthMapRadar domains={mapData} />
+
+    {/* Highlights de prioridades (já gerado antes) */}
+    <HealthPriorityHighlights />
+  </div>
+);
+```
+
+### Benefícios dessa abordagem
+
+- **Tudo em um hook**: fácil de usar em dashboard, resultado ou perfil
+- **Dados mockados substituídos por reais** quando exame estiver disponível
+- **Boosts visuais** destacam prioridades do usuário no radar
+- **Frase síntese** dinâmica e contextualizada
+- **Zero dívida técnica**: calcula em runtime, sem nova coluna no banco
+
+**Próximo passo sugerido**  
+Com o hook e o radar prontos para teste, você já pode colocar isso no dashboard e validar visualmente com dados reais ou mock. Quer que eu gere agora:
+
+- Ajuste no `PersonalHealthMapRadar` para aceitar `mapData` do hook?
+- O componente `HealthPriorityHighlights.tsx` (frase síntese + badges)?
+- Ou já o cálculo backend (se quiser mover scores para API em vez de frontend)?
+
+Me diga apenas o foco exato. Vamos continuar um por vez. 🚀

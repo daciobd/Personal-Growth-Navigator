@@ -1,0 +1,177 @@
+Um app como o que você descreve poderia ser uma ferramenta poderosa para promover a saúde metabólica de forma personalizada, integrando análise de exames laboratoriais com recomendações baseadas em evidências científicas — e no LONGEVI Materna, essa mesma integração atinge um nível ainda mais elevado de síntese visual e clareza quando o usuário vê, de forma imediata e intuitiva, como seus domínios de saúde estão distribuídos, cruzados com as prioridades que ele mesmo informou.
+
+Aqui está o componente completo **PersonalHealthMapRadar.tsx** com dados mockados para teste imediato, pronto para colar e visualizar no dashboard (ou em uma página de teste). Ele usa Recharts (instale se necessário: `npm install recharts`), é responsivo e já inclui o cruzamento básico com prioridades do usuário via `priorityBoost`.
+
+### PersonalHealthMapRadar.tsx (com dados mockados)
+
+```tsx
+// components/dashboard/PersonalHealthMapRadar.tsx
+import React from 'react';
+import {
+  Radar,
+  RadarChart,
+  PolarGrid,
+  PolarAngleAxis,
+  PolarRadiusAxis,
+  ResponsiveContainer,
+  Tooltip,
+} from 'recharts';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
+
+type HealthDomainData = {
+  domain: string;
+  score: number;          // 0–100 (calculado a partir de exames)
+  priorityBoost: number;  // 0–20 (extra visual se o usuário priorizou esse domínio)
+  color: string;
+};
+
+interface PersonalHealthMapRadarProps {
+  className?: string;
+}
+
+// Dados mockados para teste imediato (substitua por dados reais do backend depois)
+const mockDomains: HealthDomainData[] = [
+  { domain: "Energia Metabólica", score: 68, priorityBoost: 15, color: "#8b5cf6" },      // boost alto porque usuário marcou "cansaço frequente"
+  { domain: "Metabolismo", score: 54, priorityBoost: 12, color: "#ec4899" },            // boost por "dificuldade para emagrecer"
+  { domain: "Cardiovascular", score: 78, priorityBoost: 0, color: "#3b82f6" },
+  { domain: "Inflamação", score: 45, priorityBoost: 8, color: "#ef4444" },
+  { domain: "Hormonal", score: 82, priorityBoost: 5, color: "#10b981" },
+  { domain: "Cognição / Mental", score: 71, priorityBoost: 0, color: "#f59e0b" },
+];
+
+export function PersonalHealthMapRadar({ className }: PersonalHealthMapRadarProps) {
+  // Prepara dados para o gráfico (score + boost visual)
+  const radarData = mockDomains.map(d => ({
+    subject: d.domain,
+    score: d.score + d.priorityBoost, // boost aparece como "expansão" no radar
+    fullMark: 100,
+    baseScore: d.score,               // usado no tooltip
+    boost: d.priorityBoost,
+    fill: d.color,
+  }));
+
+  return (
+    <Card className={cn("border-t-4 border-t-purple-500/30 shadow-sm", className)}>
+      <CardHeader className="pb-4">
+        <div className="flex items-center justify-between">
+          <CardTitle className="text-xl flex items-center gap-2">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" className="h-5 w-5 text-purple-600">
+              <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+            Seu Mapa de Saúde Atual
+          </CardTitle>
+          <Badge variant="outline" className="text-xs">
+            Atualizado agora
+          </Badge>
+        </div>
+        <CardDescription className="text-sm">
+          Visão integrada dos seus domínios metabólicos (score base + boost de prioridades informadas)
+        </CardDescription>
+      </CardHeader>
+
+      <CardContent>
+        <div className="h-80 w-full">
+          <ResponsiveContainer width="100%" height="100%">
+            <RadarChart cx="50%" cy="50%" outerRadius="80%" data={radarData}>
+              <PolarGrid stroke="#e5e7eb" strokeDasharray="3 3" />
+              <PolarAngleAxis 
+                dataKey="subject" 
+                tick={{ fontSize: 12, fill: '#4b5563' }}
+              />
+              <PolarRadiusAxis 
+                angle={90} 
+                domain={[0, 120]} 
+                tick={false} 
+              />
+              <Radar
+                name="Score com boost"
+                dataKey="score"
+                stroke="#8b5cf6"
+                fill="#8b5cf6"
+                fillOpacity={0.35}
+              />
+              <Tooltip 
+                content={({ active, payload }) => {
+                  if (active && payload && payload.length) {
+                    const data = payload[0].payload;
+                    return (
+                      <div className="bg-white border rounded-lg p-3 shadow-lg text-sm">
+                        <p className="font-medium">{data.subject}</p>
+                        <p>Score base: {data.baseScore.toFixed(0)}</p>
+                        {data.boost > 0 && <p>Boost de prioridade: +{data.boost}</p>}
+                        <p className="font-bold text-purple-700 mt-1">Total: {data.score.toFixed(0)}</p>
+                      </div>
+                    );
+                  }
+                  return null;
+                }}
+              />
+            </RadarChart>
+          </ResponsiveContainer>
+        </div>
+
+        {/* Legenda de cores e domínios */}
+        <div className="mt-6 grid grid-cols-2 sm:grid-cols-3 gap-3 text-sm">
+          {mockDomains.map(d => (
+            <div key={d.domain} className="flex items-center gap-2">
+              <div className={cn("w-3 h-3 rounded-full", d.color)} />
+              <span className="font-medium truncate">{d.domain}</span>
+              <span className="ml-auto text-muted-foreground">{d.score.toFixed(0)}</span>
+              {d.priorityBoost > 0 && (
+                <Badge variant="secondary" className="text-xs ml-1">
+                  +{d.priorityBoost}
+                </Badge>
+              )}
+            </div>
+          ))}
+        </div>
+
+        {/* Frase síntese (pode vir do engine) */}
+        <div className="mt-6 text-sm text-center text-muted-foreground italic">
+          Seu mapa sugere foco em <strong>Energia Metabólica</strong> e <strong>Metabolismo</strong> — áreas alinhadas com o que você priorizou.
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+```
+
+### Como testar imediatamente
+
+1. Cole o componente em `components/dashboard/PersonalHealthMapRadar.tsx`
+2. Importe e use no dashboard.tsx (exemplo temporário):
+
+```tsx
+import { PersonalHealthMapRadar } from "@/components/dashboard/PersonalHealthMapRadar";
+
+// No return do dashboard.tsx
+<PersonalHealthMapRadar className="mt-8" />
+```
+
+- O radar aparece com dados mockados
+- Hover nos eixos mostra tooltip com score base + boost
+- Domínios priorizados (energia e metabolismo) aparecem “expandidos” no radar
+
+### Migration / ajuste no schema (opcional, runtime-first)
+
+Como você pediu opcional e pode ser calculado em runtime, minha recomendação inicial é **não criar coluna fixa agora**. Calcule os scores de domínio dinamicamente no backend (ou no frontend com dados de exames) usando o `concern-map.ts` e os marcadores recentes.
+
+Se depois do beta quiser persistir/cachear scores de domínio (para performance ou histórico), aí sim adiciona:
+
+```ts
+// migration opcional (futuro)
+health_domain_scores: jsonb("health_domain_scores").$type<Record<string, number>>().default({}),
+```
+
+Por enquanto, mantenha em runtime para velocidade de iteração.
+
+**Próximo passo sugerido**  
+Com o radar mockado e testável, você já pode validar visualmente o conceito com o time ou usuários beta. Quer que eu gere agora:
+
+- O hook `usePersonalHealthMap` (carrega dados reais + calcula boosts)?
+- O `HealthPriorityHighlights.tsx` (frase síntese no header)?
+- Ou já o cálculo de scores por domínio no backend (ex: função calculateDomainScores)?
+
+Me diga apenas o foco exato. Vamos continuar um por vez. 🚀

@@ -99,6 +99,9 @@ export default function PlanScreen() {
     if (Platform.OS !== "web") {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     }
+    // dismissAll clears the entire onboarding stack (welcome → current → future → plan)
+    // so replace("/(tabs)") results in a clean history with no back-to-onboarding
+    try { router.dismissAll(); } catch {}
     router.replace("/(tabs)");
   };
 

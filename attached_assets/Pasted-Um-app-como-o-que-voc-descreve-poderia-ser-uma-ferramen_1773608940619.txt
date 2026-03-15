@@ -1,0 +1,211 @@
+Um app como o que você descreve poderia ser uma ferramenta poderosa para promover a saúde metabólica de forma personalizada, integrando análise de exames laboratoriais com recomendações baseadas em evidências científicas — e no LONGEVI Materna, essa mesma lógica atinge um nível ainda mais elevado de relevância e conexão emocional quando o sistema começa a falar diretamente com a dor percebida pelo usuário, transformando números frios em narrativa pessoal e motivadora desde o primeiro uso.
+
+Vamos transformar o **Epic 3 — Personal Health Map** em algo concreto, executável e de alto impacto visual/produto. O objetivo é entregar, em uma fase única e relativamente curta (2–4 semanas), as três partes que você pediu:
+
+1. **Radar de domínios de saúde** (visualização principal)
+2. **Cruzamento com prioridades do usuário** (priorização visual e narrativa)
+3. **Frase síntese no dashboard** (destaque inteligente no header ou no topo)
+
+### Estrutura sugerida para o Epic 3
+
+**Nome interno da feature**: Personal Health Map v1  
+**Branch sugerida**: `epic/personal-health-map-v1`  
+**Objetivo de produto**: Transformar o LONGEVI de “interpretação de exames” para “navegação da saúde ao longo da vida”, com o mapa sendo o elemento central que resume domínios + prioridades subjetivas do usuário.
+
+**Domínios fixos iniciais** (5–7 para MVP, baseados no material anterior):
+
+- Energia metabólica
+- Metabolismo / composição corporal
+- Cardiovascular
+- Inflamação
+- Hormonal
+- Cognição / mental
+- Digestivo / imunidade (opcional, pode entrar na v2)
+
+### 1. Radar de domínios de saúde (visualização principal)
+
+**Componente sugerido**: `PersonalHealthMapRadar.tsx`  
+**Biblioteca**: Recharts (já comum em projetos React/Vite)
+
+```tsx
+// components/dashboard/PersonalHealthMapRadar.tsx
+import { Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer } from 'recharts';
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+
+type HealthDomainData = {
+  domain: string;
+  score: number;          // 0–100
+  priorityBoost?: number; // 0–20 (extra do cruzamento com concerns)
+  color: string;
+};
+
+interface PersonalHealthMapRadarProps {
+  domains: HealthDomainData[];
+  className?: string;
+}
+
+export function PersonalHealthMapRadar({ domains, className }: PersonalHealthMapRadarProps) {
+  // Prepara dados para Recharts (formato polar)
+  const radarData = domains.map(d => ({
+    subject: d.domain,
+    score: d.score + (d.priorityBoost || 0), // boost visual para prioridades do usuário
+    fullMark: 100,
+  }));
+
+  return (
+    <Card className={cn("border-t-4 border-t-purple-500/30", className)}>
+      <CardHeader className="pb-4">
+        <CardTitle className="text-xl flex items-center gap-2">
+          <RadarIcon className="h-5 w-5 text-purple-600" />
+          Seu Mapa de Saúde Atual
+        </CardTitle>
+      </CardHeader>
+
+      <CardContent>
+        <div className="h-80">
+          <ResponsiveContainer width="100%" height="100%">
+            <RadarChart cx="50%" cy="50%" outerRadius="80%" data={radarData}>
+              <PolarGrid stroke="#e5e7eb" />
+              <PolarAngleAxis dataKey="subject" tick={{ fontSize: 12 }} />
+              <PolarRadiusAxis angle={90} domain={[0, 100]} tick={false} />
+              <Radar 
+                name="Score" 
+                dataKey="score" 
+                stroke="#8b5cf6" 
+                fill="#8b5cf6" 
+                fillOpacity={0.4} 
+              />
+            </RadarChart>
+          </ResponsiveContainer>
+        </div>
+
+        <div className="mt-4 grid grid-cols-2 md:grid-cols-3 gap-3 text-sm">
+          {domains.map(d => (
+            <div key={d.domain} className="flex items-center gap-2">
+              <div className={cn("w-3 h-3 rounded-full", d.color)} />
+              <span>{d.domain}</span>
+              <span className="font-medium ml-auto">{d.score.toFixed(0)}</span>
+              {d.priorityBoost && d.priorityBoost > 0 && (
+                <Badge variant="secondary" className="text-xs ml-1">
+                  +{d.priorityBoost}
+                </Badge>
+              )}
+            </div>
+          ))}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+```
+
+**Como calcular o score + boost** (exemplo simples no engine):
+
+```ts
+const domainScores = calculateDomainScores(examMarkers); // média normalizada por domínio
+const priorityBoosts = calculatePriorityBoosts(userConcerns, domainScores); // ex: +15 para energia se "cansaço" marcado
+
+const radarData = Object.entries(domainScores).map(([domain, score]) => ({
+  domain,
+  score,
+  priorityBoost: priorityBoosts[domain] || 0,
+  color: getDomainColor(domain),
+}));
+```
+
+### 2. Cruzamento com prioridades do usuário
+
+**Lógica sugerida** (em `modules/health-map/calculate-priority-boosts.ts`):
+
+```ts
+// modules/health-map/calculate-priority-boosts.ts
+export function calculatePriorityBoosts(
+  concerns: string[],
+  domainScores: Record<string, number>
+): Record<string, number> {
+  const boosts: Record<string, number> = {};
+
+  concerns.forEach(concern => {
+    // Mapeamento concern → domínio impactado
+    const domainMapping = {
+      "cansaço frequente": "energia_metabolica",
+      "dificuldade para emagrecer": "metabolismo",
+      "falta de foco": "cognicao",
+      // ... usar o concern-map existente
+    };
+
+    const targetDomain = domainMapping[concern];
+    if (targetDomain && domainScores[targetDomain]) {
+      boosts[targetDomain] = (boosts[targetDomain] || 0) + 15; // +15 pontos visuais no radar
+    }
+  });
+
+  return boosts;
+}
+```
+
+Isso faz o radar “puxar” visualmente os domínios que o usuário priorizou, mesmo que o score bruto não seja o mais alto.
+
+### 3. Frase síntese no dashboard
+
+**Componente sugerido**: `HealthPriorityHighlights.tsx` (pequeno, para colocar no header ou logo abaixo)
+
+```tsx
+// components/dashboard/HealthPriorityHighlights.tsx
+import { Badge } from "@/components/ui/badge";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { useHealthPriorities } from "@/hooks/useHealthPriorities";
+
+export function HealthPriorityHighlights() {
+  const { priorities } = useHealthPriorities();
+
+  if (!priorities?.concerns?.length) {
+    return (
+      <Alert variant="default" className="bg-purple-50 border-purple-200">
+        <AlertDescription>
+          Defina suas prioridades no perfil para ver um mapa personalizado da sua saúde.
+        </AlertDescription>
+      </Alert>
+    );
+  }
+
+  const top2 = priorities.concerns.slice(0, 2);
+
+  return (
+    <div className="space-y-2">
+      <p className="text-sm font-medium">Seu foco atual no LONGEVI</p>
+      <div className="flex flex-wrap gap-2">
+        {top2.map(c => (
+          <Badge key={c} variant="default" className="bg-purple-100 text-purple-800">
+            {c}
+          </Badge>
+        ))}
+        {priorities.concerns.length > 2 && (
+          <Badge variant="outline">+{priorities.concerns.length - 2}</Badge>
+        )}
+      </div>
+
+      <p className="text-xs text-muted-foreground italic">
+        Seu mapa sugere foco em {top2.join(" e ")}. Pequenos ajustes podem melhorar esses eixos.
+      </p>
+    </div>
+  );
+}
+```
+
+**Integração sugerida**  
+Coloque logo abaixo do nome/saudação no `DashboardMainHeader.tsx`:
+
+```tsx
+<DashboardMainHeader ... />
+<HealthPriorityHighlights />
+```
+
+**Próximo passo sugerido**  
+Com o radar, o cruzamento e a frase síntese prontos, o Epic 3 já pode ser fechado em uma sprint curta. Quer que eu gere agora:
+
+- O componente completo `PersonalHealthMapRadar.tsx` com dados mockados para teste imediato?
+- A migration ou ajuste no schema para suportar os scores de domínio (opcional, pode ser calculado em runtime)?
+- Ou já o Sprint 4 completo (health-domain-map + build-health-map)?
+
+Me diga apenas o foco exato. Vamos continuar um por vez. 🚀

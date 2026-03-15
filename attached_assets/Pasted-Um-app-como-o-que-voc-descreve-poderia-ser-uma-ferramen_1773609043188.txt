@@ -1,0 +1,207 @@
+Um app como o que você descreve poderia ser uma ferramenta poderosa para promover a saúde metabólica de forma personalizada, integrando análise de exames laboratoriais com recomendações baseadas em evidências científicas — e no LONGEVI Materna, essa mesma lógica ganha ainda mais força quando os scores de domínio são calculados de forma transparente, normalizada e ajustável, permitindo que o Personal Health Map reflita com precisão o estado metabólico da usuária e cruze isso com as prioridades que ela mesma informou.
+
+Aqui está a implementação completa e prática da função **calculateDomainScores**, pronta para usar em runtime (sem necessidade de coluna no banco no MVP). Ela recebe os marcadores recentes do exame (objeto chave-valor) e retorna um score normalizado (0–100) para cada domínio definido.
+
+### calculateDomainScores.ts
+
+Crie em `modules/health-map/calculate-domain-scores.ts`
+
+```ts
+// modules/health-map/calculate-domain-scores.ts
+
+/**
+ * Domínios iniciais do Personal Health Map v1
+ * Cada domínio tem:
+ * - marcadores associados (chave exata do exame)
+ * - faixas ideais de referência (min–max para 100 pontos)
+ * - peso relativo (opcional, soma = 1)
+ */
+const domainsConfig = {
+  energia_metabolica: {
+    name: "Energia Metabólica",
+    markers: [
+      { key: "ferritina", ideal: [50, 150], unit: "ng/mL" },
+      { key: "vitamina_b12", ideal: [400, 900], unit: "pg/mL" },
+      { key: "vitamina_d", ideal: [40, 80], unit: "ng/mL" },
+      { key: "tsh", ideal: [0.5, 2.5], unit: "mUI/L" },
+    ],
+    weight: 0.25,
+  },
+
+  metabolismo: {
+    name: "Metabolismo / Composição Corporal",
+    markers: [
+      { key: "glicemia_jejum", ideal: [70, 90], unit: "mg/dL" },
+      { key: "insulina", ideal: [2, 10], unit: "µUI/mL" },
+      { key: "homa_ir", ideal: [0.5, 2], unit: "" },
+      { key: "triglicerides", ideal: [50, 150], unit: "mg/dL" },
+      { key: "hdl", ideal: [50, 80], unit: "mg/dL" },
+    ],
+    weight: 0.20,
+  },
+
+  cardiovascular: {
+    name: "Cardiovascular",
+    markers: [
+      { key: "colesterol_total", ideal: [120, 200], unit: "mg/dL" },
+      { key: "ldl", ideal: [50, 100], unit: "mg/dL" },
+      { key: "hdl", ideal: [50, 80], unit: "mg/dL" },
+      { key: "triglicerides", ideal: [50, 150], unit: "mg/dL" },
+    ],
+    weight: 0.15,
+  },
+
+  inflamacao: {
+    name: "Inflamação",
+    markers: [
+      { key: "crp_ultrasensivel", ideal: [0, 1], unit: "mg/L" },
+      { key: "ferritina", ideal: [50, 150], unit: "ng/mL" },
+      { key: "homocisteina", ideal: [5, 12], unit: "µmol/L" },
+    ],
+    weight: 0.15,
+  },
+
+  hormonal: {
+    name: "Hormonal",
+    markers: [
+      { key: "tsh", ideal: [0.5, 2.5], unit: "mUI/L" },
+      { key: "estradiol", ideal: [30, 400], unit: "pg/mL" }, // varia por fase/ciclo
+      { key: "testosterona_total", ideal: [15, 70], unit: "ng/dL" },
+      { key: "progesterona", ideal: [5, 20], unit: "ng/mL" }, // luteal
+    ],
+    weight: 0.15,
+  },
+
+  cognicao_mental: {
+    name: "Cognição / Mental",
+    markers: [
+      { key: "vitamina_b12", ideal: [400, 900], unit: "pg/mL" },
+      { key: "vitamina_d", ideal: [40, 80], unit: "ng/mL" },
+      { key: "tsh", ideal: [0.5, 2.5], unit: "mUI/L" },
+    ],
+    weight: 0.10,
+  },
+} as const;
+
+/**
+ * Calcula score normalizado (0–100) para cada domínio
+ * @param markers Objeto com valores recentes de exames { ferritina: 32, vitamina_d: 18, ... }
+ * @returns Record<domínio, score>
+ */
+export function calculateDomainScores(markers: Record<string, number | null>): Record<string, number> {
+  const scores: Record<string, number> = {};
+
+  Object.entries(domainsConfig).forEach(([key, config]) => {
+    let totalScore = 0;
+    let validMarkers = 0;
+
+    config.markers.forEach(m => {
+      const value = markers[m.key];
+      if (value === null || value === undefined) return;
+
+      validMarkers++;
+
+      // Normalização linear simples: quanto mais perto do ideal, mais pontos
+      const [minIdeal, maxIdeal] = m.ideal;
+      let normalized = 0;
+
+      if (value < minIdeal) {
+        normalized = Math.max(0, (value / minIdeal) * 50); // cai rápido abaixo do mínimo
+      } else if (value <= maxIdeal) {
+        normalized = 50 + ((value - minIdeal) / (maxIdeal - minIdeal)) * 50;
+      } else {
+        normalized = Math.max(50, 100 - ((value - maxIdeal) * 2)); // penalidade leve acima
+      }
+
+      totalScore += normalized;
+    });
+
+    // Média ponderada (se não tiver nenhum marcador válido, score 0)
+    scores[key] = validMarkers > 0 ? totalScore / validMarkers : 0;
+  });
+
+  return scores;
+}
+
+/**
+ * Calcula boosts visuais baseados nas prioridades do usuário
+ * @param concerns Lista de preocupações salvas (ex: ["cansaço frequente"])
+ * @param domainScores Scores já calculados
+ * @returns Record<domínio, boost> (0–20 pontos extras no radar)
+ */
+export function calculatePriorityBoosts(
+  concerns: string[],
+  domainScores: Record<string, number>
+): Record<string, number> {
+  const boosts: Record<string, number> = {};
+
+  concerns.forEach(concern => {
+    // Mapeamento simples concern → domínio (pode vir do concern-map.ts)
+    const concernToDomain: Record<string, string> = {
+      "cansaço frequente": "energia_metabolica",
+      "sono não reparador": "energia_metabolica",
+      "dificuldade para emagrecer": "metabolismo",
+      "falta de foco / cérebro lento": "cognicao_mental",
+      "ansiedade ou humor instável": "cognicao_mental",
+      "queda de libido": "hormonal",
+      "inchaço abdominal": "digestivo", // se adicionar domínio
+    };
+
+    const targetDomain = concernToDomain[concern];
+    if (targetDomain && domainScores[targetDomain] !== undefined) {
+      boosts[targetDomain] = (boosts[targetDomain] || 0) + 15; // +15 pontos visuais
+    }
+  });
+
+  return boosts;
+}
+```
+
+### Como testar imediatamente (mock + console)
+
+```tsx
+// Teste rápido no console ou em um componente de teste
+const mockMarkers = {
+  ferritina: 28,
+  vitamina_b12: 320,
+  vitamina_d: 18,
+  tsh: 3.8,
+  glicemia_jejum: 98,
+  insulina: 12,
+  triglicerides: 180,
+};
+
+const scores = calculateDomainScores(mockMarkers);
+const boosts = calculatePriorityBoosts(["cansaço frequente", "dificuldade para emagrecer"], scores);
+
+console.log("Scores por domínio:", scores);
+console.log("Boosts por prioridade:", boosts);
+
+// Exemplo de saída esperada:
+// Scores: { energia_metabolica: ~45, metabolismo: ~52, cardiovascular: ~75, ... }
+// Boosts: { energia_metabolica: 15, metabolismo: 15 }
+```
+
+### Integração sugerida no dashboard
+
+```tsx
+const { priorities } = useHealthPriorities();
+const scores = calculateDomainScores(examMarkers); // examMarkers do exame atual
+const boosts = calculatePriorityBoosts(priorities?.concerns || [], scores);
+
+const radarData = Object.entries(scores).map(([key, score]) => ({
+  domain: domainsConfig[key as keyof typeof domainsConfig]?.name || key,
+  score,
+  priorityBoost: boosts[key] || 0,
+  color: getDomainColor(key), // função auxiliar para cores
+}));
+```
+
+**Próximo passo sugerido**  
+Com o cálculo de scores e boosts pronto, você já pode alimentar o radar mockado que geramos antes. Quer que eu gere agora:
+
+- Função auxiliar `getDomainColor` + dados completos para o radar?
+- O componente `HealthPriorityHighlights.tsx` (frase síntese no header)?
+- Ou já o hook `usePersonalHealthMap` para carregar tudo junto?
+
+Me diga apenas o foco exato. Vamos continuar um por vez. 🚀

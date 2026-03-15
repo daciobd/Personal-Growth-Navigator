@@ -6,9 +6,9 @@ import { getApiUrl } from "@/utils/api";
 const domain = getApiUrl();
 
 const KEYS = {
-  ACCESS_TOKEN: "@meueu_access_token",
-  REFRESH_TOKEN: "@meueu_refresh_token",
-  USER: "@meueu_auth_user",
+  ACCESS_TOKEN: "meueu_access_token",
+  REFRESH_TOKEN: "meueu_refresh_token",
+  USER: "meueu_auth_user",
 };
 
 const storage = {

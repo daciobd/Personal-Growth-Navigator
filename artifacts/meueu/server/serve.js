@@ -135,6 +135,22 @@ const server = http.createServer((req, res) => {
     return serveStaticFile(WEB_ROOT, webPath, res, true);
   }
 
+  // PWA assets served at root (required for service worker scope + manifest)
+  if (
+    pathname === "/sw.js" ||
+    pathname === "/manifest.json" ||
+    pathname.startsWith("/icons/")
+  ) {
+    if (fs.existsSync(WEB_ROOT)) {
+      return serveStaticFile(WEB_ROOT, pathname, res, false);
+    }
+    // Fallback: serve from public/ (dev scenario)
+    const publicRoot = path.resolve(__dirname, "..", "public");
+    if (fs.existsSync(publicRoot)) {
+      return serveStaticFile(publicRoot, pathname, res, false);
+    }
+  }
+
   if (pathname === "/" || pathname === "/manifest") {
     const platform = req.headers["expo-platform"];
     if (platform === "ios" || platform === "android") {

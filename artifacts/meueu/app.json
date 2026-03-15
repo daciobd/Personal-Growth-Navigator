@@ -21,9 +21,12 @@
       "favicon": "./assets/images/icon.png",
       "bundler": "metro",
       "output": "static",
-      "name": "MeuEu",
+      "name": "MeuEu - Transformação Pessoal",
       "shortName": "MeuEu",
-      "description": "Transformação pessoal com psicologia baseada em evidências"
+      "description": "Transformação pessoal com psicologia baseada em evidências",
+      "themeColor": "#1B6B5A",
+      "backgroundColor": "#F5F8F6",
+      "lang": "pt-BR"
     },
     "plugins": [
       [

@@ -37,7 +37,7 @@ function levelLabel(p: number): string {
 }
 
 // ── Route ─────────────────────────────────────────────────
-router.post("/plan/generate", async (req, res) => {
+router.post("/generate", async (req, res) => {
   const {
     currentAdjectives,
     futureAdjectives,

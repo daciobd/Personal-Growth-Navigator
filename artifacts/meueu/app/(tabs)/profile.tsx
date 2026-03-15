@@ -1,4 +1,5 @@
 import { Feather } from "@expo/vector-icons";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as Haptics from "expo-haptics";
 import { router } from "expo-router";
 import React, { useState } from "react";
@@ -356,6 +357,22 @@ export default function ProfileScreen() {
           ]}
         >
           Recomeçar jornada
+        </Text>
+      </Pressable>
+
+      <Pressable
+        onPress={async () => {
+          await AsyncStorage.removeItem("@meueu_profile_v2");
+          await AsyncStorage.removeItem("@meueu_plan");
+          await AsyncStorage.removeItem("@meueu_future_adjectives");
+          await AsyncStorage.removeItem("@meueu_device_id");
+          await AsyncStorage.removeItem("@meueu_current_approach");
+          router.replace("/onboarding/welcome");
+        }}
+        style={{ alignItems: "center", paddingVertical: 20 }}
+      >
+        <Text style={{ fontSize: 13, color: "#A8C0B8", fontFamily: "Inter_400Regular" }}>
+          Refazer onboarding
         </Text>
       </Pressable>
     </ScrollView>

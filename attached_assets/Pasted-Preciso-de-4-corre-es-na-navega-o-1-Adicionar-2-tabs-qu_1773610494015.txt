@@ -1,0 +1,65 @@
+Preciso de 4 correções na navegação:
+1. Adicionar 2 tabs que estão faltando (Coach e Jornadas)
+Em artifacts/meueu/app/(tabs)/_layout.tsx, o <Tabs> tem apenas 2 screens. Adicione mais 2:
+tsx<Tabs.Screen
+  name="journeys"
+  options={{
+    title: 'Jornadas',
+    tabBarIcon: ({ color }) => <Feather name="map" size={22} color={color} />,
+  }}
+/>
+<Tabs.Screen
+  name="coach"
+  options={{
+    title: 'Coach',
+    tabBarIcon: ({ color }) => <Feather name="message-circle" size={22} color={color} />,
+  }}
+/>
+Se os arquivos (tabs)/journeys.tsx e (tabs)/coach.tsx não existirem, crie-os redirecionando para as rotas corretas:
+tsx// (tabs)/journeys.tsx
+import { Redirect } from 'expo-router';
+export default function JourneysTab() {
+  return <Redirect href="/journeys" />;
+}
+tsx// (tabs)/coach.tsx
+import { Redirect } from 'expo-router';
+export default function CoachTab() {
+  return <Redirect href="/coach" />;
+}
+2. Corrigir tab ativa sem destaque visual
+No _layout.tsx das tabs, confirme que o <Tabs> tem estas propriedades:
+tsx<Tabs
+  screenOptions={{
+    tabBarActiveTintColor: '#1B6B5A',
+    tabBarInactiveTintColor: '#A8C0B8',
+    tabBarStyle: {
+      backgroundColor: '#fff',
+      borderTopColor: '#E8F0ED',
+      borderTopWidth: 1,
+      height: 60,
+      paddingBottom: 8,
+    },
+    tabBarLabelStyle: {
+      fontSize: 11,
+      fontWeight: '600',
+    },
+    headerShown: false,
+  }}
+>
+3. Corrigir barra de tabs que some
+A barra some quando uma tela filha (como /coach/index.tsx) usa headerShown: false e ocupa a tela toda. A solução é garantir que o Coach e Jornadas abertos a partir das tabs NÃO escondam a tab bar. No Stack do _layout.tsx raiz, adicione:
+tsx<Stack.Screen name="coach/index" options={{ presentation: 'modal' }} />
+<Stack.Screen name="journeys/index" options={{ presentation: 'card' }} />
+Isso faz o Coach abrir como modal (com botão de fechar) e manter a tab bar visível nas jornadas.
+4. Botão 'Refazer onboarding' no Perfil
+Em artifacts/meueu/app/(tabs)/profile.tsx (ou meu-eu.tsx), adicione ao final da tela:
+tsx<Pressable
+  onPress={async () => {
+    await AsyncStorage.removeItem('@meueu_onboarding_complete');
+    await AsyncStorage.removeItem('@meueu_plan');
+    router.replace('/onboarding/welcome');
+  }}
+  style={{ alignItems: 'center', paddingVertical: 20 }}>
+  <Text style={{ fontSize: 13, color: '#A8C0B8' }}>Refazer onboarding</Text>
+</Pressable>
+Após as 4 correções, confirme que a barra inferior mostra 4 tabs: Hoje · Jornadas · Coach · Meu Eu, com a tab ativa em verde #1B6B5A."

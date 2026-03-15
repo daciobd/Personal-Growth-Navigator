@@ -18,7 +18,12 @@
     },
     "android": {},
     "web": {
-      "favicon": "./assets/images/icon.png"
+      "favicon": "./assets/images/icon.png",
+      "bundler": "metro",
+      "output": "static",
+      "name": "MeuEu",
+      "shortName": "MeuEu",
+      "description": "Transformação pessoal com psicologia baseada em evidências"
     },
     "plugins": [
       [

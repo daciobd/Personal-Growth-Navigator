@@ -556,12 +556,50 @@ async function main() {
   console.log("Updating manifests and creating landing page...");
   updateManifests(manifests, timestamp, baseUrl, assetsByHash);
 
-  console.log("Build complete! Deploy to:", baseUrl);
+  console.log("Native build complete! Deploy to:", baseUrl);
 
   if (metroProcess) {
     metroProcess.kill();
+    metroProcess = null;
   }
+
+  // Build web app
+  await buildWeb(domain);
+
+  console.log("All builds complete! Deploy to:", baseUrl);
   process.exit(0);
+}
+
+async function buildWeb(domain) {
+  console.log("\nBuilding Expo Web (expo export --platform web)...");
+
+  const distDir = path.join(projectRoot, "dist-web");
+  if (fs.existsSync(distDir)) {
+    fs.rmSync(distDir, { recursive: true });
+  }
+
+  const env = {
+    ...process.env,
+    EXPO_PUBLIC_DOMAIN: domain,
+    NODE_ENV: "production",
+  };
+
+  await new Promise((resolve, reject) => {
+    const proc = spawn(
+      "pnpm",
+      ["exec", "expo", "export", "--platform", "web", "--output-dir", "dist-web"],
+      { cwd: projectRoot, env, stdio: "inherit" }
+    );
+    proc.on("close", (code) => {
+      if (code === 0) {
+        console.log("Web build complete → dist-web/");
+        resolve();
+      } else {
+        reject(new Error(`expo export web exited with code ${code}`));
+      }
+    });
+    proc.on("error", reject);
+  });
 }
 
 main().catch((error) => {

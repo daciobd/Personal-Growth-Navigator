@@ -1,10 +1,11 @@
 /**
  * Standalone production server for Expo static builds.
  *
- * Serves the output of build.js (static-build/) with two special routes:
+ * Routes:
+ * - GET / (no expo-platform header) → landing page HTML
  * - GET / or /manifest with expo-platform header → platform manifest JSON
- * - GET / without expo-platform → landing page HTML
- * Everything else falls through to static file serving from ./static-build/.
+ * - GET /app/* → web app static files (dist-web/)
+ * - Everything else → native static files (static-build/)
  *
  * Zero external dependencies — uses only Node.js built-ins (http, fs, path).
  */
@@ -14,6 +15,7 @@ const fs = require("fs");
 const path = require("path");
 
 const STATIC_ROOT = path.resolve(__dirname, "..", "static-build");
+const WEB_ROOT = path.resolve(__dirname, "..", "dist-web");
 const TEMPLATE_PATH = path.resolve(__dirname, "templates", "landing-page.html");
 const basePath = (process.env.BASE_PATH || "/").replace(/\/+$/, "");
 
@@ -71,30 +73,42 @@ function serveLandingPage(req, res, landingPageTemplate, appName) {
   const host = req.headers["x-forwarded-host"] || req.headers["host"];
   const baseUrl = `${protocol}://${host}`;
   const expsUrl = `${host}`;
+  const webAppUrl = `${basePath}/app/`;
 
   const html = landingPageTemplate
     .replace(/BASE_URL_PLACEHOLDER/g, baseUrl)
     .replace(/EXPS_URL_PLACEHOLDER/g, expsUrl)
-    .replace(/APP_NAME_PLACEHOLDER/g, appName);
+    .replace(/APP_NAME_PLACEHOLDER/g, appName)
+    .replace(/APP_WEB_URL_PLACEHOLDER/g, webAppUrl);
 
   res.writeHead(200, { "content-type": "text/html; charset=utf-8" });
   res.end(html);
 }
 
-function serveStaticFile(urlPath, res) {
+function serveStaticFile(root, urlPath, res, fallbackToIndex = false) {
   const safePath = path.normalize(urlPath).replace(/^(\.\.(\/|\\|$))+/, "");
-  const filePath = path.join(STATIC_ROOT, safePath);
+  let filePath = path.join(root, safePath);
 
-  if (!filePath.startsWith(STATIC_ROOT)) {
+  if (!filePath.startsWith(root)) {
     res.writeHead(403);
     res.end("Forbidden");
     return;
   }
 
+  // If directory or not found, try index.html (for SPA routing)
   if (!fs.existsSync(filePath) || fs.statSync(filePath).isDirectory()) {
-    res.writeHead(404);
-    res.end("Not Found");
-    return;
+    if (fallbackToIndex) {
+      filePath = path.join(root, "index.html");
+      if (!fs.existsSync(filePath)) {
+        res.writeHead(404);
+        res.end("Web app not built yet. Run: pnpm --filter @workspace/meueu run build");
+        return;
+      }
+    } else {
+      res.writeHead(404);
+      res.end("Not Found");
+      return;
+    }
   }
 
   const ext = path.extname(filePath).toLowerCase();
@@ -115,6 +129,12 @@ const server = http.createServer((req, res) => {
     pathname = pathname.slice(basePath.length) || "/";
   }
 
+  // Web app: /app/*
+  if (pathname === "/app" || pathname.startsWith("/app/")) {
+    const webPath = pathname === "/app" ? "/index.html" : pathname.slice(4) || "/index.html";
+    return serveStaticFile(WEB_ROOT, webPath, res, true);
+  }
+
   if (pathname === "/" || pathname === "/manifest") {
     const platform = req.headers["expo-platform"];
     if (platform === "ios" || platform === "android") {
@@ -126,7 +146,7 @@ const server = http.createServer((req, res) => {
     }
   }
 
-  serveStaticFile(pathname, res);
+  serveStaticFile(STATIC_ROOT, pathname, res, false);
 });
 
 const port = parseInt(process.env.PORT || "3000", 10);

@@ -15,6 +15,7 @@ import Animated, { FadeInDown } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Colors from "@/constants/colors";
 import { useApp } from "@/context/AppContext";
+import { generatePlan as generatePlanWithBig5 } from "@/hooks/usePlanGeneration";
 
 type Practice = {
   abordagem: string;
@@ -64,20 +65,15 @@ export default function PlanScreen() {
     setError(null);
 
     const domain = process.env.EXPO_PUBLIC_DOMAIN ?? "";
-    const url = `${domain}/api/plan/generate`;
 
     try {
-      const response = await fetch(url, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          currentAdjectives: profile.currentAdjectives,
-          futureAdjectives: profile.futureAdjectives,
-        }),
-      });
+      const data = await generatePlanWithBig5(
+        profile.currentAdjectives,
+        profile.futureAdjectives,
+        domain
+      );
 
-      const data = await response.json();
-      if (!response.ok || !data.success) {
+      if (!data.success) {
         throw new Error(data.error ?? "Erro desconhecido");
       }
 

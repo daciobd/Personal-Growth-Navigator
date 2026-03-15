@@ -12,6 +12,7 @@ import {
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { AssessmentEntry } from "@/components/AssessmentEntry";
 import { BadgeGrid } from "@/components/BadgeGrid";
 import { XPBar } from "@/components/XPBar";
 import Colors from "@/constants/colors";
@@ -135,6 +136,8 @@ export default function ProfileScreen() {
         </View>
         <Feather name="arrow-right" size={18} color="rgba(255,255,255,0.7)" />
       </Pressable>
+
+      <AssessmentEntry />
 
       <BadgeGrid />
 

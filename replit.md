@@ -70,6 +70,17 @@ index → onboarding/welcome → onboarding/current → onboarding/future → on
   - Response: `{ response, xpEarned: 2 }`
 - `GET /api/coach/history?deviceId=xxx` — Histórico de mensagens do coach
 
+## Teste Big Five de Personalidade
+- `data/big5.ts`: 120 itens em pt-BR, 5 dimensões × 6 facetas × 4 itens cada. Funções: `scoreAnswers()`, `qualitativeLevel()`, `buildBig5PromptBlock()`, `getPageItems(page)`
+- `components/RadarChart.tsx`: gráfico radar SVG nativo (react-native-svg), 5 eixos, suporta dados atuais + anteriores em sobreposição
+- `components/AssessmentEntry.tsx`: widget na tab Perfil — convite (sem dados) ou mini radar + pontuações (com dados, reavaliação em 28 dias)
+- `app/assessment/index.tsx`: questionário paginado (10 itens/página × 12 páginas), escala Likert 1–5, salva resultado no AsyncStorage
+- `app/assessment/result.tsx`: resultado com 2 abas — "Visão geral" (radar + interpretação IA + cards por dimensão) e "30 Facetas" (barras por dimensão)
+- `hooks/usePlanGeneration.ts`: wrapper do endpoint `/api/plan/generate` que carrega automaticamente Big5 do AsyncStorage e envia junto
+- `POST /api/assessment/interpret`: interpretação textual personalizada via Claude Haiku com base nas 5 dimensões + 30 facetas
+- AsyncStorage key: `@meueu_big5_v1` — `{ scores: Big5Scores, completedAt: string, answers: Record<number, number> }`
+- `plan.ts` retrocompatível: se `big5Scores` vier no body, adiciona bloco de perfil ao prompt do Claude
+
 ## Dados
 ### Adjetivos (data/adjectives.ts)
 62 adjetivos em 5 categorias: Emocional, Cognitivo, Social, Comportamental, Valores

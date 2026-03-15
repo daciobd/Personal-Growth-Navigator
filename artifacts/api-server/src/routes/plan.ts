@@ -4,17 +4,79 @@ import { db, planLogsTable } from "@workspace/db";
 
 const router: IRouter = Router();
 
+type Big5Scores = {
+  O: number; C: number; E: number; A: number; N: number;
+  facets: Record<string, number>;
+};
+
+const DIM_NAMES: Record<string, string> = {
+  O: "Abertura à Experiência",
+  C: "Conscienciosidade",
+  E: "Extroversão",
+  A: "Amabilidade",
+  N: "Neuroticismo",
+};
+
+const FACET_NAMES: Record<string, string> = {
+  O1: "Fantasia", O2: "Estética", O3: "Sentimentos", O4: "Busca por Variedade", O5: "Intelecto", O6: "Valores",
+  C1: "Competência", C2: "Ordem", C3: "Senso de Dever", C4: "Busca por Realizações", C5: "Autodisciplina", C6: "Deliberação",
+  E1: "Cordialidade", E2: "Gregarismo", E3: "Assertividade", E4: "Nível de Atividade", E5: "Busca por Emoções", E6: "Emoções Positivas",
+  A1: "Confiança", A2: "Franqueza", A3: "Altruísmo", A4: "Complacência", A5: "Modéstia", A6: "Sensibilidade",
+  N1: "Ansiedade", N2: "Hostilidade", N3: "Tristeza", N4: "Autoconsciência Social", N5: "Impulsividade", N6: "Vulnerabilidade",
+};
+
+function qualLevel(s: number): string {
+  if (s <= 20) return "muito baixo";
+  if (s <= 35) return "baixo";
+  if (s <= 65) return "médio";
+  if (s <= 80) return "alto";
+  return "muito alto";
+}
+
+function buildBig5PromptBlock(scores: Big5Scores): string {
+  const dims = ["O", "C", "E", "A", "N"];
+  const lines: string[] = [
+    "\nPERFIL DE PERSONALIDADE (Big Five) DO CLIENTE:",
+  ];
+
+  for (const d of dims) {
+    const score = (scores as any)[d];
+    const facetsForDim = Object.entries(scores.facets)
+      .filter(([k]) => k.startsWith(d))
+      .sort(([, a], [, b]) => b - a);
+
+    const topFacets = facetsForDim.slice(0, 2).map(([k, v]) => `${FACET_NAMES[k] ?? k} (${v}%)`);
+    const lowFacets = facetsForDim.slice(-2).map(([k, v]) => `${FACET_NAMES[k] ?? k} (${v}%)`);
+
+    lines.push(
+      `${DIM_NAMES[d]}: ${score}% (${qualLevel(score)}) — mais alto em ${topFacets.join(", ")}; mais baixo em ${lowFacets.join(", ")}`
+    );
+  }
+
+  lines.push(
+    "\nUse este perfil para personalizar AINDA MAIS o plano: adapte as técnicas ao estilo do cliente. " +
+    "Por exemplo: alta Abertura → práticas criativas e reflexivas; alta Conscienciosidade → estrutura e metas claras; " +
+    "alto Neuroticismo → técnicas de regulação emocional e mindfulness; baixa Amabilidade → foco em compaixão; " +
+    "baixa Extroversão → práticas introspectivas e individuais."
+  );
+
+  return lines.join("\n");
+}
+
 router.post("/plan/generate", async (req, res) => {
-  const { currentAdjectives, futureAdjectives, sessionId } = req.body as {
+  const { currentAdjectives, futureAdjectives, sessionId, big5Scores } = req.body as {
     currentAdjectives: string[];
     futureAdjectives: string[];
     sessionId?: string;
+    big5Scores?: Big5Scores | null;
   };
 
   if (!Array.isArray(currentAdjectives) || !Array.isArray(futureAdjectives)) {
     res.status(400).json({ error: "currentAdjectives and futureAdjectives são obrigatórios" });
     return;
   }
+
+  const big5Block = big5Scores ? buildBig5PromptBlock(big5Scores) : "";
 
   const prompt = `Você é um psicólogo especializado em psicoterapias baseadas em evidências (TCC, ACT, Psicologia Positiva, Mindfulness/DBT). 
 Um cliente fez uma autoavaliação e você deve criar um plano personalizado de desenvolvimento pessoal.
@@ -24,6 +86,7 @@ ${currentAdjectives.join(", ")}
 
 EU FUTURO (adjetivos que descrevem quem o cliente quer se tornar):
 ${futureAdjectives.join(", ")}
+${big5Block}
 
 Com base nessas informações, gere um plano em JSON com a seguinte estrutura exata:
 
@@ -64,7 +127,7 @@ REGRAS IMPORTANTES:
 - As 3 práticas devem ser de abordagens DIFERENTES (use TCC, ACT e Psicologia Positiva exatamente como mostrado)
 - Os passos devem ser concretos, acionáveis e específicos para a jornada DESTE cliente
 - Use a primeira pessoa ("você") ao falar com o cliente
-- O plano deve criar uma ponte real entre os adjetivos atuais e os desejados
+- O plano deve criar uma ponte real entre os adjetivos atuais e os desejados${big5Scores ? "\n- Adapte as técnicas ao perfil Big Five do cliente" : ""}
 - Responda APENAS com o JSON válido, sem texto adicional antes ou depois`;
 
   try {

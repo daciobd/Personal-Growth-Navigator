@@ -31,6 +31,8 @@ function RootLayoutNav() {
       <Stack.Screen name="(tabs)" />
       <Stack.Screen name="intervention/[id]" />
       <Stack.Screen name="coach/index" options={{ presentation: "modal" }} />
+      <Stack.Screen name="assessment/index" />
+      <Stack.Screen name="assessment/result" />
     </Stack>
   );
 }

@@ -16,6 +16,7 @@ import { PwaHead } from "@/components/PwaHead";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 
 import { ErrorBoundary } from "@/components/ErrorBoundary";
+import WebTabBar from "@/components/WebTabBar";
 import { AppProvider } from "@/context/AppContext";
 import { AuthProvider } from "@/context/AuthContext";
 import { GamificationProvider } from "@/context/GamificationContext";
@@ -26,22 +27,25 @@ const queryClient = new QueryClient();
 
 function RootLayoutNav() {
   return (
-    <Stack screenOptions={{ headerShown: false, animation: "slide_from_right" }}>
-      <Stack.Screen name="index" />
-      <Stack.Screen name="onboarding/welcome" />
-      <Stack.Screen name="onboarding/current" />
-      <Stack.Screen name="onboarding/future" />
-      <Stack.Screen name="onboarding/plan" />
-      <Stack.Screen name="(tabs)" />
-      <Stack.Screen name="intervention/[id]" />
-      <Stack.Screen name="coach/index" options={{ presentation: "modal" }} />
-      <Stack.Screen name="assessment/index" />
-      <Stack.Screen name="assessment/result" />
-      <Stack.Screen name="auth/login" />
-      <Stack.Screen name="auth/register" />
-      <Stack.Screen name="journeys/index" />
-      <Stack.Screen name="journeys/[id]" />
-    </Stack>
+    <>
+      <Stack screenOptions={{ headerShown: false, animation: "slide_from_right" }}>
+        <Stack.Screen name="index" />
+        <Stack.Screen name="onboarding/welcome" />
+        <Stack.Screen name="onboarding/current" />
+        <Stack.Screen name="onboarding/future" />
+        <Stack.Screen name="onboarding/plan" />
+        <Stack.Screen name="(tabs)" />
+        <Stack.Screen name="intervention/[id]" />
+        <Stack.Screen name="coach/index" options={{ presentation: "modal" }} />
+        <Stack.Screen name="assessment/index" />
+        <Stack.Screen name="assessment/result" />
+        <Stack.Screen name="auth/login" />
+        <Stack.Screen name="auth/register" />
+        <Stack.Screen name="journeys/index" />
+        <Stack.Screen name="journeys/[id]" />
+      </Stack>
+      <WebTabBar />
+    </>
   );
 }
 

@@ -1,22 +1,23 @@
-import { Router, type IRouter } from "express";
-import healthRouter from "./health";
-import planRouter from "./plan";
-import adminRouter from "./admin";
-import dailyRouter from "./daily";
-import coachRouter from "./coach";
-import assessmentRouter from "./assessment";
-import authRouter from "./auth";
-import assessmentReportRouter from "./assessmentReport";
+// artifacts/api-server/src/routes/index.ts
+import { Router } from "express";
+import healthRouter     from "./health.js";
+import planRouter       from "./plan.js";
+import adminRouter      from "./admin.js";
+import dailyRouter      from "./daily.js";
+import coachRouter      from "./coach.js";
+import assessmentRouter from "./assessment.js";
+import authRouter       from "./auth.js";
+import journeysRouter   from "./journeys.js";
 
-const router: IRouter = Router();
+const router = Router();
 
 router.use(healthRouter);
-router.use(planRouter);
-router.use(adminRouter);
-router.use(dailyRouter);
-router.use(coachRouter);
-router.use(assessmentRouter);
-router.use(authRouter);
-router.use(assessmentReportRouter);
+router.use("/auth",       authRouter);
+router.use("/plan",       planRouter);
+router.use("/admin",      adminRouter);
+router.use("/daily",      dailyRouter);
+router.use("/coach",      coachRouter);
+router.use("/assessment", assessmentRouter);
+router.use("/journeys",   journeysRouter);
 
 export default router;

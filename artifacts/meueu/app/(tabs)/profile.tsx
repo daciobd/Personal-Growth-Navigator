@@ -139,6 +139,26 @@ export default function ProfileScreen() {
         <Feather name="arrow-right" size={18} color="rgba(255,255,255,0.7)" />
       </Pressable>
 
+      <Pressable
+        onPress={() => router.push("/journeys/index")}
+        style={[styles.coachCard, { backgroundColor: "#166534" }]}
+      >
+        <View style={styles.coachCardLeft}>
+          <View style={[styles.coachIcon, { backgroundColor: "rgba(255,255,255,0.15)" }]}>
+            <Feather name="map" size={20} color="#fff" />
+          </View>
+          <View>
+            <Text style={[styles.coachTitle, { fontFamily: "Inter_700Bold" }]}>
+              Jornadas
+            </Text>
+            <Text style={[styles.coachSub, { fontFamily: "Inter_400Regular" }]}>
+              30 dias de transformação
+            </Text>
+          </View>
+        </View>
+        <Feather name="arrow-right" size={18} color="rgba(255,255,255,0.7)" />
+      </Pressable>
+
       <AssessmentEntry />
 
       <BadgeGrid />

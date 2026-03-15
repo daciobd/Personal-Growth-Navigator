@@ -1,812 +1,412 @@
-import { getApiUrl } from "@/utils/api";
-/**
- * UnifiedCheckin — substitui <DailyChallenge />.
- *
- * Detecta automaticamente:
- *   • Jornada/plano ativo → exibe o desafio do dia com sinais adaptativos
- *   • Sem plano → CTA para gerar o plano personalizado
- *
- * O servidor retorna `adaptiveSignal` e `adaptiveDisplayMessage`
- * vindos do adaptiveEngine.ts — o componente os exibe quando relevante.
- */
+// artifacts/meueu/components/UnifiedCheckin.tsx
+//
+// Check-in unificado: cobre a jornada ativa + o plano personalizado em uma
+// única tela de menos de 2 minutos.
+//
+// Fluxo:
+//   1. Desafio do dia (jornada OU plano, dependendo do que estiver ativo)
+//   2. "Fiz" / "Não fiz"
+//   3. Nota 1-5 (se fez)
+//   4. Comentário opcional
+//   5. Resumo: XP ganho + sinal adaptativo para amanhã
+//
+// Uso: <UnifiedCheckin onComplete={() => {}} />
+
+import React, { useState, useEffect } from "react";
+import {
+  View, Text, StyleSheet, Pressable, TextInput,
+  ActivityIndicator, ScrollView,
+} from "react-native";
 import { Feather } from "@expo/vector-icons";
 import { router } from "expo-router";
-import React, { useEffect, useRef, useState } from "react";
-import {
-  ActivityIndicator,
-  Platform,
-  Pressable,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-} from "react-native";
-import Animated, {
-  FadeIn,
-  FadeInDown,
-} from "react-native-reanimated";
-import Colors from "@/constants/colors";
-import { useApp } from "@/context/AppContext";
-import { useGamification } from "@/context/GamificationContext";
-import type { Practice } from "@/context/AppContext";
+import { getApiUrl } from "@/utils/api";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useGamification } from "../context/GamificationContext";
 
-type AdaptiveSignal =
-  | "neutral"
-  | "subtle_adjust"
-  | "simplify"
-  | "approach_change"
-  | "add_challenge"
-  | "integration_ready"
-  | "checkin_missing";
-
-type ChallengeState =
-  | { type: "idle" }
-  | { type: "loading" }
-  | {
-      type: "challenge";
-      aiAction: string;
-      practice: Practice;
-      practiceIndex: number;
-      adaptiveSignal: AdaptiveSignal;
-      adaptiveDisplayMessage: string | null;
-    }
-  | {
-      type: "checking-in";
-      aiAction: string;
-      practice: Practice;
-      practiceIndex: number;
-      adaptiveSignal: AdaptiveSignal;
-      adaptiveDisplayMessage: string | null;
-    }
-  | { type: "submitting" }
-  | { type: "done"; xpEarned: number; aiTip: string; streak: number }
-  | { type: "no-plan" };
-
-const APPROACH_COLORS: Record<string, { bg: string; text: string }> = {
-  TCC: { bg: "#EFF6FF", text: "#1D4ED8" },
-  ACT: { bg: "#F0FDF4", text: "#166534" },
-  "Psicologia Positiva": { bg: "#FAF5FF", text: "#6B21A8" },
-  Mindfulness: { bg: "#FFF7ED", text: "#9A3412" },
-  DBT: { bg: "#FFF7ED", text: "#9A3412" },
-  CFT: { bg: "#FFF1F2", text: "#9F1239" },
-  Narrativa: { bg: "#FFFBEB", text: "#92400E" },
-  Gestalt: { bg: "#F0FDFA", text: "#065F46" },
-  Esquema: { bg: "#F5F3FF", text: "#5B21B6" },
-  "Eu Futuro": { bg: "#EFF6FF", text: "#1E40AF" },
+type Challenge = {
+  titulo: string; acao: string; dica: string;
+  tempo: string; perguntaReflexao: string; adaptacao?: string;
 };
 
-const ADAPTIVE_CONFIG: Record<
-  AdaptiveSignal,
-  { icon: string; color: string; bg: string } | null
-> = {
-  neutral: null,
-  subtle_adjust: null,
-  simplify: { icon: "minimize-2", color: "#9A3412", bg: "#FFF7ED" },
-  approach_change: { icon: "refresh-cw", color: "#1D4ED8", bg: "#EFF6FF" },
-  add_challenge: { icon: "trending-up", color: "#166534", bg: "#F0FDF4" },
-  integration_ready: { icon: "award", color: "#6B21A8", bg: "#FAF5FF" },
-  checkin_missing: { icon: "heart", color: "#9F1239", bg: "#FFF1F2" },
+type CheckinSource = "journey" | "plan" | "both";
+
+type Props = {
+  onComplete?: (xpGained: number) => void;
 };
 
-function StarRating({
-  value,
-  onChange,
-}: {
-  value: number;
-  onChange: (v: number) => void;
-}) {
-  const colors = Colors.light;
-  return (
-    <View style={styles.stars}>
-      {[1, 2, 3, 4, 5].map((star) => (
-        <Pressable key={star} onPress={() => onChange(star)} hitSlop={8}>
-          <Feather
-            name="star"
-            size={30}
-            color={star <= value ? colors.accent : colors.cardBorder}
-          />
-        </Pressable>
-      ))}
-    </View>
-  );
-}
+const NOTE_LABELS = ["", "Muito difícil", "Difícil", "Mais ou menos", "Boa", "Excelente"];
+const SIGNAL_LABELS: Record<string, string> = {
+  micro_step:          "Versão simplificada para amanhã",
+  easier_variant:      "Prática adaptada para amanhã",
+  alternative_approach:"Nova estratégia para amanhã",
+  deepen:              "Desafio extra disponível amanhã",
+  ready_to_advance:    "Pronto para avançar de fase",
+  on_track:            "No caminho certo",
+  adjust_today:        "Ajuste sutil para amanhã",
+};
 
-function XPPop({ xp }: { xp: number }) {
-  const colors = Colors.light;
-  return (
-    <Animated.View
-      entering={FadeInDown.springify()}
-      style={[styles.xpPop, { backgroundColor: colors.accent }]}
-    >
-      <Feather name="zap" size={14} color="#fff" />
-      <Text style={[styles.xpPopText, { fontFamily: "Inter_700Bold" }]}>
-        +{xp} XP
-      </Text>
-    </Animated.View>
-  );
-}
+type Step = "loading" | "challenge" | "checkin" | "done";
 
-export function UnifiedCheckin() {
-  const colors = Colors.light;
-  const { profile } = useApp();
-  const { deviceId, recordCheckin } = useGamification();
-  const plan = profile.generatedPlan;
+export default function UnifiedCheckin({ onComplete }: Props) {
+  const { recordCheckin, addXP, gam } = useGamification();
 
-  const [state, setState] = useState<ChallengeState>({ type: "idle" });
-  const [completed, setCompleted] = useState<boolean | null>(null);
-  const [rating, setRating] = useState(0);
-  const [note, setNote] = useState("");
-  const checkedRef = useRef(false);
+  const [step, setStep]               = useState<Step>("loading");
+  const [source, setSource]           = useState<CheckinSource>("plan");
+  const [challenge, setChallenge]     = useState<Challenge | null>(null);
+  const [journeyId, setJourneyId]     = useState<string | null>(null);
+  const [currentDay, setCurrentDay]   = useState(0);
+  const [journeyColor, setJourneyColor] = useState("#1B6B5A");
+  const [journeyTitle, setJourneyTitle] = useState("");
+  const [practiceIdx, setPracticeIdx] = useState(0);
+  const [practiceName, setPracticeName] = useState("");
+  const [adaptiveSignal, setAdaptiveSignal] = useState("");
+  const [adaptiveHint, setAdaptiveHint] = useState("");
+
+  // Check-in state
+  const [completed, setCompleted]     = useState<boolean | null>(null);
+  const [note, setNote]               = useState(0);
+  const [comment, setComment]         = useState("");
+  const [saving, setSaving]           = useState(false);
+  const [xpResult, setXpResult]       = useState(0);
+  const [journeyDone, setJourneyDone] = useState(false);
 
   const domain = getApiUrl();
 
   useEffect(() => {
-    if (checkedRef.current) return;
-    checkedRef.current = true;
+    loadTodayChallenge();
+  }, []);
 
-    if (!plan?.praticas?.length) {
-      setState({ type: "no-plan" });
-      return;
-    }
-
-    setState({ type: "loading" });
-    const today = new Date().toISOString().split("T")[0];
-    const practiceIndex = new Date().getDay() % 3;
-    const practice = plan.praticas[practiceIndex] ?? plan.praticas[0];
-
-    fetch(`${domain}/api/daily/challenge`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ deviceId, date: today, practice }),
-    })
-      .then((r) => r.json())
-      .then((data) => {
-        if (data.alreadyCheckedIn && data.checkin) {
-          setState({
-            type: "done",
-            xpEarned: data.checkin.xpEarned ?? 0,
-            aiTip: data.checkin.aiTip ?? "Você já fez o check-in de hoje!",
-            streak: data.checkin.streakDays ?? 1,
-          });
-        } else {
-          setState({
-            type: "challenge",
-            aiAction: data.aiAction,
-            practice,
-            practiceIndex,
-            adaptiveSignal: data.adaptiveSignal ?? "neutral",
-            adaptiveDisplayMessage: data.adaptiveDisplayMessage ?? null,
-          });
-        }
-      })
-      .catch(() => {
-        setState({
-          type: "challenge",
-          aiAction: "Dedique alguns minutos hoje para explorar esta prática com presença.",
-          practice,
-          practiceIndex,
-          adaptiveSignal: "neutral",
-          adaptiveDisplayMessage: null,
-        });
-      });
-  }, [plan, deviceId, domain]);
-
-  const handleSubmitCheckin = async () => {
-    if (state.type !== "checking-in") return;
-    setState({ type: "submitting" });
-
-    const today = new Date().toISOString().split("T")[0];
+  async function loadTodayChallenge() {
+    if (!domain) { setStep("challenge"); return; }
+    const deviceId = await AsyncStorage.getItem("@meueu_device_id") ?? "unknown";
+    const futureAdj = JSON.parse(await AsyncStorage.getItem("@meueu_future_adjectives") ?? "[]") as string[];
 
     try {
-      const response = await fetch(`${domain}/api/daily/checkin`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          deviceId,
-          date: today,
-          practiceIndex: state.practiceIndex,
-          practiceName: state.practice.nome,
-          completed: completed ?? false,
-          rating: rating > 0 ? rating : undefined,
-          note: note.trim() || undefined,
-        }),
-      });
+      // Verifica se tem jornada ativa
+      const activeRes = await fetch(`${domain}/api/journeys/active/${deviceId}`);
+      const activeData = await activeRes.json();
 
-      const data = await response.json();
-      const xpEarned = data.xpEarned ?? 0;
-      const streak = data.streakDays ?? 1;
+      if (activeData.active && !activeData.checkinDoneToday) {
+        // Jornada ativa com check-in pendente
+        setSource(activeData.checkinDoneToday ? "plan" : "journey");
+        setJourneyId(activeData.active.journeyId);
+        setCurrentDay(activeData.active.currentDay);
+        setJourneyColor(activeData.journey?.color ?? "#1B6B5A");
+        setJourneyTitle(activeData.journey?.title ?? "Jornada");
+        setPracticeName(activeData.todayPractice?.title ?? "Prática do dia");
 
-      recordCheckin({
-        date: today,
-        completed: completed ?? false,
-        rating: rating > 0 ? rating : undefined,
-        hasNote: note.trim().length > 0,
-        xpEarned,
-        streak,
-      });
+        // Gera desafio adaptativo
+        const chalRes = await fetch(`${domain}/api/journeys/day-challenge`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            deviceId,
+            journeyId: activeData.active.journeyId,
+            day: activeData.active.currentDay,
+            futureAdjectives: futureAdj,
+          }),
+        });
+        const chalData = await chalRes.json();
+        if (chalData.success) {
+          setChallenge(chalData.challenge);
+          setAdaptiveSignal(chalData.adaptiveSignal ?? "");
+          setAdaptiveHint(chalData.adaptiveUiHint ?? "");
+        }
+      } else {
+        // Sem jornada ativa: usa plano personalizado
+        setSource("plan");
+        const plan = JSON.parse(await AsyncStorage.getItem("@meueu_plan") ?? "null");
+        if (plan?.praticas?.length) {
+          const dayIdx = new Date().getDay() % plan.praticas.length;
+          setPracticeIdx(dayIdx);
+          setPracticeName(plan.praticas[dayIdx].nome);
 
-      setState({
-        type: "done",
-        xpEarned,
-        aiTip: data.aiTip ?? "Ótimo trabalho!",
-        streak,
-      });
-    } catch {
-      setState({ type: "challenge", ...(state as any) });
-    }
-  };
-
-  // ── Loading ──
-  if (state.type === "idle" || state.type === "loading") {
-    return (
-      <View
-        style={[
-          styles.card,
-          { backgroundColor: colors.card, borderColor: colors.cardBorder },
-        ]}
-      >
-        <ActivityIndicator size="small" color={colors.primary} />
-        <Text
-          style={[
-            styles.loadingText,
-            { color: colors.textMuted, fontFamily: "Inter_400Regular" },
-          ]}
-        >
-          Preparando seu desafio do dia...
-        </Text>
-      </View>
-    );
+          // Gera desafio do plano
+          const chalRes = await fetch(`${domain}/api/daily/challenge`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              deviceId,
+              practiceIdx: dayIdx,
+              practiceName: plan.praticas[dayIdx].nome,
+              practiceSteps: plan.praticas[dayIdx].passos,
+              futureAdjectives: futureAdj,
+            }),
+          });
+          const chalData = await chalRes.json();
+          if (chalData.success) setChallenge(chalData.challenge);
+        }
+      }
+    } catch { /* continua com fallback */ }
+    setStep("challenge");
   }
 
-  // ── Sem plano: CTA ──
-  if (state.type === "no-plan") {
-    return (
-      <Animated.View entering={FadeIn.duration(400)}>
-        <View
-          style={[
-            styles.card,
-            { backgroundColor: colors.card, borderColor: colors.cardBorder },
-          ]}
-        >
-          <View style={styles.noPlanHeader}>
-            <View
-              style={[styles.noPlanIcon, { backgroundColor: "#F0FDF4" }]}
-            >
-              <Feather name="map" size={22} color="#166534" />
-            </View>
-            <View style={styles.noPlanTexts}>
-              <Text
-                style={[
-                  styles.noPlanTitle,
-                  { color: colors.text, fontFamily: "Inter_700Bold" },
-                ]}
-              >
-                Comece sua jornada
-              </Text>
-              <Text
-                style={[
-                  styles.noPlanSub,
-                  {
-                    color: colors.textSecondary,
-                    fontFamily: "Inter_400Regular",
-                  },
-                ]}
-              >
-                Gere seu plano personalizado com IA
-              </Text>
-            </View>
+  async function handleCheckin() {
+    if (completed === null || (completed && note === 0)) return;
+    setSaving(true);
+    const deviceId = await AsyncStorage.getItem("@meueu_device_id") ?? "unknown";
+
+    try {
+      // Registra check-in na jornada (se ativa)
+      if (journeyId && source === "journey") {
+        const res = await fetch(`${domain}/api/journeys/checkin`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            deviceId, journeyId,
+            day: currentDay, completed,
+            note: completed ? note : undefined,
+            comment: comment || undefined,
+          }),
+        });
+        const data = await res.json();
+        setJourneyDone(data.journeyCompleted ?? false);
+        if (data.nextAdaptiveSignal) setAdaptiveSignal(data.nextAdaptiveSignal);
+        if (data.nextAdaptiveHint)   setAdaptiveHint(data.nextAdaptiveHint);
+      } else {
+        // Check-in do plano diário
+        await fetch(`${domain}/api/daily/checkin`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            deviceId, practiceIdx, practiceName,
+            completed, note: completed ? note : undefined,
+            comment: comment || undefined,
+          }),
+        });
+      }
+
+      // Atualiza gamificação local
+      const { newBadges } = await recordCheckin(completed, completed ? note : undefined);
+      const xp = completed ? 10 + (note >= 5 ? 5 : note >= 4 ? 3 : 0) : 0;
+      setXpResult(xp);
+      setStep("done");
+      onComplete?.(xp);
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  const color = journeyId ? journeyColor : "#1B6B5A";
+
+  // LOADING
+  if (step === "loading") return (
+    <View style={styles.card}>
+      <ActivityIndicator color={color} />
+    </View>
+  );
+
+  // DONE
+  if (step === "done") return (
+    <View style={styles.card}>
+      <View style={styles.doneRow}>
+        <View style={[styles.doneIcon, { backgroundColor: color + "18" }]}>
+          <Feather name="check-circle" size={22} color={color} />
+        </View>
+        <View style={{ flex: 1 }}>
+          <Text style={styles.doneTitle}>
+            {journeyDone ? "Jornada concluída!" : "Check-in registrado"}
+          </Text>
+          <Text style={styles.doneSub}>
+            {xpResult > 0 ? `+${xpResult} XP` : "Continue amanhã!"}
+            {adaptiveHint ? ` · ${adaptiveHint}` : ""}
+          </Text>
+        </View>
+        <Pressable
+          style={[styles.coachBtn, { borderColor: color }]}
+          onPress={() => router.push({
+            pathname: "/coach",
+            params: {
+              practiceName,
+              prefillMessage: completed
+                ? `Fiz a prática "${practiceName}" hoje com nota ${note}. Quero refletir.`
+                : `Não consegui fazer "${practiceName}" hoje. O que posso tentar amanhã?`,
+            },
+          })}>
+          <Feather name="message-circle" size={14} color={color} />
+          <Text style={[styles.coachBtnText, { color }]}>Coach</Text>
+        </Pressable>
+      </View>
+
+      {adaptiveSignal && adaptiveSignal !== "on_track" && (
+        <View style={[styles.signalRow, { backgroundColor: color + "10", borderColor: color + "30" }]}>
+          <Feather name="zap" size={13} color={color} />
+          <Text style={[styles.signalText, { color }]}>
+            Amanhã: {SIGNAL_LABELS[adaptiveSignal] ?? adaptiveSignal}
+          </Text>
+        </View>
+      )}
+
+      <View style={styles.streakRow}>
+        <Feather name="zap" size={13} color="#E8A838" />
+        <Text style={styles.streakText}>{gam.currentStreak} dias seguidos</Text>
+      </View>
+    </View>
+  );
+
+  // CHALLENGE
+  if (step === "challenge") return (
+    <View style={styles.card}>
+      <View style={styles.tagRow}>
+        <View style={[styles.tag, { backgroundColor: color + "18" }]}>
+          <Text style={[styles.tagText, { color }]}>
+            {source === "journey" ? `Dia ${currentDay} · ${journeyTitle}` : "Plano personalizado"}
+          </Text>
+        </View>
+        {adaptiveHint && (
+          <View style={[styles.adaptiveTag, { backgroundColor: color + "10", borderColor: color + "30" }]}>
+            <Feather name="zap" size={10} color={color} />
+            <Text style={[styles.adaptiveTagText, { color }]}>{adaptiveHint}</Text>
           </View>
+        )}
+      </View>
+
+      <Text style={styles.challengeTitle}>{challenge?.titulo ?? practiceName}</Text>
+      <Text style={styles.challengeAction}>{challenge?.acao ?? ""}</Text>
+
+      {challenge?.dica && (
+        <View style={styles.tipRow}>
+          <Feather name="info" size={13} color="#6B8F7E" />
+          <Text style={styles.tipText}>{challenge.dica}</Text>
+        </View>
+      )}
+
+      {challenge?.adaptacao && (
+        <View style={[styles.adaptacaoRow, { borderLeftColor: color }]}>
+          <Text style={styles.adaptacaoText}>{challenge.adaptacao}</Text>
+        </View>
+      )}
+
+      <View style={styles.metaRow}>
+        <Feather name="clock" size={12} color="#6B8F7E" />
+        <Text style={styles.metaText}>{challenge?.tempo ?? "10 min"}</Text>
+      </View>
+
+      <Pressable
+        style={[styles.primaryBtn, { backgroundColor: color }]}
+        onPress={() => setStep("checkin")}>
+        <Text style={styles.primaryBtnText}>Vou fazer agora</Text>
+        <Feather name="arrow-right" size={16} color="#fff" />
+      </Pressable>
+      <Pressable
+        style={styles.secondaryBtn}
+        onPress={() => router.push({
+          pathname: "/coach",
+          params: {
+            practiceName,
+            prefillMessage: `Tenho dúvida sobre a prática de hoje: "${practiceName}"`,
+          },
+        })}>
+        <Feather name="help-circle" size={14} color={color} />
+        <Text style={[styles.secondaryBtnText, { color }]}>Tenho dúvida</Text>
+      </Pressable>
+    </View>
+  );
+
+  // CHECKIN
+  return (
+    <View style={styles.card}>
+      <Text style={styles.checkinTitle}>Como foi?</Text>
+      <Text style={styles.checkinSub}>{practiceName}</Text>
+
+      <View style={styles.yesNoRow}>
+        {([true, false] as const).map(v => (
           <Pressable
-            onPress={() => router.push("/onboarding/welcome")}
-            style={[styles.btn, { backgroundColor: colors.primary }]}
-          >
-            <Feather name="arrow-right" size={16} color="#fff" />
-            <Text style={[styles.btnText, { fontFamily: "Inter_600SemiBold" }]}>
-              Criar meu plano
+            key={String(v)}
+            style={[styles.yesNoBtn, completed === v && { backgroundColor: color, borderColor: color }]}
+            onPress={() => setCompleted(v)}>
+            <Feather name={v ? "check" : "x"} size={16} color={completed === v ? "#fff" : "#6B8F7E"} />
+            <Text style={[styles.yesNoBtnText, completed === v && { color: "#fff" }]}>
+              {v ? "Fiz" : "Não consegui"}
             </Text>
           </Pressable>
-        </View>
-      </Animated.View>
-    );
-  }
-
-  // ── Desafio / Check-in ──
-  if (state.type === "challenge" || state.type === "checking-in") {
-    const aColor =
-      APPROACH_COLORS[state.practice.abordagem] ?? {
-        bg: "#F5F5F5",
-        text: "#333",
-      };
-    const isCheckingIn = state.type === "checking-in";
-    const adaptiveCfg = ADAPTIVE_CONFIG[state.adaptiveSignal];
-
-    return (
-      <Animated.View entering={FadeIn.duration(400)}>
-        <View
-          style={[
-            styles.card,
-            { backgroundColor: colors.card, borderColor: colors.cardBorder },
-          ]}
-        >
-          {/* Header badges */}
-          <View style={styles.cardHeader}>
-            <View
-              style={[
-                styles.challengeBadge,
-                { backgroundColor: colors.primary },
-              ]}
-            >
-              <Feather name="target" size={12} color="#fff" />
-              <Text
-                style={[
-                  styles.challengeBadgeText,
-                  { fontFamily: "Inter_600SemiBold" },
-                ]}
-              >
-                Desafio de hoje
-              </Text>
-            </View>
-            <View
-              style={[styles.approachBadge, { backgroundColor: aColor.bg }]}
-            >
-              <Text
-                style={[
-                  styles.approachText,
-                  { color: aColor.text, fontFamily: "Inter_500Medium" },
-                ]}
-              >
-                {state.practice.abordagem}
-              </Text>
-            </View>
-          </View>
-
-          {/* Adaptive signal banner */}
-          {adaptiveCfg && state.adaptiveDisplayMessage && (
-            <Animated.View
-              entering={FadeInDown.duration(300)}
-              style={[
-                styles.adaptiveBanner,
-                { backgroundColor: adaptiveCfg.bg },
-              ]}
-            >
-              <Feather
-                name={adaptiveCfg.icon as any}
-                size={13}
-                color={adaptiveCfg.color}
-              />
-              <Text
-                style={[
-                  styles.adaptiveText,
-                  {
-                    color: adaptiveCfg.color,
-                    fontFamily: "Inter_500Medium",
-                  },
-                ]}
-              >
-                {state.adaptiveDisplayMessage}
-              </Text>
-            </Animated.View>
-          )}
-
-          {/* Practice name */}
-          <Text
-            style={[
-              styles.practiceName,
-              { color: colors.text, fontFamily: "Inter_700Bold" },
-            ]}
-          >
-            {state.practice.nome}
-          </Text>
-
-          {/* AI action */}
-          <View
-            style={[
-              styles.actionBox,
-              { backgroundColor: colors.background },
-            ]}
-          >
-            <Feather name="sunrise" size={14} color={colors.primary} />
-            <Text
-              style={[
-                styles.actionText,
-                { color: colors.text, fontFamily: "Inter_400Regular" },
-              ]}
-            >
-              {state.aiAction}
-            </Text>
-          </View>
-
-          {/* CTA: já fiz */}
-          {!isCheckingIn && (
-            <Pressable
-              onPress={() => setState({ ...state, type: "checking-in" })}
-              style={[styles.btn, { backgroundColor: colors.primary }]}
-            >
-              <Feather name="check-circle" size={16} color="#fff" />
-              <Text
-                style={[
-                  styles.btnText,
-                  { fontFamily: "Inter_600SemiBold" },
-                ]}
-              >
-                Já fiz!
-              </Text>
-            </Pressable>
-          )}
-
-          {/* Formulário de check-in */}
-          {isCheckingIn && (
-            <Animated.View
-              entering={FadeInDown.duration(300)}
-              style={styles.checkinForm}
-            >
-              <Text
-                style={[
-                  styles.checkinLabel,
-                  { color: colors.text, fontFamily: "Inter_600SemiBold" },
-                ]}
-              >
-                Conseguiu fazer?
-              </Text>
-              <View style={styles.yesNoRow}>
-                <Pressable
-                  onPress={() => setCompleted(true)}
-                  style={[
-                    styles.yesNoBtn,
-                    {
-                      backgroundColor:
-                        completed === true
-                          ? colors.success
-                          : colors.background,
-                      borderColor:
-                        completed === true
-                          ? colors.success
-                          : colors.cardBorder,
-                    },
-                  ]}
-                >
-                  <Feather
-                    name="check"
-                    size={16}
-                    color={completed === true ? "#fff" : colors.textMuted}
-                  />
-                  <Text
-                    style={[
-                      styles.yesNoText,
-                      {
-                        color:
-                          completed === true ? "#fff" : colors.textMuted,
-                        fontFamily: "Inter_600SemiBold",
-                      },
-                    ]}
-                  >
-                    Sim
-                  </Text>
-                </Pressable>
-                <Pressable
-                  onPress={() => setCompleted(false)}
-                  style={[
-                    styles.yesNoBtn,
-                    {
-                      backgroundColor:
-                        completed === false
-                          ? colors.danger
-                          : colors.background,
-                      borderColor:
-                        completed === false
-                          ? colors.danger
-                          : colors.cardBorder,
-                    },
-                  ]}
-                >
-                  <Feather
-                    name="x"
-                    size={16}
-                    color={completed === false ? "#fff" : colors.textMuted}
-                  />
-                  <Text
-                    style={[
-                      styles.yesNoText,
-                      {
-                        color:
-                          completed === false ? "#fff" : colors.textMuted,
-                        fontFamily: "Inter_600SemiBold",
-                      },
-                    ]}
-                  >
-                    Não
-                  </Text>
-                </Pressable>
-              </View>
-
-              <Text
-                style={[
-                  styles.checkinLabel,
-                  { color: colors.text, fontFamily: "Inter_600SemiBold" },
-                ]}
-              >
-                Como foi? (1–5)
-              </Text>
-              <StarRating value={rating} onChange={setRating} />
-
-              <TextInput
-                placeholder="Nota livre (opcional)"
-                placeholderTextColor={colors.textMuted}
-                value={note}
-                onChangeText={setNote}
-                multiline
-                numberOfLines={3}
-                style={[
-                  styles.noteInput,
-                  {
-                    color: colors.text,
-                    borderColor: colors.cardBorder,
-                    backgroundColor: colors.background,
-                    fontFamily: "Inter_400Regular",
-                  },
-                ]}
-              />
-
-              <Pressable
-                onPress={handleSubmitCheckin}
-                disabled={completed === null}
-                style={[
-                  styles.btn,
-                  {
-                    backgroundColor:
-                      completed !== null
-                        ? colors.primary
-                        : colors.cardBorder,
-                  },
-                ]}
-              >
-                <Text
-                  style={[
-                    styles.btnText,
-                    { fontFamily: "Inter_600SemiBold" },
-                  ]}
-                >
-                  Registrar
-                </Text>
-              </Pressable>
-            </Animated.View>
-          )}
-        </View>
-      </Animated.View>
-    );
-  }
-
-  // ── Enviando ──
-  if (state.type === "submitting") {
-    return (
-      <View
-        style={[
-          styles.card,
-          { backgroundColor: colors.card, borderColor: colors.cardBorder },
-        ]}
-      >
-        <ActivityIndicator size="small" color={colors.primary} />
-        <Text
-          style={[
-            styles.loadingText,
-            { color: colors.textMuted, fontFamily: "Inter_400Regular" },
-          ]}
-        >
-          Registrando check-in...
-        </Text>
+        ))}
       </View>
-    );
-  }
 
-  // ── Concluído ──
-  if (state.type === "done") {
-    return (
-      <Animated.View entering={FadeIn.duration(500)}>
-        <View
-          style={[
-            styles.card,
-            { backgroundColor: colors.card, borderColor: colors.cardBorder },
-          ]}
-        >
-          <View style={styles.doneHeader}>
-            <View style={[styles.doneIcon, { backgroundColor: "#F0FDF4" }]}>
-              <Feather name="check-circle" size={22} color="#166534" />
-            </View>
-            <View style={styles.doneTexts}>
-              <Text
-                style={[
-                  styles.doneTitle,
-                  { color: colors.text, fontFamily: "Inter_700Bold" },
-                ]}
-              >
-                Check-in de hoje feito!
-              </Text>
-              <Text
-                style={[
-                  styles.doneStreak,
-                  {
-                    color: colors.textSecondary,
-                    fontFamily: "Inter_400Regular",
-                  },
-                ]}
-              >
-                {state.streak} dia{state.streak !== 1 ? "s" : ""} seguido
-                {state.streak !== 1 ? "s" : ""}
-              </Text>
-            </View>
-            {state.xpEarned > 0 && <XPPop xp={state.xpEarned} />}
+      {completed && (
+        <>
+          <View style={styles.noteRow}>
+            {[1,2,3,4,5].map(n => (
+              <Pressable
+                key={n}
+                style={[styles.noteBtn, note === n && { backgroundColor: color, borderColor: color }]}
+                onPress={() => setNote(n)}>
+                <Text style={[styles.noteBtnNum, note === n && { color: "#fff" }]}>{n}</Text>
+              </Pressable>
+            ))}
           </View>
+          {note > 0 && <Text style={styles.noteLabel}>{NOTE_LABELS[note]}</Text>}
+        </>
+      )}
 
-          <View
-            style={[styles.tipBox, { backgroundColor: colors.background }]}
-          >
-            <Feather
-              name="message-circle"
-              size={14}
-              color={colors.primary}
-            />
-            <Text
-              style={[
-                styles.tipText,
-                { color: colors.text, fontFamily: "Inter_400Regular" },
-              ]}
-            >
-              {state.aiTip}
-            </Text>
-          </View>
+      {challenge?.perguntaReflexao && (
+        <View style={styles.reflectionBox}>
+          <Text style={styles.reflectionLabel}>Reflexão</Text>
+          <Text style={styles.reflectionText}>"{challenge.perguntaReflexao}"</Text>
         </View>
-      </Animated.View>
-    );
-  }
+      )}
 
-  return null;
+      <TextInput
+        style={styles.commentInput}
+        placeholder="Comentário opcional…"
+        placeholderTextColor="#A8C0B8"
+        value={comment}
+        onChangeText={setComment}
+        multiline
+      />
+
+      <Pressable
+        style={[styles.primaryBtn, { backgroundColor: color }, (completed === null || (completed && note === 0) || saving) && { opacity: 0.4 }]}
+        onPress={handleCheckin}
+        disabled={completed === null || (completed && note === 0) || saving}>
+        {saving
+          ? <ActivityIndicator color="#fff" />
+          : <Text style={styles.primaryBtnText}>Registrar</Text>}
+      </Pressable>
+    </View>
+  );
 }
 
 const styles = StyleSheet.create({
-  card: {
-    borderRadius: 18,
-    borderWidth: 1,
-    padding: 18,
-    gap: 14,
-  },
-  loadingText: {
-    fontSize: 13,
-    textAlign: "center",
-    marginTop: 4,
-  },
-  cardHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-  },
-  challengeBadge: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 5,
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 8,
-  },
-  challengeBadgeText: { fontSize: 11, color: "#fff" },
-  approachBadge: {
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 8,
-  },
-  approachText: { fontSize: 11 },
-  adaptiveBanner: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 7,
-    paddingHorizontal: 10,
-    paddingVertical: 7,
-    borderRadius: 10,
-  },
-  adaptiveText: {
-    fontSize: 12,
-    flex: 1,
-  },
-  practiceName: {
-    fontSize: 16,
-    lineHeight: 22,
-  },
-  actionBox: {
-    flexDirection: "row",
-    gap: 10,
-    borderRadius: 12,
-    padding: 12,
-    alignItems: "flex-start",
-  },
-  actionText: {
-    flex: 1,
-    fontSize: 14,
-    lineHeight: 20,
-  },
-  btn: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 8,
-    paddingVertical: 13,
-    borderRadius: 14,
-  },
-  btnText: { fontSize: 15, color: "#fff" },
-  checkinForm: { gap: 12 },
-  checkinLabel: { fontSize: 14 },
-  yesNoRow: { flexDirection: "row", gap: 10 },
-  yesNoBtn: {
-    flex: 1,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 6,
-    paddingVertical: 11,
-    borderRadius: 12,
-    borderWidth: 1.5,
-  },
-  yesNoText: { fontSize: 14 },
-  stars: {
-    flexDirection: "row",
-    gap: 8,
-    paddingVertical: 4,
-  },
-  noteInput: {
-    borderWidth: 1,
-    borderRadius: 12,
-    padding: 12,
-    fontSize: 14,
-    minHeight: 70,
-    textAlignVertical: "top",
-  },
-  doneHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
-  },
-  doneIcon: {
-    width: 44,
-    height: 44,
-    borderRadius: 14,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  doneTexts: { flex: 1 },
-  doneTitle: { fontSize: 15 },
-  doneStreak: { fontSize: 12, marginTop: 2 },
-  xpPop: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 4,
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 10,
-  },
-  xpPopText: { fontSize: 13, color: "#fff" },
-  tipBox: {
-    flexDirection: "row",
-    gap: 10,
-    borderRadius: 12,
-    padding: 12,
-    alignItems: "flex-start",
-  },
-  tipText: {
-    flex: 1,
-    fontSize: 13,
-    lineHeight: 19,
-  },
-  noPlanHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
-  },
-  noPlanIcon: {
-    width: 44,
-    height: 44,
-    borderRadius: 14,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  noPlanTexts: { flex: 1 },
-  noPlanTitle: { fontSize: 15 },
-  noPlanSub: { fontSize: 13, marginTop: 2 },
+  card: { backgroundColor: "#fff", borderRadius: 16, padding: 18, borderWidth: 1, borderColor: "#E8F0ED", marginBottom: 16 },
+  tagRow: { flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 12, flexWrap: "wrap" },
+  tag: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 20 },
+  tagText: { fontSize: 11, fontWeight: "700" },
+  adaptiveTag: { flexDirection: "row", alignItems: "center", gap: 4, paddingHorizontal: 8, paddingVertical: 4, borderRadius: 20, borderWidth: 1 },
+  adaptiveTagText: { fontSize: 10, fontWeight: "600" },
+  challengeTitle: { fontSize: 18, fontWeight: "700", color: "#0F1F1B", marginBottom: 8, lineHeight: 24 },
+  challengeAction: { fontSize: 14, color: "#3D5A52", lineHeight: 22, marginBottom: 10 },
+  tipRow: { flexDirection: "row", alignItems: "flex-start", gap: 6, backgroundColor: "#F5F8F6", borderRadius: 8, padding: 10, marginBottom: 10 },
+  tipText: { fontSize: 12, color: "#6B8F7E", flex: 1, lineHeight: 18 },
+  adaptacaoRow: { borderLeftWidth: 3, paddingLeft: 10, marginBottom: 10 },
+  adaptacaoText: { fontSize: 12, color: "#6B8F7E", fontStyle: "italic", lineHeight: 18 },
+  metaRow: { flexDirection: "row", alignItems: "center", gap: 5, marginBottom: 16 },
+  metaText: { fontSize: 12, color: "#6B8F7E" },
+  primaryBtn: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, borderRadius: 12, paddingVertical: 13, marginBottom: 8 },
+  primaryBtnText: { color: "#fff", fontSize: 15, fontWeight: "700" },
+  secondaryBtn: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 6, paddingVertical: 8 },
+  secondaryBtnText: { fontSize: 13, fontWeight: "500" },
+  checkinTitle: { fontSize: 17, fontWeight: "700", color: "#0F1F1B", marginBottom: 2 },
+  checkinSub: { fontSize: 12, color: "#6B8F7E", marginBottom: 16 },
+  yesNoRow: { flexDirection: "row", gap: 10, marginBottom: 16 },
+  yesNoBtn: { flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 7, paddingVertical: 11, borderRadius: 10, borderWidth: 1.5, borderColor: "#E8F0ED" },
+  yesNoBtnText: { fontSize: 13, fontWeight: "600", color: "#6B8F7E" },
+  noteRow: { flexDirection: "row", gap: 8, marginBottom: 5 },
+  noteBtn: { flex: 1, alignItems: "center", paddingVertical: 10, borderRadius: 10, borderWidth: 1.5, borderColor: "#E8F0ED" },
+  noteBtnNum: { fontSize: 16, fontWeight: "700", color: "#3D5A52" },
+  noteLabel: { fontSize: 11, color: "#6B8F7E", textAlign: "center", marginBottom: 12 },
+  reflectionBox: { backgroundColor: "#F5F8F6", borderRadius: 8, padding: 10, marginBottom: 10 },
+  reflectionLabel: { fontSize: 9, fontWeight: "700", color: "#A8C0B8", textTransform: "uppercase", letterSpacing: .08, marginBottom: 4 },
+  reflectionText: { fontSize: 12, color: "#3D5A52", lineHeight: 18, fontStyle: "italic" },
+  commentInput: { borderWidth: 1, borderColor: "#E8F0ED", borderRadius: 10, padding: 11, fontSize: 14, color: "#0F1F1B", minHeight: 52, marginBottom: 12 },
+  doneRow: { flexDirection: "row", alignItems: "center", gap: 12, marginBottom: 12 },
+  doneIcon: { width: 40, height: 40, borderRadius: 20, alignItems: "center", justifyContent: "center" },
+  doneTitle: { fontSize: 15, fontWeight: "700", color: "#0F1F1B" },
+  doneSub: { fontSize: 12, color: "#6B8F7E", marginTop: 2 },
+  coachBtn: { flexDirection: "row", alignItems: "center", gap: 5, borderWidth: 1.5, borderRadius: 20, paddingHorizontal: 12, paddingVertical: 7 },
+  coachBtnText: { fontSize: 12, fontWeight: "700" },
+  signalRow: { flexDirection: "row", alignItems: "center", gap: 7, borderWidth: 1, borderRadius: 10, padding: 10, marginBottom: 10 },
+  signalText: { fontSize: 12, fontWeight: "600" },
+  streakRow: { flexDirection: "row", alignItems: "center", gap: 6, paddingTop: 10, borderTopWidth: 1, borderTopColor: "#E8F0ED" },
+  streakText: { fontSize: 12, color: "#E8A838", fontWeight: "600" },
 });

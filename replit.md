@@ -80,6 +80,29 @@ index → onboarding/welcome → onboarding/current → onboarding/future → on
   - Response: `{ response, xpEarned: 2 }`
 - `GET /api/coach/history?deviceId=xxx` — Histórico de mensagens do coach
 
+## Jornadas de 30 Dias
+- `data/journeyCatalog.ts`: catálogo de 6 jornadas × 30 dias × 3 fases (180 práticas no total)
+  - Jornadas: Ansiedade, Disciplina, Autoestima, Relacionamentos, Propósito, Procrastinação
+  - Cada jornada tem `id`, `title`, `color`, `icon`, `targetDimension` (Big Five), 3 fases, 30 dias
+- `data/adaptiveEngine.ts`: motor de progressão adaptativa baseado no histórico de check-ins
+  - Sinais: `micro_step`, `easier_variant`, `alternative_approach`, `adjust_today`, `deepen`, `ready_to_advance`, `on_track`
+  - `analyzeProgress(checkins)` retorna sinal + `promptModifier` para o Claude
+- `routes/journeys.ts`: endpoints completos de jornadas com adaptação por IA
+- `components/UnifiedCheckin.tsx`: check-in unificado — detecta jornada ativa ou plano personalizado e exibe o desafio correto
+- `app/journeys/index.tsx`: catálogo de jornadas (rota `/journeys/index`)
+- `app/journeys/[id].tsx`: tela da jornada ativa (rota `/journeys/[id]`)
+- Navegação: card "Jornadas" na tab Perfil (verde `#166534`) → `/journeys/index`
+- DB: tabelas `user_journeys` + `journey_checkins` (schema em `lib/db/src/schema/journeys.ts`)
+- `hooks/usePlanGeneration.ts`: hook React que chama `/api/plan/generate` com Big5 automático do AsyncStorage
+
+### API Endpoints de Jornadas
+- `GET /api/journeys` — Catálogo de jornadas
+- `GET /api/journeys/active/:deviceId` — Jornada ativa do usuário
+- `POST /api/journeys/start` — Iniciar jornada: `{ deviceId, journeyId }`
+- `GET /api/journeys/day-challenge` — Desafio do dia com adaptação IA: `{ deviceId, journeyId }`
+- `POST /api/journeys/checkin` — Check-in da jornada: `{ deviceId, journeyId, day, phase, practiceKey, completed, note, comment }`
+- `GET /api/journeys/context/:deviceId/:journeyId` — Contexto unificado para UnifiedCheckin
+
 ## Teste Big Five de Personalidade
 - `data/big5.ts`: 120 itens em pt-BR, 5 dimensões × 6 facetas × 4 itens cada. Funções: `scoreAnswers()`, `qualitativeLevel()`, `buildBig5PromptBlock()`, `getPageItems(page)`
 - `components/RadarChart.tsx`: gráfico radar SVG nativo (react-native-svg), 5 eixos, suporta dados atuais + anteriores em sobreposição

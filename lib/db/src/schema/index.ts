@@ -23,3 +23,4 @@ export * from "./plan-logs";
 export * from "./daily-checkins";
 export * from "./coach-messages";
 export * from "./users";
+export * from "./journeys";

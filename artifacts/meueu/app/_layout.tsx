@@ -38,6 +38,8 @@ function RootLayoutNav() {
       <Stack.Screen name="assessment/result" />
       <Stack.Screen name="auth/login" />
       <Stack.Screen name="auth/register" />
+      <Stack.Screen name="journeys/index" />
+      <Stack.Screen name="journeys/[id]" />
     </Stack>
   );
 }

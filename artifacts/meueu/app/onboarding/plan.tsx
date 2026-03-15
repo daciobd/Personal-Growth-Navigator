@@ -15,8 +15,7 @@ import Animated, { FadeInDown } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Colors from "@/constants/colors";
 import { useApp } from "@/context/AppContext";
-import { generatePlan as generatePlanWithBig5, type PlanApproach } from "@/hooks/usePlanGeneration";
-import { getApiUrl } from "@/utils/api";
+import { usePlanGeneration, type GeneratedPlan, type GeneratedApproach } from "@/hooks/usePlanGeneration";
 
 type Practice = {
   abordagem: string;
@@ -26,13 +25,8 @@ type Practice = {
   frequencia: string;
 };
 
-type Plan = {
-  sintese: string;
-  fraseIntencao: string;
-  praticas: Practice[];
-  rawText?: string;
-  parseError?: boolean;
-};
+type Plan = GeneratedPlan;
+type PlanApproach = GeneratedApproach;
 
 const APPROACH_COLORS: Record<string, { bg: string; text: string; icon: string }> = {
   TCC: { bg: "#EFF6FF", text: "#1D4ED8", icon: "edit-3" },
@@ -55,6 +49,7 @@ export default function PlanScreen() {
   const colors = Colors.light;
   const insets = useSafeAreaInsets();
   const { profile, completeOnboarding, setPlan } = useApp();
+  const { generate, loading: hookLoading, error: hookError } = usePlanGeneration();
 
   const [plan, setPlanLocal] = useState<Plan | null>(null);
   const [approach, setApproach] = useState<PlanApproach | null>(null);
@@ -66,23 +61,15 @@ export default function PlanScreen() {
   const generatePlan = async () => {
     setLoading(true);
     setError(null);
-
-    const domain = getApiUrl();
-
     try {
-      const data = await generatePlanWithBig5(
+      const result = await generate(
         profile.currentAdjectives,
-        profile.futureAdjectives,
-        domain
+        profile.futureAdjectives
       );
-
-      if (!data.success) {
-        throw new Error(data.error ?? "Erro desconhecido");
-      }
-
-      setPlanLocal(data.plan as Plan);
-      setPlan(data.plan as Plan);
-      if (data.approach) setApproach(data.approach);
+      if (!result) throw new Error(hookError ?? "Erro ao gerar plano");
+      setPlanLocal(result.plan as Plan);
+      setPlan(result.plan as any);
+      setApproach(result.approach);
       if (Platform.OS !== "web") {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       }
@@ -213,7 +200,7 @@ export default function PlanScreen() {
                   <View style={styles.approachQuestionRow}>
                     <Feather name="message-circle" size={13} color="#16A34A" />
                     <Text style={[styles.approachQuestion, { color: "#166534", fontFamily: "Inter_400Regular" }]}>
-                      {approach.question}
+                      {approach.anchorQuestion}
                     </Text>
                   </View>
                 </View>

@@ -1,59 +1,106 @@
+// artifacts/meueu/hooks/usePlanGeneration.ts
+// Passa Big Five + assessmentNumber ao servidor.
+// Retorna plan + approach para exibição no frontend.
+
+import { useState, useCallback } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { BIG5_STORAGE_KEY, type StoredBig5 } from "@/data/big5";
-import { getApiUrl } from "@/utils/api";
+import { type B5Scores } from "../data/big5";
+import { getApiUrl } from "../utils/api";
 
-const PLAN_COUNT_KEY = "@meueu_plan_count_v1";
-
-export type PlanApproach = {
+export type GeneratedApproach = {
   key: string;
   name: string;
-  question: string;
+  anchorQuestion: string;
 };
 
-export async function generatePlan(
-  currentAdjectives: string[],
-  futureAdjectives: string[],
-  _legacyDomain?: string,
-  sessionId?: string
-): Promise<{ success: boolean; plan?: any; approach?: PlanApproach; error?: string }> {
-  const domain = getApiUrl();
-  let big5Scores: StoredBig5["scores"] | null = null;
-  let sessionCount = 1;
+export type GeneratedPlan = {
+  sintese: string;
+  fraseIntencao: string;
+  perguntaReflexao?: string;
+  praticas: Array<{
+    abordagem: string;
+    nome: string;
+    justificativa: string;
+    passos: string[];
+    frequencia: string;
+  }>;
+};
 
-  try {
-    const raw = await AsyncStorage.getItem(BIG5_STORAGE_KEY);
-    if (raw) {
-      const stored: StoredBig5 = JSON.parse(raw);
-      big5Scores = stored.scores;
+export type PlanResult = {
+  plan: GeneratedPlan;
+  approach: GeneratedApproach;
+  hasBig5: boolean;
+};
+
+export function usePlanGeneration() {
+  const [loading, setLoading] = useState(false);
+  const [error, setError]     = useState<string | null>(null);
+
+  const generate = useCallback(async (
+    currentAdjectives: string[],
+    futureAdjectives: string[]
+  ): Promise<PlanResult | null> => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      const domain = getApiUrl();
+      if (!domain) throw new Error("EXPO_PUBLIC_DOMAIN não configurado");
+
+      // Carrega Big Five e contagem de avaliações
+      let big5Scores: B5Scores | undefined;
+      let assessmentNumber = 1;
+      try {
+        const raw = await AsyncStorage.getItem("@meueu_assessments");
+        if (raw) {
+          const all = JSON.parse(raw) as Array<{ scores: B5Scores }>;
+          if (all.length > 0) {
+            big5Scores = all[all.length - 1].scores;
+            assessmentNumber = all.length;
+          }
+        }
+      } catch { /* Big Five opcional */ }
+
+      const res = await fetch(`${domain}/api/plan/generate`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          currentAdjectives,
+          futureAdjectives,
+          assessmentNumber,
+          ...(big5Scores ? { big5Scores } : {}),
+        }),
+      });
+
+      const data = await res.json() as {
+        success: boolean;
+        plan: GeneratedPlan;
+        approach: GeneratedApproach;
+        hasBig5: boolean;
+        error?: string;
+      };
+
+      if (!data.success) throw new Error(data.error ?? "Erro desconhecido");
+
+      // Persiste approach para uso no check-in e coach
+      await AsyncStorage.setItem(
+        "@meueu_current_approach",
+        JSON.stringify(data.approach)
+      );
+
+      return {
+        plan:    data.plan,
+        approach: data.approach,
+        hasBig5: data.hasBig5,
+      };
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "Erro ao gerar plano";
+      setError(msg);
+      return null;
+    } finally {
+      setLoading(false);
     }
-  } catch {
-    // No Big5 data — proceed without it
-  }
+  }, []);
 
-  try {
-    const rawCount = await AsyncStorage.getItem(PLAN_COUNT_KEY);
-    if (rawCount) sessionCount = parseInt(rawCount, 10) + 1;
-    await AsyncStorage.setItem(PLAN_COUNT_KEY, String(sessionCount));
-  } catch {
-    // Ignore count errors
-  }
-
-  const response = await fetch(`${domain}/api/plan/generate`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      currentAdjectives,
-      futureAdjectives,
-      sessionId,
-      big5Scores,
-      sessionCount,
-    }),
-  });
-
-  if (!response.ok) {
-    const err = await response.json().catch(() => ({}));
-    return { success: false, error: err.error ?? "Erro ao gerar plano." };
-  }
-
-  return response.json();
+  return { generate, loading, error };
 }

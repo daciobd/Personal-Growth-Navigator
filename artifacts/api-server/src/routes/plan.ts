@@ -1,12 +1,14 @@
 import { Router, type IRouter } from "express";
 import { anthropic } from "@workspace/integrations-anthropic-ai";
+import { db, planLogsTable } from "@workspace/db";
 
 const router: IRouter = Router();
 
 router.post("/plan/generate", async (req, res) => {
-  const { currentAdjectives, futureAdjectives } = req.body as {
+  const { currentAdjectives, futureAdjectives, sessionId } = req.body as {
     currentAdjectives: string[];
     futureAdjectives: string[];
+    sessionId?: string;
   };
 
   if (!Array.isArray(currentAdjectives) || !Array.isArray(futureAdjectives)) {
@@ -74,10 +76,8 @@ REGRAS IMPORTANTES:
 
     const rawText = message.content[0].type === "text" ? message.content[0].text : "";
 
-    // Robust JSON parsing with fallback
-    let planData;
+    let planData: any;
     try {
-      // Try to extract JSON from the response
       const jsonMatch = rawText.match(/\{[\s\S]*\}/);
       if (jsonMatch) {
         planData = JSON.parse(jsonMatch[0]);
@@ -85,8 +85,19 @@ REGRAS IMPORTANTES:
         throw new Error("No JSON found");
       }
     } catch {
-      // Fallback: return raw text so frontend can handle it
       planData = { rawText, parseError: true };
+    }
+
+    // Log plan to database (non-blocking)
+    if (!planData.parseError) {
+      db.insert(planLogsTable).values({
+        sessionId: sessionId ?? null,
+        currentAdjectives,
+        futureAdjectives,
+        sintese: planData.sintese ?? null,
+        fraseIntencao: planData.fraseIntencao ?? null,
+        praticas: planData.praticas ?? null,
+      }).catch((err: Error) => console.error("Failed to log plan:", err));
     }
 
     res.json({ success: true, plan: planData });

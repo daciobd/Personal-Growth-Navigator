@@ -3,6 +3,12 @@
 ## Visão Geral
 Aplicativo mobile Expo (React Native) em português (pt-BR) para transformação pessoal. Usuários selecionam adjetivos que descrevem o "eu atual" e o "eu futuro" e recebem intervenções terapêuticas personalizadas geradas por IA (Claude Haiku via Anthropic).
 
+## Painel Admin
+- URL: `/admin/` — artifact React + Vite separado
+- 5 seções: Dashboard, Intervenções, Adjetivos, Logs de Planos, Simulador de Perfil
+- API: rotas `/api/admin/stats`, `/api/admin/logs`, `/api/admin/interventions`, `/api/admin/adjectives`, `/api/admin/simulate`
+- Logs: cada plano gerado é salvo automaticamente em `plan_logs` no banco de dados
+
 ## Stack
 - **Frontend**: Expo (React Native + Web) com Expo Router
 - **Backend API**: Express.js (api-server)
@@ -17,9 +23,11 @@ Aplicativo mobile Expo (React Native) em português (pt-BR) para transformação
 artifacts/
   meueu/           # Expo app (previewPath: "/")
   api-server/      # Express API
+  admin/           # Painel admin React+Vite (previewPath: "/admin/")
 lib/
   integrations-anthropic-ai/  # Anthropic client wrapper
-  db/                          # Drizzle ORM + PostgreSQL
+  db/                          # Drizzle ORM + PostgreSQL (tabela: plan_logs)
+  content/                     # Dados compartilhados: adjetivos + intervenções
   api-zod/                     # Shared Zod schemas
 ```
 

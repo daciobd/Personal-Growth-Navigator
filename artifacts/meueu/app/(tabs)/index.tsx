@@ -10,7 +10,7 @@ import {
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { UnifiedCheckin } from "@/components/UnifiedCheckin";
+import UnifiedCheckin from "@/components/UnifiedCheckin";
 import { StreakBadge } from "@/components/StreakBadge";
 import { XPBar } from "@/components/XPBar";
 import Colors from "@/constants/colors";

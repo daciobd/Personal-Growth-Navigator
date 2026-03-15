@@ -1,6 +1,7 @@
 import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { router } from "expo-router";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import React, { useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
@@ -90,8 +91,11 @@ export default function PlanScreen() {
     return () => clearInterval(interval);
   }, []);
 
-  const handleDone = () => {
-    completeOnboarding();
+  const handleDone = async () => {
+    if (plan) {
+      await AsyncStorage.setItem("@meueu_plan", JSON.stringify(plan));
+    }
+    completeOnboarding(plan ?? undefined);
     if (Platform.OS !== "web") {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     }

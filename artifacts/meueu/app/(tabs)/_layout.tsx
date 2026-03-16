@@ -18,16 +18,16 @@ export default function TabLayout() {
         headerShown: false,
         tabBarActiveTintColor: ACTIVE,
         tabBarInactiveTintColor: INACTIVE,
-        tabBarStyle: isWeb
-          ? { display: "none" }
-          : {
-              backgroundColor: isIOS ? "transparent" : "#fff",
-              borderTopColor: BORDER,
-              borderTopWidth: 1,
-              height: 60,
-              paddingBottom: 8,
-              elevation: 0,
-            },
+        tabBarStyle: {
+          display: isWeb ? "none" : "flex",
+          backgroundColor: isIOS ? "transparent" : "#fff",
+          borderTopColor: BORDER,
+          borderTopWidth: 1,
+          height: 64,
+          paddingBottom: 10,
+          paddingTop: 6,
+          elevation: 0,
+        },
         tabBarLabelStyle: {
           fontSize: 11,
           fontWeight: "600",

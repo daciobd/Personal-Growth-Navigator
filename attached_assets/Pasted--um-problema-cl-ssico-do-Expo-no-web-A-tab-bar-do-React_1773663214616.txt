@@ -1,0 +1,89 @@
+É um problema clássico do Expo no web. A tab bar do React Navigation é um componente nativo — no celular ela renderiza como barra fixa na parte inferior, mas no browser ela simplesmente não aparece porque o CSS de posicionamento não funciona da mesma forma.
+
+Manda para o Replit Agent:
+
+---
+
+> "A barra de navegação inferior não aparece no browser web — só aparece no celular. Isso acontece porque o `TabBar` do React Navigation não tem estilo de posicionamento fixo para web.
+>
+> **Correção — forçar posicionamento fixo da tab bar no web:**
+>
+> Em `artifacts/meueu/app/(tabs)/_layout.tsx`, adicione ao `tabBarStyle`:
+> ```tsx
+> tabBarStyle: {
+>   backgroundColor: '#fff',
+>   borderTopColor: '#E8F0ED',
+>   borderTopWidth: 1,
+>   height: 60,
+>   paddingBottom: 8,
+>   // Correção para web:
+>   ...(Platform.OS === 'web' && {
+>     position: 'fixed' as any,
+>     bottom: 0,
+>     left: 0,
+>     right: 0,
+>     zIndex: 100,
+>   }),
+> },
+> ```
+> E adicione `import { Platform } from 'react-native';` no topo se não existir.
+>
+> **Correção adicional — padding no conteúdo para não ficar atrás da tab bar:**
+>
+> Em cada tela das tabs (index.tsx, profile.tsx, etc.), o ScrollView ou View principal precisa de `paddingBottom: 70` para o conteúdo não ficar escondido atrás da barra:
+> ```tsx
+> <ScrollView contentContainerStyle={{ paddingBottom: 70 }}>
+> ```
+>
+> **Alternativa mais robusta — tab bar customizada para web:**
+>
+> Se o `position: fixed` não funcionar bem com o Expo Router, crie um componente de navegação separado para web em `artifacts/meueu/components/WebTabBar.tsx`:
+> ```tsx
+> import { View, Pressable, Text, StyleSheet, Platform } from 'react-native';
+> import { router, usePathname } from 'expo-router';
+> import { Feather } from '@expo/vector-icons';
+>
+> const TABS = [
+>   { href: '/(tabs)', label: 'Hoje', icon: 'sun' },
+>   { href: '/journeys', label: 'Jornadas', icon: 'map' },
+>   { href: '/coach', label: 'Coach', icon: 'message-circle' },
+>   { href: '/(tabs)/profile', label: 'Meu Eu', icon: 'user' },
+> ] as const;
+>
+> export default function WebTabBar() {
+>   const pathname = usePathname();
+>   if (Platform.OS !== 'web') return null;
+>   return (
+>     <View style={styles.bar}>
+>       {TABS.map(tab => {
+>         const active = pathname === tab.href || pathname.startsWith(tab.href.replace('/(tabs)', ''));
+>         return (
+>           <Pressable key={tab.href} style={styles.tab} onPress={() => router.push(tab.href)}>
+>             <Feather name={tab.icon} size={22} color={active ? '#1B6B5A' : '#A8C0B8'} />
+>             <Text style={[styles.label, active && styles.labelActive]}>{tab.label}</Text>
+>           </Pressable>
+>         );
+>       })}
+>     </View>
+>   );
+> }
+>
+> const styles = StyleSheet.create({
+>   bar: { position: 'fixed' as any, bottom: 0, left: 0, right: 0, height: 60, backgroundColor: '#fff', borderTopWidth: 1, borderTopColor: '#E8F0ED', flexDirection: 'row', zIndex: 100 },
+>   tab: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 3 },
+>   label: { fontSize: 10, fontWeight: '600', color: '#A8C0B8' },
+>   labelActive: { color: '#1B6B5A' },
+> });
+> ```
+>
+> Depois adicione `<WebTabBar />` no final do layout raiz `_layout.tsx`, fora do Stack:
+> ```tsx
+> return (
+>   <>
+>     <Stack>...</Stack>
+>     <WebTabBar />
+>   </>
+> );
+> ```
+>
+> Isso garante que a barra aparece em todas as telas no web, com navegação funcional e tab ativa destacada em verde."

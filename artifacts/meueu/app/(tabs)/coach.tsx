@@ -1,5 +1,2 @@
-import { Redirect } from "expo-router";
+export { default } from "@/app/coach/index";
 
-export default function CoachTab() {
-  return <Redirect href="/coach" />;
-}

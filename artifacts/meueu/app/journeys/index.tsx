@@ -9,7 +9,7 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
-import { router } from "expo-router";
+import { router, useSegments } from "expo-router";
 import { getApiUrl } from "@/utils/api";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
@@ -27,6 +27,8 @@ type ActiveJourney = {
 
 export default function JourneysCatalog() {
   const insets = useSafeAreaInsets();
+  const segments = useSegments();
+  const isInTabs = segments.includes("(tabs)" as never);
   const [journeys, setJourneys]     = useState<JourneyMeta[]>([]);
   const [active, setActive]         = useState<ActiveJourney | null>(null);
   const [loading, setLoading]       = useState(true);
@@ -87,9 +89,11 @@ export default function JourneysCatalog() {
     <View style={[styles.screen, { paddingTop: insets.top }]}>
       {/* Header */}
       <View style={styles.header}>
-        <Pressable onPress={() => router.back()} style={styles.backBtn}>
-          <Feather name="arrow-left" size={20} color="#0F1F1B" />
-        </Pressable>
+        {!isInTabs && (
+          <Pressable onPress={() => router.back()} style={styles.backBtn}>
+            <Feather name="arrow-left" size={20} color="#0F1F1B" />
+          </Pressable>
+        )}
         <Text style={styles.headerTitle}>Jornadas de 30 dias</Text>
       </View>
 

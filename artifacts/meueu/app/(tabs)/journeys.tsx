@@ -1,5 +1,2 @@
-import { Redirect } from "expo-router";
+export { default } from "@/app/journeys/index";
 
-export default function JourneysTab() {
-  return <Redirect href="/journeys" />;
-}

@@ -1,5 +1,5 @@
 import { Feather } from "@expo/vector-icons";
-import { router } from "expo-router";
+import { router, useSegments } from "expo-router";
 import React, { useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
@@ -26,6 +26,8 @@ type Message = {
 export default function CoachScreen() {
   const colors = Colors.light;
   const insets = useSafeAreaInsets();
+  const segments = useSegments();
+  const isInTabs = segments.includes("(tabs)" as never);
   const { deviceId, recordCoachMessage } = useGamification();
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
@@ -135,7 +137,11 @@ export default function CoachScreen() {
 
   return (
     <KeyboardAvoidingView
-      style={[styles.container, { backgroundColor: colors.background }]}
+      style={[
+        styles.container,
+        { backgroundColor: colors.background },
+        Platform.OS === "web" && { paddingBottom: 60 },
+      ]}
       behavior={Platform.OS === "ios" ? "padding" : undefined}
       keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 0}
     >
@@ -143,15 +149,17 @@ export default function CoachScreen() {
         style={[
           styles.header,
           {
-            paddingTop: Platform.OS === "web" ? 67 : insets.top + 12,
+            paddingTop: insets.top + 12,
             borderBottomColor: colors.cardBorder,
             backgroundColor: colors.card,
           },
         ]}
       >
-        <Pressable onPress={() => router.back()} hitSlop={12}>
-          <Feather name="arrow-left" size={22} color={colors.text} />
-        </Pressable>
+        {!isInTabs && (
+          <Pressable onPress={() => router.back()} hitSlop={12}>
+            <Feather name="arrow-left" size={22} color={colors.text} />
+          </Pressable>
+        )}
         <View style={styles.headerInfo}>
           <Text style={[styles.headerTitle, { color: colors.text, fontFamily: "Inter_700Bold" }]}>
             Coach
@@ -175,7 +183,7 @@ export default function CoachScreen() {
           keyExtractor={(_, i) => i.toString()}
           contentContainerStyle={[
             styles.messageList,
-            { paddingBottom: Platform.OS === "web" ? 34 : insets.bottom + 80 },
+            { paddingBottom: Platform.OS === "web" ? 34 : insets.bottom + 16 },
           ]}
           ListEmptyComponent={
             <View style={styles.emptyState}>

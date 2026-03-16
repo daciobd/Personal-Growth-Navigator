@@ -69,6 +69,7 @@ export default function TabLayout() {
           tabBarIcon: ({ color }) => (
             <Feather name="message-circle" size={22} color={color} />
           ),
+          tabBarHideOnKeyboard: true,
         }}
       />
       <Tabs.Screen

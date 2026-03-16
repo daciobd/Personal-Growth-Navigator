@@ -27,7 +27,7 @@ async function createRefreshToken(userId: number): Promise<string> {
 }
 
 // POST /api/auth/register
-router.post("/auth/register", async (req, res) => {
+router.post("/register", async (req, res) => {
   const { email, name, password, deviceId } = req.body as {
     email: string;
     name: string;
@@ -71,7 +71,7 @@ router.post("/auth/register", async (req, res) => {
 });
 
 // POST /api/auth/login
-router.post("/auth/login", async (req, res) => {
+router.post("/login", async (req, res) => {
   const { email, password } = req.body as { email: string; password: string };
 
   if (!email || !password) {
@@ -108,7 +108,7 @@ router.post("/auth/login", async (req, res) => {
 });
 
 // POST /api/auth/refresh
-router.post("/auth/refresh", async (req, res) => {
+router.post("/refresh", async (req, res) => {
   const { refreshToken } = req.body as { refreshToken: string };
 
   if (!refreshToken) {
@@ -149,7 +149,7 @@ router.post("/auth/refresh", async (req, res) => {
 });
 
 // POST /api/auth/logout
-router.post("/auth/logout", async (req, res) => {
+router.post("/logout", async (req, res) => {
   const { refreshToken } = req.body as { refreshToken?: string };
   if (refreshToken) {
     await db.delete(refreshTokensTable).where(eq(refreshTokensTable.token, refreshToken)).catch(() => {});
@@ -158,7 +158,7 @@ router.post("/auth/logout", async (req, res) => {
 });
 
 // POST /api/auth/migrate — reassigns anonymous deviceId data to the logged-in user
-router.post("/auth/migrate", async (req, res) => {
+router.post("/migrate", async (req, res) => {
   const authHeader = req.headers.authorization;
   if (!authHeader?.startsWith("Bearer ")) {
     res.status(401).json({ error: "Não autorizado." });

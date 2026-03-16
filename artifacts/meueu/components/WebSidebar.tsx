@@ -30,21 +30,6 @@ const ITEMS = [
   },
 ];
 
-export const SIDEBAR_PATHS = [
-  "/",
-  "/profile",
-  "/journeys",
-  "/coach",
-  "/intervention",
-  "/(tabs)",
-];
-
-export function shouldShowSidebar(pathname: string): boolean {
-  return SIDEBAR_PATHS.some(
-    (p) => pathname === p || pathname.startsWith(p + "/")
-  );
-}
-
 function isItemActive(pathMatch: string[], pathname: string): boolean {
   return pathMatch.some(
     (p) => pathname === p || pathname.startsWith(p + "/")
@@ -61,7 +46,6 @@ export default function WebSidebar() {
 
   if (Platform.OS !== "web") return null;
   if (!mounted) return null;
-  if (!shouldShowSidebar(pathname)) return null;
 
   return (
     <View style={styles.sidebar}>

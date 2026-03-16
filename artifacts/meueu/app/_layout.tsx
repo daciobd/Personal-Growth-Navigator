@@ -7,7 +7,7 @@ import {
 } from "@expo-google-fonts/inter";
 import { Feather } from "@expo/vector-icons";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { Stack, usePathname } from "expo-router";
+import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import React, { useEffect } from "react";
 import { Platform, View } from "react-native";
@@ -16,7 +16,7 @@ import { PwaHead } from "@/components/PwaHead";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 
 import { ErrorBoundary } from "@/components/ErrorBoundary";
-import WebSidebar, { shouldShowSidebar } from "@/components/WebSidebar";
+import WebSidebar from "@/components/WebSidebar";
 import { AppProvider } from "@/context/AppContext";
 import { AuthProvider } from "@/context/AuthContext";
 import { GamificationProvider } from "@/context/GamificationContext";
@@ -26,11 +26,10 @@ SplashScreen.preventAutoHideAsync().catch(() => {});
 const queryClient = new QueryClient();
 
 function RootLayoutNav() {
-  const pathname = usePathname();
-  const sidebarVisible = Platform.OS === "web" && shouldShowSidebar(pathname);
+  const isWeb = Platform.OS === "web";
 
   return (
-    <View style={{ flex: 1, paddingLeft: sidebarVisible ? 220 : 0 }}>
+    <View style={{ flex: 1, paddingLeft: isWeb ? 220 : 0 }}>
       <Stack screenOptions={{ headerShown: false, animation: "slide_from_right" }}>
         <Stack.Screen name="index" />
         <Stack.Screen name="onboarding/welcome" />

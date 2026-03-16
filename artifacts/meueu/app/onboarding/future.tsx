@@ -44,7 +44,7 @@ export default function FutureScreen() {
         styles.container,
         {
           backgroundColor: colors.background,
-          paddingTop: Platform.OS === "web" ? 67 : insets.top,
+          paddingTop: insets.top,
         },
       ]}
     >

@@ -64,7 +64,7 @@ export default function RegisterScreen() {
         contentContainerStyle={[
           styles.content,
           {
-            paddingTop: Platform.OS === "web" ? 67 + 16 : insets.top + 16,
+            paddingTop: insets.top + 16,
             paddingBottom: Platform.OS === "web" ? 34 + 32 : insets.bottom + 32,
           },
         ]}

@@ -72,7 +72,7 @@ export default function WelcomeScreen() {
         styles.container,
         {
           backgroundColor: colors.background,
-          paddingTop: Platform.OS === "web" ? 67 : insets.top,
+          paddingTop: insets.top,
           paddingBottom: Platform.OS === "web" ? 34 : insets.bottom,
         },
       ]}

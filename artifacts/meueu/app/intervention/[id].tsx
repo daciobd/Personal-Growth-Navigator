@@ -89,14 +89,14 @@ export default function InterventionScreen() {
           styles.completedContainer,
           {
             backgroundColor: colors.background,
-            paddingTop: Platform.OS === "web" ? 67 : insets.top,
-            paddingBottom: Platform.OS === "web" ? 34 : insets.bottom,
+            paddingTop: insets.top,
+            paddingBottom: Platform.OS === "web" ? 70 : insets.bottom,
           },
         ]}
       >
         <Pressable
           onPress={() => router.back()}
-          style={[styles.backBtn, { top: Platform.OS === "web" ? 67 + 16 : insets.top + 16 }]}
+          style={[styles.backBtn, { top: insets.top + 16 }]}
         >
           <Feather name="x" size={22} color={colors.text} />
         </Pressable>
@@ -150,8 +150,8 @@ export default function InterventionScreen() {
         styles.container,
         {
           backgroundColor: colors.background,
-          paddingTop: Platform.OS === "web" ? 67 : insets.top,
-          paddingBottom: Platform.OS === "web" ? 34 : insets.bottom,
+          paddingTop: insets.top,
+          paddingBottom: Platform.OS === "web" ? 70 : insets.bottom,
         },
       ]}
     >

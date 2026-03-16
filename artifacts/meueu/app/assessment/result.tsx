@@ -108,7 +108,7 @@ export default function AssessmentResultScreen() {
         style={[
           styles.header,
           {
-            paddingTop: Platform.OS === "web" ? 67 : insets.top + 8,
+            paddingTop: insets.top + 8,
             borderBottomColor: colors.cardBorder,
             backgroundColor: colors.card,
           },

@@ -5,11 +5,12 @@ import {
   Inter_700Bold,
   useFonts,
 } from "@expo-google-fonts/inter";
-import { Feather } from "@expo/vector-icons";
+import Feather from "@expo/vector-icons/Feather";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Stack } from "expo-router";
+import * as Font from "expo-font";
 import * as SplashScreen from "expo-splash-screen";
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { Platform, View } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { PwaHead } from "@/components/PwaHead";
@@ -57,14 +58,20 @@ export default function RootLayout() {
     Inter_500Medium,
     Inter_600SemiBold,
     Inter_700Bold,
-    ...Feather.font,
   });
+  const [iconsLoaded, setIconsLoaded] = useState(false);
 
   useEffect(() => {
-    if (fontsLoaded || fontError) {
+    Font.loadAsync(Feather.font)
+      .catch(() => {})
+      .finally(() => setIconsLoaded(true));
+  }, []);
+
+  useEffect(() => {
+    if ((fontsLoaded || fontError) && iconsLoaded) {
       SplashScreen.hideAsync().catch(() => {});
     }
-  }, [fontsLoaded, fontError]);
+  }, [fontsLoaded, fontError, iconsLoaded]);
 
   useEffect(() => {
     if (Platform.OS !== "web") return;
@@ -85,7 +92,7 @@ export default function RootLayout() {
     }
   }, []);
 
-  if (!fontsLoaded && !fontError) return null;
+  if ((!fontsLoaded && !fontError) || !iconsLoaded) return null;
 
   return (
     <SafeAreaProvider>

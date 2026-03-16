@@ -1,4 +1,4 @@
-export type Category = "Emocional" | "Cognitivo" | "Social" | "Comportamental" | "Valores";
+export type Category = "Emocional" | "Cognitivo" | "Social" | "Comportamental" | "Valores" | "Forças";
 
 export type AdjectiveItem = {
   label: string;
@@ -11,6 +11,7 @@ export const CATEGORIES: Category[] = [
   "Social",
   "Comportamental",
   "Valores",
+  "Forças",
 ];
 
 export const CATEGORY_ICONS: Record<Category, string> = {
@@ -19,6 +20,7 @@ export const CATEGORY_ICONS: Record<Category, string> = {
   Social: "users",
   Comportamental: "activity",
   Valores: "star",
+  Forças: "zap",
 };
 
 export const CATEGORY_COLORS: Record<Category, { bg: string; text: string; active: string }> = {
@@ -27,6 +29,7 @@ export const CATEGORY_COLORS: Record<Category, { bg: string; text: string; activ
   Social: { bg: "#F0FDF4", text: "#166534", active: "#16A34A" },
   Comportamental: { bg: "#FFF7ED", text: "#9A3412", active: "#EA580C" },
   Valores: { bg: "#FAF5FF", text: "#6B21A8", active: "#9333EA" },
+  Forças: { bg: "#F0FFF8", text: "#1B6B5A", active: "#0F6E56" },
 };
 
 export const CURRENT_ADJECTIVES: AdjectiveItem[] = [
@@ -77,11 +80,8 @@ export const CURRENT_ADJECTIVES: AdjectiveItem[] = [
   { label: "desmotivado", category: "Comportamental" },
   { label: "acelerado", category: "Comportamental" },
   { label: "desorganizado", category: "Comportamental" },
-  { label: "impulsivo", category: "Comportamental" },
   { label: "negligente", category: "Comportamental" },
   { label: "reativo", category: "Comportamental" },
-  { label: "evitativo", category: "Comportamental" },
-  { label: "dependente", category: "Comportamental" },
   // Valores
   { label: "perdido", category: "Valores" },
   { label: "sem propósito", category: "Valores" },
@@ -91,10 +91,35 @@ export const CURRENT_ADJECTIVES: AdjectiveItem[] = [
   { label: "egoísta", category: "Valores" },
   { label: "inflexível", category: "Valores" },
   { label: "desengajado", category: "Valores" },
-  { label: "fechado", category: "Valores" },
   { label: "desconectado", category: "Valores" },
   { label: "inautêntico", category: "Valores" },
   { label: "indiferente", category: "Valores" },
+  // Forças (Pontos fortes)
+  { label: "calmo", category: "Forças" },
+  { label: "resiliente", category: "Forças" },
+  { label: "empático", category: "Forças" },
+  { label: "grato", category: "Forças" },
+  { label: "esperançoso", category: "Forças" },
+  { label: "criativo", category: "Forças" },
+  { label: "curioso", category: "Forças" },
+  { label: "focado", category: "Forças" },
+  { label: "reflexivo", category: "Forças" },
+  { label: "estratégico", category: "Forças" },
+  { label: "caloroso", category: "Forças" },
+  { label: "confiável", category: "Forças" },
+  { label: "comunicativo", category: "Forças" },
+  { label: "generoso", category: "Forças" },
+  { label: "assertivo", category: "Forças" },
+  { label: "disciplinado", category: "Forças" },
+  { label: "organizado", category: "Forças" },
+  { label: "proativo", category: "Forças" },
+  { label: "perseverante", category: "Forças" },
+  { label: "consistente", category: "Forças" },
+  { label: "autêntico", category: "Forças" },
+  { label: "íntegro", category: "Forças" },
+  { label: "compassivo", category: "Forças" },
+  { label: "corajoso", category: "Forças" },
+  { label: "presente", category: "Forças" },
 ];
 
 export const FUTURE_ADJECTIVES: AdjectiveItem[] = [

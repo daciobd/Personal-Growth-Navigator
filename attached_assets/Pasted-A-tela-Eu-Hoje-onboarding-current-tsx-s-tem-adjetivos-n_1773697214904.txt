@@ -1,0 +1,40 @@
+A tela 'Eu Hoje' (onboarding/current.tsx) só tem adjetivos negativos, o que distorce o perfil Big Five para N sempre alto. Preciso adicionar adjetivos positivos que descrevem traços que a pessoa já tem.
+1. Adicione uma nova categoria 'Pontos fortes' no filtro de categorias:
+tsx{ id: 'forcas', label: '⭐ Pontos fortes', icon: 'star' }
+2. Adicione estes adjetivos positivos ao array de adjetivos da tela atual:
+typescript// Emocional positivo
+{ text: 'calmo', category: 'forcas' },
+{ text: 'resiliente', category: 'forcas' },
+{ text: 'empático', category: 'forcas' },
+{ text: 'grato', category: 'forcas' },
+{ text: 'esperançoso', category: 'forcas' },
+// Cognitivo positivo
+{ text: 'criativo', category: 'forcas' },
+{ text: 'curioso', category: 'forcas' },
+{ text: 'focado', category: 'forcas' },
+{ text: 'reflexivo', category: 'forcas' },
+{ text: 'estratégico', category: 'forcas' },
+// Social positivo
+{ text: 'caloroso', category: 'forcas' },
+{ text: 'confiável', category: 'forcas' },
+{ text: 'comunicativo', category: 'forcas' },
+{ text: 'generoso', category: 'forcas' },
+{ text: 'assertivo', category: 'forcas' },
+// Comportamental positivo
+{ text: 'disciplinado', category: 'forcas' },
+{ text: 'organizado', category: 'forcas' },
+{ text: 'proativo', category: 'forcas' },
+{ text: 'perseverante', category: 'forcas' },
+{ text: 'consistente', category: 'forcas' },
+// Valores positivo
+{ text: 'autêntico', category: 'forcas' },
+{ text: 'íntegro', category: 'forcas' },
+{ text: 'compassivo', category: 'forcas' },
+{ text: 'corajoso', category: 'forcas' },
+{ text: 'presente', category: 'forcas' },
+3. Atualize o texto de instrução da tela:
+De: "Selecione os adjetivos que melhor descrevem como você se vê agora"
+Para: "Selecione os adjetivos que descrevem como você é hoje — tanto desafios quanto pontos fortes"
+4. Estilo visual para distinguir positivos de negativos:
+Adjetivos da categoria 'forcas' devem ter borda e texto verde (#1B6B5A) quando não selecionados, para distinguir visualmente dos negativos (borda cinza). Quando selecionados, mantém o fundo colorido padrão.
+Isso garante que o Big Five estimado reflete o perfil real — com N, E, A, O, C balanceados — e não apenas quem a pessoa não quer ser."

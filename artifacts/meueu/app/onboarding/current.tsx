@@ -74,7 +74,7 @@ export default function CurrentScreen() {
             Eu Hoje
           </Text>
           <Text style={[styles.subtitle, { color: colors.textSecondary, fontFamily: "Inter_400Regular" }]}>
-            Selecione os adjetivos que melhor descrevem como você se vê agora. Use as categorias para filtrar.
+            Selecione os adjetivos que descrevem como você é hoje — tanto desafios quanto pontos fortes.
           </Text>
         </View>
 

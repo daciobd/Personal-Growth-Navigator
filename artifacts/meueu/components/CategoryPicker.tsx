@@ -18,6 +18,15 @@ import {
   Category,
 } from "@/data/adjectives";
 
+const CATEGORY_LABELS: Record<Category, string> = {
+  Emocional: "Emocional",
+  Cognitivo: "Cognitivo",
+  Social: "Social",
+  Comportamental: "Comportamental",
+  Valores: "Valores",
+  Forças: "Pontos fortes",
+};
+
 type Props = {
   adjectives: AdjectiveItem[];
   selected: string[];
@@ -35,6 +44,7 @@ function AdjectiveChipItem({
 }) {
   const colors = Colors.light;
   const catColor = CATEGORY_COLORS[item.category];
+  const isStrength = item.category === "Forças";
 
   return (
     <Pressable
@@ -43,7 +53,11 @@ function AdjectiveChipItem({
         chipStyles.chip,
         {
           backgroundColor: selected ? catColor.active : colors.chip.default,
-          borderColor: selected ? catColor.active : "transparent",
+          borderColor: selected
+            ? catColor.active
+            : isStrength
+            ? catColor.text
+            : "transparent",
         },
       ]}
     >
@@ -51,7 +65,11 @@ function AdjectiveChipItem({
         style={[
           chipStyles.label,
           {
-            color: selected ? "#fff" : colors.chip.textDefault,
+            color: selected
+              ? "#fff"
+              : isStrength
+              ? catColor.text
+              : colors.chip.textDefault,
             fontFamily: selected ? "Inter_600SemiBold" : "Inter_500Medium",
           },
         ]}
@@ -121,6 +139,7 @@ export function CategoryPicker({ adjectives, selected, onToggle }: Props) {
         {CATEGORIES.map((cat) => {
           const catColor = CATEGORY_COLORS[cat];
           const isActive = activeCategory === cat;
+          const isStrengthCat = cat === "Forças";
           return (
             <Pressable
               key={cat}
@@ -129,6 +148,8 @@ export function CategoryPicker({ adjectives, selected, onToggle }: Props) {
                 styles.filterChip,
                 {
                   backgroundColor: isActive ? catColor.active : catColor.bg,
+                  borderWidth: isStrengthCat && !isActive ? 1.5 : 0,
+                  borderColor: isStrengthCat && !isActive ? catColor.text : "transparent",
                 },
               ]}
             >
@@ -142,11 +163,11 @@ export function CategoryPicker({ adjectives, selected, onToggle }: Props) {
                   styles.filterText,
                   {
                     color: isActive ? "#fff" : catColor.text,
-                    fontFamily: "Inter_500Medium",
+                    fontFamily: isStrengthCat && !isActive ? "Inter_600SemiBold" : "Inter_500Medium",
                   },
                 ]}
               >
-                {cat}
+                {CATEGORY_LABELS[cat]}
               </Text>
             </Pressable>
           );

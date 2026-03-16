@@ -1,8 +1,8 @@
 /**
- * MeuEu Service Worker v2 — produção apenas.
+ * MeuEu Service Worker v3 — produção apenas.
  * Força limpeza do cache antigo e não cacheia em dev.
  */
-const CACHE_NAME = "meueu-v2";
+const CACHE_NAME = "meueu-v3";
 
 const STATIC_ASSETS = [
   "/manifest.json",

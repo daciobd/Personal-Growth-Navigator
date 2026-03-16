@@ -1,6 +1,7 @@
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Feather } from "@expo/vector-icons";
 import { router } from "expo-router";
-import React, { useMemo } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
   Platform,
   Pressable,
@@ -39,6 +40,13 @@ export default function TodayScreen() {
   const { profile } = useApp();
   const { streak } = useGamification();
   const plan = profile.generatedPlan;
+  const [hasAssessment, setHasAssessment] = useState(true);
+
+  useEffect(() => {
+    AsyncStorage.getItem("@meueu_assessments").then((val) => {
+      setHasAssessment(val !== null);
+    });
+  }, []);
 
   const interventions = useMemo(
     () =>
@@ -78,6 +86,25 @@ export default function TodayScreen() {
         </View>
         <StreakBadge days={streak || profile.streakDays} />
       </View>
+
+      {/* Big Five CTA */}
+      {!hasAssessment && (
+        <Pressable
+          onPress={() => router.push("/assessment")}
+          style={({ pressed }) => [styles.bigFiveCard, { opacity: pressed ? 0.9 : 1 }]}
+        >
+          <Feather name="bar-chart-2" size={22} color="#fff" />
+          <View style={{ flex: 1 }}>
+            <Text style={[styles.bigFiveTitle, { fontFamily: "Inter_700Bold" }]}>
+              Descubra seu perfil Big Five
+            </Text>
+            <Text style={[styles.bigFiveSub, { fontFamily: "Inter_400Regular" }]}>
+              120 itens · 30 facetas · 15 min · Científico
+            </Text>
+          </View>
+          <Feather name="arrow-right" size={18} color="#fff" />
+        </Pressable>
+      )}
 
       {/* Daily Check-in unificado */}
       <UnifiedCheckin />
@@ -306,4 +333,14 @@ const styles = StyleSheet.create({
   miniRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
   miniTitle: { fontSize: 14 },
   miniTherapy: { fontSize: 12 },
+  bigFiveCard: {
+    backgroundColor: "#3A5A8C",
+    borderRadius: 14,
+    padding: 16,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+  },
+  bigFiveTitle: { color: "#fff", fontSize: 15 },
+  bigFiveSub: { color: "rgba(255,255,255,0.75)", fontSize: 12, marginTop: 2 },
 });

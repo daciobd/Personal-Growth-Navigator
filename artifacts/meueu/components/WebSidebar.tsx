@@ -17,6 +17,12 @@ const ITEMS = [
     navigate: () => router.replace("/(tabs)/profile"),
   },
   {
+    label: "Teste Big Five",
+    icon: "bar-chart-2" as const,
+    pathMatch: ["/assessment"],
+    navigate: () => router.push("/assessment"),
+  },
+  {
     label: "Jornadas",
     icon: "map" as const,
     pathMatch: ["/journeys"],

@@ -13,6 +13,7 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { CategoryPicker } from "@/components/CategoryPicker";
 import { ProgressBar } from "@/components/ProgressBar";
+import Big5LivePreview from "@/components/Big5LivePreview";
 import Colors from "@/constants/colors";
 import { useApp } from "@/context/AppContext";
 import { CURRENT_ADJECTIVES } from "@/data/adjectives";
@@ -81,6 +82,11 @@ export default function CurrentScreen() {
           adjectives={CURRENT_ADJECTIVES}
           selected={selected}
           onToggle={toggle}
+        />
+
+        <Big5LivePreview
+          currentAdjectives={selected}
+          compact={selected.length < 5}
         />
 
         <View style={{ height: 100 }} />

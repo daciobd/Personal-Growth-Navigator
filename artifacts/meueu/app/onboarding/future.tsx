@@ -13,6 +13,7 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { CategoryPicker } from "@/components/CategoryPicker";
 import { ProgressBar } from "@/components/ProgressBar";
+import Big5LivePreview from "@/components/Big5LivePreview";
 import Colors from "@/constants/colors";
 import { useApp } from "@/context/AppContext";
 import { FUTURE_ADJECTIVES } from "@/data/adjectives";
@@ -20,7 +21,7 @@ import { FUTURE_ADJECTIVES } from "@/data/adjectives";
 export default function FutureScreen() {
   const colors = Colors.light;
   const insets = useSafeAreaInsets();
-  const { setFutureAdjectives } = useApp();
+  const { setFutureAdjectives, currentAdjectives } = useApp();
   const [selected, setSelected] = useState<string[]>([]);
 
   const toggle = (label: string) => {
@@ -81,6 +82,12 @@ export default function FutureScreen() {
           adjectives={FUTURE_ADJECTIVES}
           selected={selected}
           onToggle={toggle}
+        />
+
+        <Big5LivePreview
+          currentAdjectives={currentAdjectives}
+          futureAdjectives={selected}
+          compact={false}
         />
 
         <View style={{ height: 100 }} />

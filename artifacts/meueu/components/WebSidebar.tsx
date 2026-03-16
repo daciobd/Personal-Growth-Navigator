@@ -2,6 +2,7 @@ import { Feather } from "@expo/vector-icons";
 import { router, usePathname } from "expo-router";
 import React, { useEffect, useState } from "react";
 import { Platform, Pressable, StyleSheet, Text, View } from "react-native";
+import { useAuth } from "@/context/AuthContext";
 
 const ITEMS = [
   {
@@ -45,6 +46,7 @@ function isItemActive(pathMatch: string[], pathname: string): boolean {
 export default function WebSidebar() {
   const pathname = usePathname();
   const [mounted, setMounted] = useState(false);
+  const { isLoggedIn, user } = useAuth();
 
   useEffect(() => {
     setMounted(true);
@@ -52,6 +54,8 @@ export default function WebSidebar() {
 
   if (Platform.OS !== "web") return null;
   if (!mounted) return null;
+
+  const authActive = pathname.includes("auth") || pathname.includes("profile");
 
   return (
     <View style={styles.sidebar}>
@@ -86,6 +90,31 @@ export default function WebSidebar() {
             </Pressable>
           );
         })}
+      </View>
+
+      <View style={styles.footer}>
+        <Pressable
+          style={({ pressed }) => [
+            styles.item,
+            authActive && styles.itemActive,
+            { opacity: pressed ? 0.7 : 1 },
+          ]}
+          onPress={() =>
+            router.push(isLoggedIn ? "/(tabs)/profile" : "/auth/login")
+          }
+        >
+          <Feather
+            name={isLoggedIn ? "user-check" : "log-in"}
+            size={18}
+            color={authActive ? "#1B6B5A" : "#6B8F7E"}
+          />
+          <Text
+            style={[styles.label, authActive && styles.labelActive]}
+            numberOfLines={1}
+          >
+            {isLoggedIn ? user?.name || "Meu perfil" : "Entrar / Criar conta"}
+          </Text>
+        </Pressable>
       </View>
     </View>
   );
@@ -133,6 +162,13 @@ const styles = StyleSheet.create({
     color: "#0F1F1B",
   },
   nav: { gap: 4 },
+  footer: {
+    // @ts-ignore
+    position: "absolute",
+    bottom: 24,
+    left: 16,
+    right: 16,
+  },
   item: {
     flexDirection: "row",
     alignItems: "center",

@@ -1,7 +1,7 @@
 import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { router } from "expo-router";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Platform,
   Pressable,
@@ -10,6 +10,7 @@ import {
   Text,
   View,
 } from "react-native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { CategoryPicker } from "@/components/CategoryPicker";
 import { ProgressBar } from "@/components/ProgressBar";
@@ -21,8 +22,20 @@ import { FUTURE_ADJECTIVES } from "@/data/adjectives";
 export default function FutureScreen() {
   const colors = Colors.light;
   const insets = useSafeAreaInsets();
-  const { setFutureAdjectives, currentAdjectives } = useApp();
+  const { setFutureAdjectives } = useApp();
   const [selected, setSelected] = useState<string[]>([]);
+  const [traitAdj, setTraitAdj] = useState<string[]>([]);
+
+  useEffect(() => {
+    (async () => {
+      const traitsRaw = await AsyncStorage.getItem("@meueu_trait_adjectives");
+      const currentRaw = await AsyncStorage.getItem("@meueu_current_adjectives");
+      const adj = traitsRaw
+        ? JSON.parse(traitsRaw)
+        : currentRaw ? JSON.parse(currentRaw) : [];
+      setTraitAdj(adj);
+    })();
+  }, []);
 
   const toggle = (label: string) => {
     setSelected((prev) =>
@@ -55,10 +68,10 @@ export default function FutureScreen() {
             <Feather name="arrow-left" size={20} color={colors.text} />
           </Pressable>
           <Text style={[styles.step, { color: colors.textMuted, fontFamily: "Inter_500Medium" }]}>
-            Etapa 2 de 2
+            Etapa 3 de 3
           </Text>
         </View>
-        <ProgressBar progress={2} total={2} />
+        <ProgressBar progress={3} total={3} />
       </View>
 
       <ScrollView
@@ -85,7 +98,7 @@ export default function FutureScreen() {
         />
 
         <Big5LivePreview
-          currentAdjectives={currentAdjectives}
+          currentAdjectives={traitAdj}
           futureAdjectives={selected}
           compact={false}
         />

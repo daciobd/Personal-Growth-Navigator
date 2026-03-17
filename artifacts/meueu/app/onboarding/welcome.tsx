@@ -50,7 +50,7 @@ const APPROACHES = [
 ];
 
 const STEPS = [
-  { num: "1", label: "Eu Hoje", desc: "Quem você é agora" },
+  { num: "1", label: "Sua personalidade", desc: "Traços + estado atual" },
   { num: "2", label: "Eu Futuro", desc: "Quem você quer ser" },
   { num: "3", label: "Seu Plano", desc: "IA gera seu caminho" },
 ];
@@ -63,7 +63,7 @@ export default function WelcomeScreen() {
     if (Platform.OS !== "web") {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     }
-    router.push("/onboarding/current");
+    router.push("/onboarding/traits");
   };
 
   return (

@@ -1,7 +1,8 @@
-// artifacts/api-server/src/routes/plan.ts
-// Integra as 8 abordagens do "eu futuro" ao prompt do Claude.
-// A abordagem é selecionada automaticamente pelo perfil Big Five.
-// Retorna `approach` no JSON para o frontend exibir ao usuário.
+// artifacts/api-server/src/routes/plan.ts (atualizado)
+// Integra traços + estado + Big Five ao prompt do Claude.
+// Traços → estimativa Big Five (estável)
+// Estado → contexto emocional atual (volátil)
+// O Claude recebe os dois separados e gera síntese diferenciada.
 
 import { Router, type IRouter } from "express";
 import { anthropic } from "@workspace/integrations-anthropic-ai";
@@ -11,20 +12,11 @@ import { selectFutureApproach } from "../data/futureApproaches.js";
 
 const router: IRouter = Router();
 
-// ── Helpers ───────────────────────────────────────────────
 type DimKey = "N" | "E" | "O" | "A" | "C";
 
 const DIM_NAMES: Record<DimKey, string> = {
   N: "Neuroticismo", E: "Extroversão", O: "Abertura",
   A: "Amabilidade",  C: "Conscienciosidade",
-};
-
-const FACET_NAMES: Record<string, string> = {
-  N1:"Ansiedade",N2:"Hostilidade",N3:"Depressão",N4:"Autoconsciência",N5:"Impulsividade",N6:"Vulnerabilidade",
-  E1:"Cordialidade",E2:"Gregarismo",E3:"Assertividade",E4:"Atividade",E5:"Busca de excitação",E6:"Emoções positivas",
-  O1:"Fantasia",O2:"Estética",O3:"Sentimentos",O4:"Ações",O5:"Ideias",O6:"Valores",
-  A1:"Confiança",A2:"Franqueza",A3:"Altruísmo",A4:"Complacência",A5:"Modéstia",A6:"Sensibilidade",
-  C1:"Competência",C2:"Ordem",C3:"Senso de dever",C4:"Realização",C5:"Autodisciplina",C6:"Deliberação",
 };
 
 function levelLabel(p: number): string {
@@ -36,79 +28,88 @@ function levelLabel(p: number): string {
   return "muito alto";
 }
 
-// ── Route ─────────────────────────────────────────────────
-router.post("/generate", async (req, res) => {
+router.post("/plan/generate", async (req, res) => {
   const {
+    // Novos campos v2
+    traitAdjectives,     // traços estáveis → Big Five
+    stateAdjectives,     // estado atual → contexto
+    // Legados (compatibilidade)
     currentAdjectives,
     futureAdjectives,
+    // Big Five (opcional, de avaliação completa ou estimativa)
     big5Scores,
     assessmentNumber = 1,
   } = req.body as {
-    currentAdjectives: string[];
-    futureAdjectives: string[];
-    big5Scores?: {
-      dims: Record<string, number>;
-      facets: Record<string, number>;
-    };
+    traitAdjectives?: string[];
+    stateAdjectives?: string[];
+    currentAdjectives?: string[];
+    futureAdjectives?: string[];
+    big5Scores?: { dims: Record<string, number>; facets: Record<string, number> };
     assessmentNumber?: number;
   };
 
-  if (!Array.isArray(currentAdjectives) || !Array.isArray(futureAdjectives)) {
-    res.status(400).json({ error: "currentAdjectives e futureAdjectives são obrigatórios" });
+  // Normaliza: usa novos campos se disponíveis, senão legados
+  const traits  = traitAdjectives  ?? currentAdjectives ?? [];
+  const states  = stateAdjectives  ?? [];
+  const future  = futureAdjectives ?? [];
+
+  if (traits.length === 0 && future.length === 0) {
+    res.status(400).json({ error: "Adjetivos são obrigatórios" });
     return;
   }
 
-  // ── 1. Seleciona abordagem do eu futuro ──────────────────
+  // Seleciona abordagem do eu futuro
   const approach = selectFutureApproach(big5Scores?.dims, assessmentNumber);
 
-  // ── 2. Bloco Big Five (opcional) ─────────────────────────
+  // Bloco Big Five
   let big5Block = "";
   if (big5Scores?.dims) {
     const dimLines = (["N","E","O","A","C"] as DimKey[]).map(d => {
       const pct = big5Scores.dims[d] ?? 50;
-      const top2 = Object.entries(big5Scores.facets ?? {})
-        .filter(([k]) => k.startsWith(d))
-        .sort((a, b) => b[1] - a[1])
-        .slice(0, 2)
-        .map(([k, v]) => `${FACET_NAMES[k] ?? k}:${v}%`)
-        .join(", ");
-      return `  ${DIM_NAMES[d]}: ${pct}% (${levelLabel(pct)})${top2 ? ` | facetas elevadas: ${top2}` : ""}`;
+      return `  ${DIM_NAMES[d]}: ${pct}% (${levelLabel(pct)})`;
     });
-    big5Block = `PERFIL BIG FIVE (IPIP-NEO-120):\n${dimLines.join("\n")}\n\n`;
+    const source = assessmentNumber > 1 || big5Scores.dims.N !== undefined
+      ? "avaliação IPIP-NEO-120"
+      : "estimativa por adjetivos";
+    big5Block = `PERFIL BIG FIVE (${source}):\n${dimLines.join("\n")}\n\n`;
   }
 
-  // ── 3. Monta o prompt enriquecido ────────────────────────
+  // Bloco de estado atual
+  const stateBlock = states.length > 0
+    ? `ESTADO EMOCIONAL ATUAL (última semana — VOLÁTIL, não confunda com traço):\n  ${states.join(", ")}\n\n`
+    : "";
+
   const prompt = `Você é um psicólogo clínico especialista em psicoterapia integrativa.
 
-${big5Block}EU HOJE:
-${currentAdjectives.join(", ")}
+${big5Block}${stateBlock}TRAÇOS DE PERSONALIDADE (estáveis — base para o Big Five):
+${traits.join(", ")}
 
 EU FUTURO DESEJADO:
-${futureAdjectives.join(", ")}
+${future.join(", ")}
 
 === PERSPECTIVA TERAPÊUTICA DESTA SESSÃO ===
 Abordagem: ${approach.name}
-
 ${approach.systemInstruction}
-
 SÍNTESE: ${approach.synthesisLens}
 FRASE DE INTENÇÃO: ${approach.intentionFrame}
 PRÁTICAS: ${approach.practiceFrame}
-
 ===========================================
 
-Gere o plano em JSON com esta estrutura exata:
+${stateBlock ? `IMPORTANTE: O estado atual (${states.slice(0, 3).join(", ")}...) representa o contexto emocional presente, não a personalidade permanente. O plano deve reconhecer esse estado E trabalhar com os traços estáveis como base de mudança.` : ""}
+
+Gere o plano em JSON com esta estrutura:
 
 {
-  "sintese": "2-3 frases usando a perspectiva ${approach.name}. ${approach.synthesisLens}",
-  "fraseIntencao": "Frase de intenção. ${approach.intentionFrame}",
+  "sintese": "2-3 frases. ${approach.synthesisLens}${states.length > 0 ? " Reconheça o estado atual e conecte com os traços estáveis." : ""}",
+  "estadoAtual": "${states.length > 0 ? "1 frase reconhecendo o contexto emocional presente com compaixão (não patologizando)" : ""}",
+  "fraseIntencao": "${approach.intentionFrame}",
   "praticas": [
     {
       "abordagem": "TCC",
-      "nome": "Nome da técnica",
-      "justificativa": "Por que esta técnica é relevante para ESTE perfil${big5Block ? " (mencione dimensões ou facetas)" : ""}.",
+      "nome": "Nome",
+      "justificativa": "Por que para ESTE perfil específico",
       "passos": ["Passo 1", "Passo 2", "Passo 3", "Passo 4"],
-      "frequencia": "Sugestão prática"
+      "frequencia": "Sugestão"
     },
     { "abordagem": "ACT", "nome": "...", "justificativa": "...", "passos": ["...","...","...","..."], "frequencia": "..." },
     { "abordagem": "Psicologia Positiva", "nome": "...", "justificativa": "...", "passos": ["...","...","...","..."], "frequencia": "..." }
@@ -117,14 +118,11 @@ Gere o plano em JSON com esta estrutura exata:
 }
 
 REGRAS:
-- 3 práticas de abordagens DIFERENTES (TCC, ACT, Psicologia Positiva)
-- Passos concretos e acionáveis para ESTE perfil específico
+- Diferencia traço (permanente) de estado (temporário) na síntese
+- 3 práticas de abordagens DIFERENTES
 - Use segunda pessoa ("você")
-- A síntese e a frase de intenção DEVEM refletir a perspectiva ${approach.key}
-- "perguntaReflexao" é sempre exatamente: "${approach.anchorQuestion}"
-- Responda APENAS com JSON válido, sem texto antes ou depois`;
+- Responda APENAS com JSON válido`;
 
-  // ── 4. Chama o Claude ─────────────────────────────────────
   try {
     const message = await anthropic.messages.create({
       model: "claude-haiku-4-5",
@@ -133,7 +131,6 @@ REGRAS:
     });
 
     const rawText = message.content[0].type === "text" ? message.content[0].text : "";
-
     let planData: Record<string, unknown>;
     try {
       const match = rawText.match(/\{[\s\S]*\}/);
@@ -142,10 +139,9 @@ REGRAS:
       planData = { rawText, parseError: true };
     }
 
-    // Log não-bloqueante
     db.insert(planLogsTable).values({
-      currentAdjectives,
-      futureAdjectives,
+      currentAdjectives: traits,
+      futureAdjectives: future,
       plan: planData,
     }).catch(err => console.error("Plan log error:", err));
 
@@ -153,11 +149,12 @@ REGRAS:
       success: true,
       plan: planData,
       approach: {
-        key:             approach.key,
-        name:            approach.name,
-        anchorQuestion:  approach.anchorQuestion,
+        key:            approach.key,
+        name:           approach.name,
+        anchorQuestion: approach.anchorQuestion,
       },
-      hasBig5: !!big5Scores,
+      hasBig5:  !!big5Scores,
+      hasState: states.length > 0,
     });
 
   } catch (err) {

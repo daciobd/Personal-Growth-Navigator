@@ -21,16 +21,18 @@ import WebSidebar from "@/components/WebSidebar";
 import { AppProvider } from "@/context/AppContext";
 import { AuthProvider } from "@/context/AuthContext";
 import { GamificationProvider } from "@/context/GamificationContext";
+import { SidebarProvider, useSidebar } from "@/context/SidebarContext";
 
 SplashScreen.preventAutoHideAsync().catch(() => {});
 
 const queryClient = new QueryClient();
 
-function RootLayoutNav() {
+function RootLayoutNavInner() {
+  const { isWide } = useSidebar();
   const isWeb = Platform.OS === "web";
 
   return (
-    <View style={{ flex: 1, paddingLeft: isWeb ? 220 : 0 }}>
+    <View style={{ flex: 1, paddingLeft: isWeb && isWide ? 220 : 0 }}>
       <Stack screenOptions={{ headerShown: false, animation: "slide_from_right" }}>
         <Stack.Screen name="index" />
         <Stack.Screen name="onboarding/welcome" />
@@ -51,6 +53,14 @@ function RootLayoutNav() {
       </Stack>
       <WebSidebar />
     </View>
+  );
+}
+
+function RootLayoutNav() {
+  return (
+    <SidebarProvider>
+      <RootLayoutNavInner />
+    </SidebarProvider>
   );
 }
 

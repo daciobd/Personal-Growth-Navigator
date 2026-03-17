@@ -64,7 +64,6 @@ export default function PlanScreen() {
     setError(null);
     try {
       const result = await generate(
-        profile.currentAdjectives,
         profile.futureAdjectives
       );
       if (!result) throw new Error(hookError ?? "Erro ao gerar plano");

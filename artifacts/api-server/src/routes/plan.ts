@@ -28,7 +28,7 @@ function levelLabel(p: number): string {
   return "muito alto";
 }
 
-router.post("/plan/generate", async (req, res) => {
+router.post("/generate", async (req, res) => {
   const {
     // Novos campos v2
     traitAdjectives,     // traços estáveis → Big Five

@@ -1,51 +1,13 @@
-import { BlurView } from "expo-blur";
 import { Tabs } from "expo-router";
 import { Feather } from "@expo/vector-icons";
 import React from "react";
-import { Platform, StyleSheet, useWindowDimensions, View } from "react-native";
-
-const ACTIVE = "#1B6B5A";
-const INACTIVE = "#A8C0B8";
-const BORDER = "#E8F0ED";
 
 export default function TabLayout() {
-  const isIOS = Platform.OS === "ios";
-  const { width } = useWindowDimensions();
-  const isWide = Platform.OS === "web" && width >= 768;
-
   return (
     <Tabs
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: ACTIVE,
-        tabBarInactiveTintColor: INACTIVE,
-        tabBarStyle: isWide
-          ? { display: "none" }
-          : {
-              backgroundColor: "#fff",
-              borderTopColor: BORDER,
-              borderTopWidth: 1,
-              height: 64,
-              paddingBottom: 10,
-              paddingTop: 6,
-              elevation: 0,
-            },
-        tabBarLabelStyle: {
-          fontSize: 11,
-          fontWeight: "600",
-        },
-        tabBarBackground: () =>
-          isIOS ? (
-            <BlurView
-              intensity={100}
-              tint="light"
-              style={StyleSheet.absoluteFill}
-            />
-          ) : (
-            <View
-              style={[StyleSheet.absoluteFill, { backgroundColor: "#fff" }]}
-            />
-          ),
+        tabBarStyle: { display: "none" },
       }}
     >
       <Tabs.Screen
@@ -73,7 +35,6 @@ export default function TabLayout() {
           tabBarIcon: ({ color }) => (
             <Feather name="message-circle" size={22} color={color} />
           ),
-          tabBarHideOnKeyboard: true,
         }}
       />
       <Tabs.Screen
@@ -88,5 +49,3 @@ export default function TabLayout() {
     </Tabs>
   );
 }
-
-const styles = StyleSheet.create({});

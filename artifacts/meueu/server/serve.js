@@ -2,10 +2,11 @@
  * Standalone production server for Expo static builds.
  *
  * Routes:
- * - GET / (no expo-platform header) → landing page HTML
- * - GET / or /manifest with expo-platform header → platform manifest JSON
- * - GET /app/* → web app static files (dist-web/)
- * - Everything else → native static files (static-build/)
+ * - GET / or /* (no expo-platform header) → Expo web app (dist-web/) with SPA fallback
+ * - GET / or /manifest with expo-platform header → native platform manifest JSON
+ * - GET /landing → landing page HTML
+ * - GET /app or /app/* → 301 redirect to / (backwards compatibility)
+ * - GET /sw.js → service worker (no-cache)
  *
  * Zero external dependencies — uses only Node.js built-ins (http, fs, path).
  */
@@ -73,7 +74,7 @@ function serveLandingPage(req, res, landingPageTemplate, appName) {
   const host = req.headers["x-forwarded-host"] || req.headers["host"];
   const baseUrl = `${protocol}://${host}`;
   const expsUrl = `${host}`;
-  const webAppUrl = `${basePath}/app/`;
+  const webAppUrl = `${basePath}/`;
 
   const html = landingPageTemplate
     .replace(/BASE_URL_PLACEHOLDER/g, baseUrl)
@@ -95,7 +96,6 @@ function serveStaticFile(root, urlPath, res, fallbackToIndex = false) {
     return;
   }
 
-  // If directory or not found, try index.html (for SPA routing)
   if (!fs.existsSync(filePath) || fs.statSync(filePath).isDirectory()) {
     if (fallbackToIndex) {
       filePath = path.join(root, "index.html");
@@ -120,6 +120,7 @@ function serveStaticFile(root, urlPath, res, fallbackToIndex = false) {
 
 const landingPageTemplate = fs.readFileSync(TEMPLATE_PATH, "utf-8");
 const appName = getAppName();
+const webRootExists = () => fs.existsSync(WEB_ROOT);
 
 const server = http.createServer((req, res) => {
   const url = new URL(req.url || "/", `http://${req.headers.host}`);
@@ -129,56 +130,51 @@ const server = http.createServer((req, res) => {
     pathname = pathname.slice(basePath.length) || "/";
   }
 
-  // Web app: /app/*
-  if (pathname === "/app" || pathname.startsWith("/app/")) {
-    const webPath = pathname === "/app" ? "/index.html" : pathname.slice(4) || "/index.html";
-    return serveStaticFile(WEB_ROOT, webPath, res, true);
+  // Native Expo Go: manifest requests with expo-platform header
+  if (
+    (pathname === "/" || pathname === "/manifest") &&
+    (req.headers["expo-platform"] === "ios" || req.headers["expo-platform"] === "android")
+  ) {
+    return serveManifest(req.headers["expo-platform"], res);
   }
 
-  // PWA assets served at root (required for service worker scope + manifest)
-  if (
-    pathname === "/sw.js" ||
-    pathname === "/manifest.json" ||
-    pathname.startsWith("/icons/")
-  ) {
-    if (pathname === "/sw.js") {
-      res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
-      res.setHeader("Pragma", "no-cache");
-      res.setHeader("Expires", "0");
-    }
-    if (fs.existsSync(WEB_ROOT)) {
+  // Backwards compatibility: redirect /app/* to /
+  if (pathname === "/app" || pathname.startsWith("/app/")) {
+    const redirectTo = `${basePath}/`;
+    res.writeHead(301, { location: redirectTo });
+    res.end();
+    return;
+  }
+
+  // Landing page at /landing
+  if (pathname === "/landing" || pathname === "/landing/") {
+    return serveLandingPage(req, res, landingPageTemplate, appName);
+  }
+
+  // Service worker: no-cache headers
+  if (pathname === "/sw.js") {
+    res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+    res.setHeader("Pragma", "no-cache");
+    res.setHeader("Expires", "0");
+    if (webRootExists()) {
       return serveStaticFile(WEB_ROOT, pathname, res, false);
     }
-    // Fallback: serve from public/ (dev scenario)
     const publicRoot = path.resolve(__dirname, "..", "public");
     if (fs.existsSync(publicRoot)) {
       return serveStaticFile(publicRoot, pathname, res, false);
     }
   }
 
-  // Web app static assets (JS bundles, fonts, images) referenced root-relative by Expo export
-  if (
-    (pathname.startsWith("/_expo/") || pathname.startsWith("/assets/") || pathname === "/favicon.ico") &&
-    fs.existsSync(WEB_ROOT)
-  ) {
-    return serveStaticFile(WEB_ROOT, pathname, res, false);
+  // Everything else: serve Expo web app from dist-web/ with SPA fallback
+  if (webRootExists()) {
+    return serveStaticFile(WEB_ROOT, pathname, res, true);
   }
 
-  if (pathname === "/" || pathname === "/manifest") {
-    const platform = req.headers["expo-platform"];
-    if (platform === "ios" || platform === "android") {
-      return serveManifest(platform, res);
-    }
-
-    if (pathname === "/") {
-      return serveLandingPage(req, res, landingPageTemplate, appName);
-    }
-  }
-
+  // Fallback: native static files (when dist-web/ not built)
   serveStaticFile(STATIC_ROOT, pathname, res, false);
 });
 
 const port = parseInt(process.env.PORT || "3000", 10);
 server.listen(port, "0.0.0.0", () => {
-  console.log(`Serving static Expo build on port ${port}`);
+  console.log(`Serving on port ${port} — web: ${webRootExists() ? "dist-web/" : "NOT BUILT"}`);
 });

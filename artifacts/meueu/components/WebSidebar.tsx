@@ -89,7 +89,6 @@ export default function WebSidebar() {
 
   if (Platform.OS !== "web") return null;
   if (!mounted) return null;
-  if (!isWide) return null;
 
   const authActive = pathname.includes("auth") || pathname.includes("profile");
 

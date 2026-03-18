@@ -16,6 +16,7 @@ import { StreakBadge } from "@/components/StreakBadge";
 import { XPBar } from "@/components/XPBar";
 import Colors from "@/constants/colors";
 import { useApp } from "@/context/AppContext";
+import { useAuth } from "@/context/AuthContext";
 import { useGamification } from "@/context/GamificationContext";
 import { getRelevantInterventions } from "@/data/interventions";
 
@@ -38,6 +39,7 @@ export default function TodayScreen() {
   const colors = Colors.light;
   const insets = useSafeAreaInsets();
   const { profile } = useApp();
+  const { isLoggedIn } = useAuth();
   const { streak } = useGamification();
   const plan = profile.generatedPlan;
   const [hasAssessment, setHasAssessment] = useState(true);
@@ -86,6 +88,33 @@ export default function TodayScreen() {
         </View>
         <StreakBadge days={streak || profile.streakDays} />
       </View>
+
+      {/* Save progress banner — shown only when not logged in */}
+      {!isLoggedIn && (
+        <Pressable
+          onPress={() => router.push("/auth/register")}
+          style={{
+            backgroundColor: "#E8A838",
+            margin: 16,
+            marginBottom: 0,
+            padding: 14,
+            borderRadius: 12,
+            flexDirection: "row",
+            alignItems: "center",
+            justifyContent: "space-between",
+          }}
+        >
+          <View>
+            <Text style={{ color: "#fff", fontSize: 14, fontWeight: "700" }}>
+              Salvar meu progresso
+            </Text>
+            <Text style={{ color: "rgba(255,255,255,0.85)", fontSize: 12, marginTop: 2 }}>
+              Crie uma conta gratuita para não perder seus dados
+            </Text>
+          </View>
+          <Feather name="arrow-right" size={18} color="#fff" />
+        </Pressable>
+      )}
 
       {/* Big Five CTA */}
       {!hasAssessment && (

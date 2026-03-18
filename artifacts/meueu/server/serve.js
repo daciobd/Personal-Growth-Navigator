@@ -141,6 +141,11 @@ const server = http.createServer((req, res) => {
     pathname === "/manifest.json" ||
     pathname.startsWith("/icons/")
   ) {
+    if (pathname === "/sw.js") {
+      res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+      res.setHeader("Pragma", "no-cache");
+      res.setHeader("Expires", "0");
+    }
     if (fs.existsSync(WEB_ROOT)) {
       return serveStaticFile(WEB_ROOT, pathname, res, false);
     }

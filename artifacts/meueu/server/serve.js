@@ -156,6 +156,14 @@ const server = http.createServer((req, res) => {
     }
   }
 
+  // Web app static assets (JS bundles, fonts, images) referenced root-relative by Expo export
+  if (
+    (pathname.startsWith("/_expo/") || pathname.startsWith("/assets/") || pathname === "/favicon.ico") &&
+    fs.existsSync(WEB_ROOT)
+  ) {
+    return serveStaticFile(WEB_ROOT, pathname, res, false);
+  }
+
   if (pathname === "/" || pathname === "/manifest") {
     const platform = req.headers["expo-platform"];
     if (platform === "ios" || platform === "android") {

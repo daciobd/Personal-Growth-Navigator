@@ -1,13 +1,24 @@
 import { Tabs } from "expo-router";
 import { Feather } from "@expo/vector-icons";
 import React from "react";
+import { Platform } from "react-native";
 
 export default function TabLayout() {
   return (
     <Tabs
       screenOptions={{
         headerShown: false,
-        tabBarStyle: { display: "none" },
+        tabBarStyle: Platform.OS !== "web"
+          ? {
+              backgroundColor: "#fff",
+              borderTopColor: "#E8F0ED",
+              borderTopWidth: 1,
+              height: 64,
+              paddingBottom: 10,
+              paddingTop: 6,
+              elevation: 0,
+            }
+          : { display: "none" },
       }}
     >
       <Tabs.Screen

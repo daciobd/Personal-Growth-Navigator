@@ -3,6 +3,7 @@ import { Tabs } from "expo-router";
 import { Feather } from "@expo/vector-icons";
 import React from "react";
 import { Platform, StyleSheet, View } from "react-native";
+import { useSidebar } from "@/context/SidebarContext";
 
 const ACTIVE = "#1B6B5A";
 const INACTIVE = "#A8C0B8";
@@ -10,6 +11,7 @@ const BORDER = "#E8F0ED";
 
 export default function TabLayout() {
   const isIOS = Platform.OS === "ios";
+  const { isWide } = useSidebar();
 
   return (
     <Tabs
@@ -17,7 +19,7 @@ export default function TabLayout() {
         headerShown: false,
         tabBarActiveTintColor: ACTIVE,
         tabBarInactiveTintColor: INACTIVE,
-        tabBarStyle: Platform.OS === "web"
+        tabBarStyle: isWide
           ? { display: "none" }
           : {
               backgroundColor: "#fff",
@@ -40,7 +42,9 @@ export default function TabLayout() {
               style={StyleSheet.absoluteFill}
             />
           ) : (
-            <View style={[StyleSheet.absoluteFill, { backgroundColor: "#fff" }]} />
+            <View
+              style={[StyleSheet.absoluteFill, { backgroundColor: "#fff" }]}
+            />
           ),
       }}
     >

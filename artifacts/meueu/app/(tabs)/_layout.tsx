@@ -2,8 +2,7 @@ import { BlurView } from "expo-blur";
 import { Tabs } from "expo-router";
 import { Feather } from "@expo/vector-icons";
 import React from "react";
-import { Platform, StyleSheet, View } from "react-native";
-import { useSidebar } from "@/context/SidebarContext";
+import { Platform, StyleSheet, useWindowDimensions, View } from "react-native";
 
 const ACTIVE = "#1B6B5A";
 const INACTIVE = "#A8C0B8";
@@ -11,7 +10,8 @@ const BORDER = "#E8F0ED";
 
 export default function TabLayout() {
   const isIOS = Platform.OS === "ios";
-  const { isWide } = useSidebar();
+  const { width } = useWindowDimensions();
+  const isWide = Platform.OS === "web" && width >= 768;
 
   return (
     <Tabs

@@ -12,7 +12,7 @@ interface SidebarContextType {
 
 const SidebarContext = createContext<SidebarContextType>({
   isOpen: false,
-  isWide: true,
+  isWide: false,
   toggle: () => {},
   close: () => {},
 });

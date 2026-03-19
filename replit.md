@@ -160,6 +160,22 @@ Estrutura: `{ sintese, fraseIntencao, praticas: [{ abordagem, nome, justificativ
 - `AdjectiveChip`: Chip individual (legado, integrado no CategoryPicker)
 - `ErrorBoundary`: Boundary de erros
 
+## Loop Jornada-EU (behavioral engine)
+- `POST /api/jornada/daily-plan` — Gera ação do dia baseada em segmento comportamental (low/medium/high)
+  - Calcula segmento dos check-ins dos últimos 7 dias: ≥5=high, ≥2=medium, <2=low
+  - Mapeia segmento → adaptationLevel: high→normal, medium→simplified, low→minimal
+  - Gera ação com Claude Haiku adaptada ao nível
+  - Cache em memória por planId (`jornada-{deviceId}-{YYYY-MM-DD}`) — TTL 6h
+  - Retorna: planId, behavioralSegment, adaptation.{level,experimentKey,experimentVariant}, action, uiHints
+- `POST /api/behavioral/events` — Persiste eventos comportamentais (plan_loaded / done / missed)
+  - Campos por evento: eventType, userId, planId, actionId, timestamp, careMode, behavioralSegment, adaptationLevel, experimentKey, experimentVariant, markerKey, recommendedActionType, metadata
+  - Tabela DB: `behavioral_events` (lib/db/src/schema/behavioral-events.ts)
+- Expo tab "Ação" (`app/(tabs)/jornada.tsx`):
+  - Carrega daily-plan on mount, dispara plan_loaded event
+  - Renderiza action card adaptado ao nivel: minimal (título+instrução), simplified (+steps), normal (+steps+why)
+  - Botões "Feito" (verde) e "Não consegui" → posta done/missed event, persiste status em AsyncStorage
+  - Cache local por dia: `@jornada_day_{YYYY-MM-DD}` no AsyncStorage
+
 ## Estrutura de Rotas da API
 **REGRA IMPORTANTE**: Cada subrouter é montado em `routes/index.ts` com um prefixo (ex: `router.use("/coach", coachRouter)`). As rotas DENTRO de cada arquivo devem ser relativas (sem repetir o prefixo). Exemplo:
 - `coach.ts` → `/message` e `/history` (NÃO `/coach/message`)

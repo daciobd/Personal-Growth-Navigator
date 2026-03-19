@@ -5,7 +5,7 @@ import { eq, asc } from "drizzle-orm";
 
 const router: IRouter = Router();
 
-const SYSTEM_PROMPT = `Você é um coach terapêutico empático e encorajador chamado "Eu". Você faz parte do app MeuEu, um aplicativo de transformação pessoal.
+const BASE_SYSTEM_PROMPT = `Você é um coach terapêutico empático e encorajador chamado "Eu". Você faz parte do app MeuEu, um aplicativo de transformação pessoal.
 
 Seu papel:
 - Apoiar o usuário em sua jornada de transformação pessoal
@@ -19,11 +19,42 @@ Você NÃO é um terapeuta e deve lembrar disso se o usuário mencionar crises g
 
 type Message = { role: "user" | "assistant"; content: string };
 
+type HealthContext = {
+  careMode?: string;
+  biomarkerFocus?: { key: string; label: string; status: string; value?: number; unit?: string };
+  clinicalSummary?: string;
+  targetOutcome?: string;
+  barriers?: string[];
+};
+
+function buildSystemPrompt(healthContext?: HealthContext): string {
+  if (!healthContext) return BASE_SYSTEM_PROMPT;
+
+  const lines: string[] = [];
+  if (healthContext.clinicalSummary) lines.push(`Contexto clínico: ${healthContext.clinicalSummary}`);
+  if (healthContext.biomarkerFocus) {
+    const b = healthContext.biomarkerFocus;
+    const v = b.value !== undefined ? ` (${b.value} ${b.unit ?? ""})` : "";
+    lines.push(`Biomarcador em atenção: ${b.label}${v} — ${b.status}`);
+  }
+  if (healthContext.targetOutcome) lines.push(`Objetivo do usuário: ${healthContext.targetOutcome}`);
+  if (healthContext.barriers?.length) lines.push(`Barreiras relatadas: ${healthContext.barriers.join(", ")}`);
+
+  if (lines.length === 0) return BASE_SYSTEM_PROMPT;
+
+  return `${BASE_SYSTEM_PROMPT}
+
+CONTEXTO DE SAÚDE (via Longevi — use para personalizar as respostas, sem alarmismo):
+${lines.join("\n")}
+Adapte suas sugestões para endereçar as barreiras do usuário e apoiar o objetivo acima. Nunca faça diagnósticos.`;
+}
+
 router.post("/coach/message", async (req, res) => {
-  const { deviceId, message, history } = req.body as {
+  const { deviceId, message, history, healthContext } = req.body as {
     deviceId: string;
     message: string;
     history?: Message[];
+    healthContext?: HealthContext;
   };
 
   if (!deviceId || !message) {
@@ -56,7 +87,7 @@ router.post("/coach/message", async (req, res) => {
     const aiResponse = await anthropic.messages.create({
       model: "claude-haiku-4-5",
       max_tokens: 300,
-      system: SYSTEM_PROMPT,
+      system: buildSystemPrompt(healthContext),
       messages,
     });
 

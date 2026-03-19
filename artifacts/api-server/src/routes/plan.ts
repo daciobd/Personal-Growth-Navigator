@@ -39,8 +39,10 @@ router.post("/generate", async (req, res) => {
     // Big Five (opcional, de avaliação completa ou estimativa)
     big5Scores,
     assessmentNumber = 1,
-    // Contexto Longevi (opcional)
+    // Contexto Longevi simplificado (via URL params)
     longeviContext,
+    // Contexto de saúde rico (via API Longevi)
+    healthContext,
   } = req.body as {
     traitAdjectives?: string[];
     stateAdjectives?: string[];
@@ -49,6 +51,20 @@ router.post("/generate", async (req, res) => {
     big5Scores?: { dims: Record<string, number>; facets: Record<string, number> };
     assessmentNumber?: number;
     longeviContext?: { context: string; focus: string };
+    healthContext?: {
+      careMode?: string;
+      biomarkerFocus?: {
+        key: string;
+        label: string;
+        status: string;
+        value?: number;
+        unit?: string;
+      };
+      clinicalSummary?: string;
+      targetOutcome?: string;
+      barriers?: string[];
+      examContext?: { examId?: string; examDate?: string };
+    };
   };
 
   // Normaliza: usa novos campos se disponíveis, senão legados
@@ -56,8 +72,9 @@ router.post("/generate", async (req, res) => {
   const states  = stateAdjectives  ?? [];
   const future  = futureAdjectives ?? [];
 
-  if (traits.length === 0 && future.length === 0) {
-    res.status(400).json({ error: "Adjetivos são obrigatórios" });
+  const hasHealthContext = !!(healthContext?.biomarkerFocus || healthContext?.clinicalSummary);
+  if (traits.length === 0 && future.length === 0 && !hasHealthContext) {
+    res.status(400).json({ error: "Adjetivos ou healthContext são obrigatórios" });
     return;
   }
 
@@ -101,13 +118,39 @@ router.post("/generate", async (req, res) => {
     ? `CONTEXTO CLÍNICO (via Longevi — integre ao plano sem alarmar o usuário):
   Condição de atenção: ${CONTEXT_LABELS[longeviContext.context] ?? longeviContext.context}
   Foco de mudança comportamental: ${FOCUS_LABELS[longeviContext.focus] ?? longeviContext.focus}
-  → As práticas devem ter impacto direto neste contexto clínico (ex: sono, cortisol, consistência de rotina, alimentação consciente).
+  → As práticas devem ter impacto direto neste contexto clínico.
   → Mencione o contexto de saúde de forma acolhedora na síntese, sem diagnósticos.\n\n`
     : "";
 
+  // Bloco healthContext rico (API Longevi)
+  let healthBlock = "";
+  if (healthContext) {
+    const lines: string[] = [];
+    if (healthContext.clinicalSummary) {
+      lines.push(`  Resumo clínico: ${healthContext.clinicalSummary}`);
+    }
+    if (healthContext.biomarkerFocus) {
+      const b = healthContext.biomarkerFocus;
+      const valStr = b.value !== undefined ? ` (${b.value} ${b.unit ?? ""})` : "";
+      lines.push(`  Biomarcador em foco: ${b.label}${valStr} — status: ${b.status}`);
+    }
+    if (healthContext.targetOutcome) {
+      lines.push(`  Objetivo de mudança: ${healthContext.targetOutcome}`);
+    }
+    if (healthContext.barriers && healthContext.barriers.length > 0) {
+      lines.push(`  Barreiras relatadas pelo usuário: ${healthContext.barriers.join(", ")}`);
+    }
+    if (lines.length > 0) {
+      healthBlock = `CONTEXTO DE SAÚDE (dados clínicos do Longevi — use para personalizar o plano):
+${lines.join("\n")}
+  → As práticas devem endereçar diretamente essas barreiras e apoiar o objetivo de mudança.
+  → Linguagem acolhedora, sem alarmismo. Não faça diagnósticos.\n\n`;
+    }
+  }
+
   const prompt = `Você é um psicólogo clínico especialista em psicoterapia integrativa.
 
-${longeviBlock}${big5Block}${stateBlock}TRAÇOS DE PERSONALIDADE (estáveis — base para o Big Five):
+${healthBlock}${longeviBlock}${big5Block}${stateBlock}TRAÇOS DE PERSONALIDADE (estáveis — base para o Big Five):
 ${traits.join(", ")}
 
 EU FUTURO DESEJADO:

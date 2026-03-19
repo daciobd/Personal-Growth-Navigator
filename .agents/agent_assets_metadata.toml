@@ -6,3 +6,9 @@ id = "2A89M7lAs3jYfUor0eqD6"
 uri = "file://ARQUITETURA_MEUEU.md"
 type = "text"
 title = "Arquitetura MeuEu — Documento para Consultor"
+
+[[outputs]]
+id = "W8BqBdyKJbhSskgP0l8mI"
+uri = "file://LONGEVI_INTEGRATION.md"
+type = "text"
+title = "MeuEu × Longevi — Guia de Integração API"

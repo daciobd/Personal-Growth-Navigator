@@ -16,6 +16,7 @@ import Animated, { FadeInDown } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Colors from "@/constants/colors";
 import { useApp } from "@/context/AppContext";
+import { useAuth } from "@/context/AuthContext";
 import { usePlanGeneration, type GeneratedPlan, type GeneratedApproach } from "@/hooks/usePlanGeneration";
 
 type Practice = {
@@ -50,6 +51,7 @@ export default function PlanScreen() {
   const colors = Colors.light;
   const insets = useSafeAreaInsets();
   const { profile, completeOnboarding, setPlan } = useApp();
+  const { isLoggedIn } = useAuth();
   const { generate, loading: hookLoading, error: hookError } = usePlanGeneration();
 
   const [plan, setPlanLocal] = useState<Plan | null>(null);
@@ -57,6 +59,7 @@ export default function PlanScreen() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [loadingMsg, setLoadingMsg] = useState(LOADING_MESSAGES[0]);
+  const [skipSave, setSkipSave] = useState(false);
   const msgIndex = useRef(0);
 
   const generatePlan = async () => {
@@ -170,6 +173,26 @@ export default function PlanScreen() {
               Etapa 3 de 3
             </Text>
           </View>
+
+          {!isLoggedIn && !skipSave && (
+            <View style={{ backgroundColor: "#1B6B5A", borderRadius: 16, padding: 20, margin: 16, marginBottom: 0 }}>
+              <Text style={{ color: "#fff", fontSize: 18, fontWeight: "700", marginBottom: 8, fontFamily: "Inter_700Bold" }}>
+                Salvar seu plano
+              </Text>
+              <Text style={{ color: "rgba(255,255,255,0.85)", fontSize: 14, marginBottom: 16, lineHeight: 20, fontFamily: "Inter_400Regular" }}>
+                Crie uma conta gratuita para não perder seu plano personalizado e acompanhar seu progresso.
+              </Text>
+              <Pressable
+                onPress={() => router.push("/auth/register")}
+                style={({ pressed }) => ({ backgroundColor: "#fff", borderRadius: 10, padding: 14, alignItems: "center" as const, marginBottom: 10, opacity: pressed ? 0.9 : 1 })}
+              >
+                <Text style={{ color: "#1B6B5A", fontSize: 15, fontWeight: "700", fontFamily: "Inter_700Bold" }}>Criar conta gratuita</Text>
+              </Pressable>
+              <Pressable onPress={() => setSkipSave(true)} style={{ alignItems: "center", padding: 8 }}>
+                <Text style={{ color: "rgba(255,255,255,0.7)", fontSize: 13, fontFamily: "Inter_400Regular" }}>Continuar sem salvar</Text>
+              </Pressable>
+            </View>
+          )}
 
           <ScrollView
             style={styles.scroll}

@@ -1,0 +1,1436 @@
+Perfeito — agora ficou claro: você está falando do **Jornada-EU (o app)** como camada que conversa com o LONGEVI.
+
+Então a pergunta vira:
+
+> o que o *Jornada-EU* precisa ter para conversar bem com o LONGEVI?
+
+A resposta é: você não precisa mudar o LONGEVI — você precisa criar uma **camada de tradução comportamental + operacional** no Jornada-EU.
+
+---
+
+# 🧠 Arquitetura mental correta
+
+Pense assim:
+
+* **LONGEVI = cérebro clínico + motor adaptativo**
+* **Jornada-EU = interface comportamental + loop de hábito**
+
+O Jornada-EU não interpreta exames.
+Ele transforma recomendações em **ação diária sustentada**.
+
+---
+
+# 🔌 O “contrato” entre Jornada-EU ↔ LONGEVI
+
+Você precisa definir um contrato claro entre os dois sistemas.
+
+## Entrada (Jornada-EU → LONGEVI)
+
+O Jornada-EU deve enviar:
+
+```json
+{
+  "userId": "...",
+  "careMode": "adult | materna | pet | ...",
+  "behavioralSegment": "low | medium | high",
+  "recentAdherence": {
+    "checkinsLast7d": 2,
+    "streak": 1,
+    "missRate": 0.6
+  },
+  "context": {
+    "timeOfDay": "morning",
+    "dayOfWeek": "monday"
+  }
+}
+```
+
+👉 Isso alimenta o motor adaptativo.
+
+---
+
+## Saída (LONGEVI → Jornada-EU)
+
+O LONGEVI deve devolver algo assim:
+
+```json
+{
+  "planId": "...",
+  "adaptation": {
+    "level": "minimal | simplified | normal"
+  },
+  "actions": [
+    {
+      "id": "a1",
+      "type": "nutrition",
+      "title": "Tomar água ao acordar",
+      "instruction": "1 copo de água ao levantar",
+      "effort": "low",
+      "trigger": "after_wakeup"
+    }
+  ],
+  "explanation": {
+    "why": "...",
+    "confidence": "high"
+  }
+}
+```
+
+👉 Isso vira UI no Jornada-EU.
+
+---
+
+# 🧩 O que o Jornada-EU precisa ter
+
+Agora vem a resposta direta à sua pergunta.
+
+## 1. Motor de execução (não só exibição)
+
+O Jornada-EU NÃO pode só mostrar o plano.
+
+Ele precisa:
+
+* disparar no momento certo
+* reduzir fricção
+* facilitar o check-in em 1 toque
+
+Exemplo:
+
+* notificação contextual
+* botão “feito” direto
+* zero navegação
+
+---
+
+## 2. Sistema de check-in (core do app)
+
+Esse é o coração:
+
+* `done`
+* `missed`
+* opcional: `partial`
+
+E cada ação precisa gerar evento:
+
+```json
+{
+  "event": "done",
+  "actionId": "a1",
+  "timestamp": "...",
+  "adaptationLevel": "minimal"
+}
+```
+
+👉 Isso fecha o loop com o LONGEVI.
+
+---
+
+## 3. Loop de feedback em tempo real
+
+O Jornada-EU precisa reagir:
+
+Se usuário:
+
+* falha → reduzir fricção (mais `minimal`)
+* acerta → pode aumentar complexidade
+
+Mas quem decide é o LONGEVI.
+O Jornada-EU só **reflete rápido**.
+
+---
+
+## 4. UX orientada a hábito (não a informação)
+
+Evitar:
+
+* telas complexas
+* múltiplas decisões
+
+Focar em:
+
+* 1 ação clara por vez
+* linguagem simples
+* progresso visível
+
+Exemplo:
+
+> “Agora: 1 copo de água 💧”
+
+---
+
+## 5. Persistência leve local
+
+O Jornada-EU precisa guardar:
+
+* plano atual
+* estado das ações (done/missed)
+* último sync
+
+Para funcionar mesmo com latência/rede ruim.
+
+---
+
+## 6. Sincronização com LONGEVI
+
+Fluxo ideal:
+
+1. App abre → busca plano
+2. Usuário executa → gera eventos
+3. Eventos enviados → LONGEVI
+4. LONGEVI recalcula → novo plano
+
+👉 Loop contínuo
+
+---
+
+# 🔁 O loop completo (visão simples)
+
+```
+LONGEVI (decide)
+      ↓
+Jornada-EU (executa)
+      ↓
+Usuário (age)
+      ↓
+Jornada-EU (captura)
+      ↓
+LONGEVI (aprende)
+```
+
+Se esse loop estiver bem feito → você tem aderência.
+
+---
+
+# ⚠️ Erros comuns (evitar)
+
+## 1. Fazer o Jornada-EU inteligente demais
+
+Ele não deve decidir estratégia.
+Isso é do LONGEVI.
+
+## 2. Virar app de conteúdo
+
+Se tiver muito texto → perde aderência.
+
+## 3. Check-in difícil
+
+Se não for 1 clique → quebra o sistema.
+
+## 4. Não logar contexto
+
+Sem contexto → o motor adaptativo fica cego.
+
+---
+
+# 🧭 Regra de ouro
+
+> LONGEVI pensa
+> Jornada-EU faz acontecer
+
+---
+
+# 🧪 Próximo passo ideal
+
+Você está num momento perfeito para isso:
+
+👉 implementar o experimento `minimal vs simplified`
+
+O Jornada-EU precisa apenas:
+
+* receber `adaptation.level`
+* renderizar diferente (menos ou mais detalhe)
+* logar corretamente
+
+E pronto — o experimento já roda.
+
+---
+
+# 💡 Em uma frase
+
+O Jornada-EU não é um app de saúde.
+
+> É um **sistema de execução de comportamento conectado a um cérebro clínico adaptativo**.
+
+---
+
+Se quiser, posso te desenhar:
+
+* a arquitetura técnica (frontend + API)
+* o schema completo de eventos
+* ou um wireframe do Jornada-EU focado em aderência máxima
+
+
+
+
+Ótimo. Então vou te devolver um **starter pack do Jornada-EU ↔ LONGEVI** já em formato de produto.
+
+# 1. Arquitetura mínima recomendada
+
+## Papéis
+
+### LONGEVI
+
+Responsável por:
+
+* interpretar contexto clínico
+* decidir `adaptationLevel`
+* gerar plano
+* recalcular estratégia com base em aderência
+
+### Jornada-EU
+
+Responsável por:
+
+* buscar plano
+* exibir ação do jeito certo
+* capturar `done / missed`
+* sincronizar eventos
+* sustentar rotina diária
+
+---
+
+## Fluxo principal
+
+```text
+1. Jornada-EU abre
+2. GET /daily-plan
+3. LONGEVI retorna plano adaptado
+4. Jornada-EU renderiza a experiência
+5. usuário marca done/missed
+6. POST /behavioral/events
+7. LONGEVI registra eventos
+8. próximo plano já considera esse comportamento
+```
+
+---
+
+## Componentes do Jornada-EU
+
+### A. Plan Fetcher
+
+Busca o plano atual.
+
+### B. Action Renderer
+
+Mostra as ações de acordo com:
+
+* `minimal`
+* `simplified`
+* `normal`
+
+### C. Check-in Engine
+
+Dispara os eventos:
+
+* `plan_loaded`
+* `done`
+* `missed`
+
+### D. Sync Queue
+
+Guarda eventos localmente e envia depois se estiver offline.
+
+### E. Habit UI Layer
+
+Transforma o plano em:
+
+* tela do dia
+* lembrete
+* CTA de 1 toque
+* feedback curto
+
+---
+
+# 2. Contrato de API entre Jornada-EU e LONGEVI
+
+## GET `/api/jornada/daily-plan`
+
+### request
+
+```json
+{
+  "userId": "u_123",
+  "careMode": "adult",
+  "context": {
+    "timeOfDay": "morning",
+    "dayOfWeek": "thursday"
+  }
+}
+```
+
+### response
+
+```json
+{
+  "planId": "plan_456",
+  "generatedAt": "2026-03-19T08:00:00Z",
+  "behavioralSegment": "medium",
+  "adaptation": {
+    "level": "minimal",
+    "experimentKey": "medium_adaptation_v1",
+    "experimentVariant": "minimal"
+  },
+  "actions": [
+    {
+      "id": "act_1",
+      "type": "nutrition",
+      "markerKey": "glucose",
+      "recommendedActionType": "meal_timing",
+      "title": "Comece o dia com proteína",
+      "instruction": "Inclua uma fonte de proteína no café da manhã.",
+      "effort": "low",
+      "trigger": "breakfast",
+      "priority": 1
+    }
+  ],
+  "uiHints": {
+    "maxVisibleActions": 1,
+    "tone": "calm",
+    "showWhy": false,
+    "showProgress": true
+  }
+}
+```
+
+---
+
+## POST `/api/behavioral/events`
+
+### request
+
+```json
+{
+  "events": [
+    {
+      "eventType": "plan_loaded",
+      "userId": "u_123",
+      "planId": "plan_456",
+      "actionId": null,
+      "timestamp": "2026-03-19T08:01:00Z",
+      "careMode": "adult",
+      "behavioralSegment": "medium",
+      "adaptationLevel": "minimal",
+      "experimentKey": "medium_adaptation_v1",
+      "experimentVariant": "minimal",
+      "markerKey": "glucose",
+      "recommendedActionType": "meal_timing",
+      "metadata": {
+        "timeOfDay": "morning",
+        "surface": "home"
+      }
+    }
+  ]
+}
+```
+
+---
+
+# 3. Schema de eventos que o Jornada-EU precisa emitir
+
+## Evento 1: `plan_loaded`
+
+Quando a tela com o plano aparece.
+
+Campos:
+
+* `userId`
+* `planId`
+* `careMode`
+* `behavioralSegment`
+* `adaptationLevel`
+* `experimentKey`
+* `experimentVariant`
+* `markerKey`
+* `recommendedActionType`
+* `surface`
+* `timestamp`
+
+---
+
+## Evento 2: `done`
+
+Quando o usuário conclui.
+
+```json
+{
+  "eventType": "done",
+  "userId": "u_123",
+  "planId": "plan_456",
+  "actionId": "act_1",
+  "timestamp": "2026-03-19T08:20:00Z",
+  "careMode": "adult",
+  "behavioralSegment": "medium",
+  "adaptationLevel": "minimal",
+  "experimentKey": "medium_adaptation_v1",
+  "experimentVariant": "minimal",
+  "markerKey": "glucose",
+  "recommendedActionType": "meal_timing",
+  "metadata": {
+    "completionMethod": "one_tap",
+    "surface": "notification"
+  }
+}
+```
+
+---
+
+## Evento 3: `missed`
+
+Quando o usuário não fez ou marcou como não feito.
+
+```json
+{
+  "eventType": "missed",
+  "userId": "u_123",
+  "planId": "plan_456",
+  "actionId": "act_1",
+  "timestamp": "2026-03-19T21:00:00Z",
+  "careMode": "adult",
+  "behavioralSegment": "medium",
+  "adaptationLevel": "minimal",
+  "experimentKey": "medium_adaptation_v1",
+  "experimentVariant": "minimal",
+  "markerKey": "glucose",
+  "recommendedActionType": "meal_timing",
+  "metadata": {
+    "reason": "not_completed",
+    "surface": "home"
+  }
+}
+```
+
+---
+
+## Evento opcional: `action_opened`
+
+Útil para medir interesse sem conclusão.
+
+---
+
+# 4. Como o Jornada-EU deve renderizar cada nível
+
+## `minimal`
+
+Objetivo: remover atrito máximo.
+
+Mostrar:
+
+* 1 ação principal
+* 1 frase curta
+* 1 botão `Feito`
+* 1 botão discreto `Não consegui`
+
+Exemplo:
+
+```text
+Hoje
+Inclua proteína no café da manhã
+
+[Feito]   [Não consegui]
+```
+
+---
+
+## `simplified`
+
+Objetivo: ainda leve, mas com um pouco mais de orientação.
+
+Mostrar:
+
+* 1 a 2 ações
+* instrução curta
+* mini “por quê”
+
+Exemplo:
+
+```text
+Hoje
+Inclua proteína no café da manhã
+Isso ajuda a reduzir picos de fome mais tarde.
+
+[Feito]   [Não consegui]
+```
+
+---
+
+## `normal`
+
+Objetivo: usuário tolera mais estrutura.
+
+Mostrar:
+
+* 2 a 3 ações
+* instrução
+* por quê
+* progresso do dia
+
+Exemplo:
+
+```text
+Plano de hoje
+1. Proteína no café da manhã
+2. Caminhada de 10 min após almoço
+3. Água ao acordar
+
+Meta do dia: 3 ações
+```
+
+---
+
+# 5. Wireframe funcional do Jornada-EU
+
+## Tela 1 — Home do dia
+
+Blocos:
+
+* saudação curta
+* ação principal
+* CTA de 1 toque
+* progresso
+
+### versão minimal
+
+```text
+Bom dia
+
+Ação de hoje:
+Tomar 1 copo de água ao acordar
+
+[Feito agora]
+[Não consegui]
+```
+
+### versão simplified
+
+```text
+Bom dia
+
+Ação de hoje:
+Tomar 1 copo de água ao acordar
+
+Pequenas ações consistentes ajudam mais do que grandes planos.
+
+[Feito agora]
+[Não consegui]
+```
+
+### versão normal
+
+```text
+Bom dia
+
+Plano de hoje
+- Água ao acordar
+- Café da manhã com proteína
+- Caminhada de 10 min
+
+Progresso: 0/3
+```
+
+---
+
+## Tela 2 — Confirmação
+
+Depois de `done`:
+
+```text
+Feito 👏
+Você concluiu sua ação de hoje.
+
+[Voltar]
+```
+
+Sem exagero. Reforço curto.
+
+---
+
+## Tela 3 — Falha sem culpa
+
+Depois de `missed`:
+
+```text
+Tudo bem.
+Vamos tentar de forma mais simples amanhã.
+
+[Continuar]
+```
+
+Isso é importante. O app não pode soar punitivo.
+
+---
+
+# 6. Modelo de dados local no app
+
+## `current_plan`
+
+```ts
+type CurrentPlan = {
+  planId: string;
+  generatedAt: string;
+  careMode: string;
+  behavioralSegment: "low" | "medium" | "high";
+  adaptationLevel: "minimal" | "simplified" | "normal";
+  experimentKey?: string | null;
+  experimentVariant?: string | null;
+  actions: Action[];
+};
+```
+
+## `pending_events`
+
+```ts
+type PendingEvent = {
+  id: string;
+  eventType: "plan_loaded" | "done" | "missed";
+  payload: Record<string, unknown>;
+  createdAt: string;
+  syncStatus: "pending" | "sent" | "failed";
+};
+```
+
+Isso resolve o offline básico.
+
+---
+
+# 7. Regra de UX mais importante
+
+O Jornada-EU deve sempre otimizar esta equação:
+
+> menor esforço possível para registrar uma microvitória
+
+Então:
+
+* nada de muitos menus
+* nada de texto clínico pesado
+* nada de exigir reflexão extra
+* tudo precisa caber em 1 gesto
+
+---
+
+# 8. O que precisa mudar no backend do LONGEVI
+
+Para o Jornada-EU conversar bem, o LONGEVI precisa garantir 4 coisas:
+
+## A. Resposta já pronta para UI
+
+Não devolver só “estratégia”; devolver:
+
+* ação
+* prioridade
+* hint de exibição
+
+## B. Logging completo
+
+Já está quase aí no que você descreveu.
+
+## C. Assignment estável de experimento
+
+Especialmente para `medium`.
+
+## D. Endpoint agregador simples
+
+O app não deveria montar lógica comportamental local. Ele só consome.
+
+---
+
+# 9. Sequência ideal de implementação
+
+## Fase 1 — conectar
+
+* criar `GET /daily-plan`
+* criar `POST /behavioral/events`
+* renderizar `minimal`
+* registrar `plan_loaded`, `done`, `missed`
+
+## Fase 2 — adaptar UI
+
+* suportar `simplified`
+* suportar `normal`
+* usar `uiHints`
+
+## Fase 3 — experimento
+
+* ativar `medium_adaptation_v1`
+* comparar `minimal` vs `simplified`
+
+## Fase 4 — inteligência de superfície
+
+* escolher melhor momento
+* melhorar lembretes
+* personalizar copy sem mudar regra clínica
+
+---
+
+# 10. Minha recomendação objetiva
+
+Se eu estivesse desenhando isso com você agora, começaria com este recorte:
+
+### MVP do Jornada-EU
+
+* 1 tela principal
+* 1 ação prioritária por dia
+* 2 botões: `Feito` / `Não consegui`
+* sync local
+* eventos completos
+* suporte inicial a `minimal`
+
+Porque isso já fecha o loop:
+
+> LONGEVI decide → Jornada-EU executa → usuário responde → LONGEVI aprende
+
+E esse é o coração do sistema.
+
+Posso agora te entregar a próxima peça em formato de código, com:
+**(A)** types/interfaces TypeScript do contrato,
+ou **(B)** um fluxo React/Next da tela principal do Jornada-EU.
+
+
+Perfeito. Vamos sair do conceito e ir para algo que já encaixa no build.
+
+Vou te entregar o **contrato TypeScript + fluxo React/Next do MVP da tela principal do Jornada-EU**.
+
+# 1. Types do contrato Jornada-EU ↔ LONGEVI
+
+```ts
+// /types/jornada.ts
+
+export type CareMode = "adult" | "materna" | "pet";
+
+export type BehavioralSegment = "low" | "medium" | "high";
+
+export type AdaptationLevel = "minimal" | "simplified" | "normal";
+
+export type EventType = "plan_loaded" | "done" | "missed" | "action_opened";
+
+export type ActionType =
+  | "nutrition"
+  | "exercise"
+  | "sleep"
+  | "supplement"
+  | "hydration"
+  | "mindset";
+
+export type RecommendedActionType =
+  | "meal_timing"
+  | "protein_intake"
+  | "walking"
+  | "sleep_hygiene"
+  | "supplement_schedule"
+  | "water_intake"
+  | "stress_regulation";
+
+export type TriggerType =
+  | "after_wakeup"
+  | "breakfast"
+  | "mid_morning"
+  | "lunch"
+  | "afternoon"
+  | "dinner"
+  | "before_sleep"
+  | "free";
+
+export interface DailyPlanRequest {
+  userId: string;
+  careMode: CareMode;
+  context?: {
+    timeOfDay?: string;
+    dayOfWeek?: string;
+    timezone?: string;
+    surface?: "home" | "notification" | "widget";
+  };
+}
+
+export interface PlanAction {
+  id: string;
+  type: ActionType;
+  markerKey?: string | null;
+  recommendedActionType?: RecommendedActionType | null;
+  title: string;
+  instruction: string;
+  effort: "low" | "medium" | "high";
+  trigger?: TriggerType;
+  priority: number;
+}
+
+export interface DailyPlanResponse {
+  planId: string;
+  generatedAt: string;
+  careMode: CareMode;
+  behavioralSegment: BehavioralSegment;
+  adaptation: {
+    level: AdaptationLevel;
+    experimentKey?: string | null;
+    experimentVariant?: string | null;
+  };
+  actions: PlanAction[];
+  uiHints?: {
+    maxVisibleActions?: number;
+    tone?: "calm" | "neutral" | "directive";
+    showWhy?: boolean;
+    showProgress?: boolean;
+  };
+}
+
+export interface BehavioralEvent {
+  eventType: EventType;
+  userId: string;
+  planId: string;
+  actionId?: string | null;
+  timestamp: string;
+  careMode: CareMode;
+  behavioralSegment: BehavioralSegment;
+  adaptationLevel: AdaptationLevel;
+  experimentKey?: string | null;
+  experimentVariant?: string | null;
+  markerKey?: string | null;
+  recommendedActionType?: RecommendedActionType | null;
+  metadata?: Record<string, unknown>;
+}
+
+export interface BehavioralEventsRequest {
+  events: BehavioralEvent[];
+}
+
+export interface BehavioralEventsResponse {
+  ok: boolean;
+  accepted: number;
+}
+```
+
+---
+
+# 2. Cliente de API
+
+```ts
+// /lib/jornada-api.ts
+
+import type {
+  DailyPlanRequest,
+  DailyPlanResponse,
+  BehavioralEventsRequest,
+  BehavioralEventsResponse,
+} from "@/types/jornada";
+
+export async function fetchDailyPlan(
+  input: DailyPlanRequest
+): Promise<DailyPlanResponse> {
+  const response = await fetch("/api/jornada/daily-plan", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(input),
+  });
+
+  if (!response.ok) {
+    throw new Error("Failed to fetch daily plan");
+  }
+
+  return response.json();
+}
+
+export async function sendBehavioralEvents(
+  input: BehavioralEventsRequest
+): Promise<BehavioralEventsResponse> {
+  const response = await fetch("/api/behavioral/events", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(input),
+  });
+
+  if (!response.ok) {
+    throw new Error("Failed to send behavioral events");
+  }
+
+  return response.json();
+}
+```
+
+---
+
+# 3. Helpers de evento
+
+```ts
+// /lib/jornada-events.ts
+
+import type { BehavioralEvent, DailyPlanResponse, PlanAction } from "@/types/jornada";
+
+type BuildEventParams = {
+  eventType: BehavioralEvent["eventType"];
+  userId: string;
+  plan: DailyPlanResponse;
+  action?: PlanAction | null;
+  surface?: "home" | "notification" | "widget";
+  extraMetadata?: Record<string, unknown>;
+};
+
+export function buildBehavioralEvent({
+  eventType,
+  userId,
+  plan,
+  action,
+  surface = "home",
+  extraMetadata = {},
+}: BuildEventParams): BehavioralEvent {
+  return {
+    eventType,
+    userId,
+    planId: plan.planId,
+    actionId: action?.id ?? null,
+    timestamp: new Date().toISOString(),
+    careMode: plan.careMode,
+    behavioralSegment: plan.behavioralSegment,
+    adaptationLevel: plan.adaptation.level,
+    experimentKey: plan.adaptation.experimentKey ?? null,
+    experimentVariant: plan.adaptation.experimentVariant ?? null,
+    markerKey: action?.markerKey ?? null,
+    recommendedActionType: action?.recommendedActionType ?? null,
+    metadata: {
+      surface,
+      ...extraMetadata,
+    },
+  };
+}
+```
+
+---
+
+# 4. Persistência local simples de fila
+
+Para MVP, localStorage resolve.
+
+```ts
+// /lib/jornada-queue.ts
+
+import type { BehavioralEvent } from "@/types/jornada";
+
+const STORAGE_KEY = "jornada_pending_events";
+
+export function getPendingEvents(): BehavioralEvent[] {
+  if (typeof window === "undefined") return [];
+  const raw = window.localStorage.getItem(STORAGE_KEY);
+  if (!raw) return [];
+
+  try {
+    return JSON.parse(raw) as BehavioralEvent[];
+  } catch {
+    return [];
+  }
+}
+
+export function enqueueEvent(event: BehavioralEvent) {
+  const events = getPendingEvents();
+  events.push(event);
+  window.localStorage.setItem(STORAGE_KEY, JSON.stringify(events));
+}
+
+export function clearPendingEvents() {
+  window.localStorage.removeItem(STORAGE_KEY);
+}
+
+export function replacePendingEvents(events: BehavioralEvent[]) {
+  window.localStorage.setItem(STORAGE_KEY, JSON.stringify(events));
+}
+```
+
+---
+
+# 5. Flush da fila
+
+```ts
+// /lib/jornada-sync.ts
+
+import { getPendingEvents, replacePendingEvents } from "@/lib/jornada-queue";
+import { sendBehavioralEvents } from "@/lib/jornada-api";
+
+export async function flushPendingEvents() {
+  const pending = getPendingEvents();
+  if (!pending.length) return;
+
+  try {
+    await sendBehavioralEvents({ events: pending });
+    replacePendingEvents([]);
+  } catch {
+    // mantém para tentar depois
+  }
+}
+```
+
+---
+
+# 6. Componente principal da tela do dia
+
+Aqui está o coração do MVP: 1 tela, 1 ação prioritária, 2 botões.
+
+```tsx
+// /components/jornada/JornadaHome.tsx
+"use client";
+
+import { useEffect, useMemo, useState } from "react";
+import type { DailyPlanResponse, PlanAction } from "@/types/jornada";
+import { fetchDailyPlan, sendBehavioralEvents } from "@/lib/jornada-api";
+import { buildBehavioralEvent } from "@/lib/jornada-events";
+import { enqueueEvent } from "@/lib/jornada-queue";
+import { flushPendingEvents } from "@/lib/jornada-sync";
+
+type JornadaHomeProps = {
+  userId: string;
+  careMode: "adult" | "materna" | "pet";
+};
+
+type Status = "idle" | "done" | "missed";
+
+export function JornadaHome({ userId, careMode }: JornadaHomeProps) {
+  const [plan, setPlan] = useState<DailyPlanResponse | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [status, setStatus] = useState<Status>("idle");
+  const [error, setError] = useState<string | null>(null);
+
+  const primaryAction = useMemo<PlanAction | null>(() => {
+    if (!plan?.actions?.length) return null;
+    return [...plan.actions].sort((a, b) => a.priority - b.priority)[0];
+  }, [plan]);
+
+  useEffect(() => {
+    void load();
+    void flushPendingEvents();
+  }, []);
+
+  async function load() {
+    try {
+      setLoading(true);
+      setError(null);
+
+      const nextPlan = await fetchDailyPlan({
+        userId,
+        careMode,
+        context: {
+          timeOfDay: getTimeOfDay(),
+          dayOfWeek: getDayOfWeek(),
+          timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+          surface: "home",
+        },
+      });
+
+      setPlan(nextPlan);
+
+      const loadedEvent = buildBehavioralEvent({
+        eventType: "plan_loaded",
+        userId,
+        plan: nextPlan,
+        action: null,
+        surface: "home",
+      });
+
+      await safeSendEvent(loadedEvent);
+    } catch (err) {
+      setError("Não foi possível carregar seu plano de hoje.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function safeSendEvent(event: ReturnType<typeof buildBehavioralEvent>) {
+    try {
+      await sendBehavioralEvents({ events: [event] });
+    } catch {
+      enqueueEvent(event);
+    }
+  }
+
+  async function handleDone() {
+    if (!plan || !primaryAction) return;
+
+    const event = buildBehavioralEvent({
+      eventType: "done",
+      userId,
+      plan,
+      action: primaryAction,
+      surface: "home",
+      extraMetadata: {
+        completionMethod: "one_tap",
+      },
+    });
+
+    setStatus("done");
+    await safeSendEvent(event);
+  }
+
+  async function handleMissed() {
+    if (!plan || !primaryAction) return;
+
+    const event = buildBehavioralEvent({
+      eventType: "missed",
+      userId,
+      plan,
+      action: primaryAction,
+      surface: "home",
+      extraMetadata: {
+        reason: "not_completed",
+      },
+    });
+
+    setStatus("missed");
+    await safeSendEvent(event);
+  }
+
+  if (loading) {
+    return (
+      <main className="mx-auto max-w-md p-6">
+        <div className="rounded-3xl border p-6 shadow-sm">
+          <p className="text-sm text-neutral-500">Carregando seu dia...</p>
+        </div>
+      </main>
+    );
+  }
+
+  if (error || !plan || !primaryAction) {
+    return (
+      <main className="mx-auto max-w-md p-6">
+        <div className="rounded-3xl border p-6 shadow-sm space-y-3">
+          <h1 className="text-xl font-semibold">Jornada-EU</h1>
+          <p className="text-sm text-neutral-600">
+            {error ?? "Nenhuma ação disponível para hoje."}
+          </p>
+          <button
+            onClick={() => void load()}
+            className="rounded-2xl border px-4 py-2 text-sm"
+          >
+            Tentar novamente
+          </button>
+        </div>
+      </main>
+    );
+  }
+
+  return (
+    <main className="mx-auto max-w-md p-6">
+      <div className="rounded-3xl border p-6 shadow-sm space-y-6">
+        <header className="space-y-1">
+          <p className="text-sm text-neutral-500">{getGreeting()}</p>
+          <h1 className="text-2xl font-semibold">Sua jornada de hoje</h1>
+        </header>
+
+        {status === "idle" && (
+          <ActionCard plan={plan} action={primaryAction} />
+        )}
+
+        {status === "done" && (
+          <FeedbackCard
+            title="Feito 👏"
+            description="Você concluiu sua ação de hoje."
+          />
+        )}
+
+        {status === "missed" && (
+          <FeedbackCard
+            title="Tudo bem."
+            description="Vamos tentar de forma mais simples amanhã."
+          />
+        )}
+
+        {status === "idle" && (
+          <div className="flex gap-3">
+            <button
+              onClick={() => void handleDone()}
+              className="flex-1 rounded-2xl px-4 py-3 font-medium border"
+            >
+              Feito
+            </button>
+            <button
+              onClick={() => void handleMissed()}
+              className="flex-1 rounded-2xl px-4 py-3 text-neutral-600 border"
+            >
+              Não consegui
+            </button>
+          </div>
+        )}
+
+        {plan.uiHints?.showProgress && (
+          <p className="text-xs text-neutral-500">
+            Estratégia do dia: {plan.adaptation.level}
+          </p>
+        )}
+      </div>
+    </main>
+  );
+}
+
+function ActionCard({
+  plan,
+  action,
+}: {
+  plan: DailyPlanResponse;
+  action: PlanAction;
+}) {
+  const isMinimal = plan.adaptation.level === "minimal";
+  const isSimplified = plan.adaptation.level === "simplified";
+
+  return (
+    <section className="space-y-3">
+      <div className="rounded-2xl bg-neutral-50 p-4">
+        <p className="text-sm text-neutral-500">Ação principal</p>
+        <h2 className="text-xl font-medium mt-1">{action.title}</h2>
+        <p className="text-sm text-neutral-700 mt-2">{action.instruction}</p>
+
+        {isSimplified && (
+          <p className="text-sm text-neutral-500 mt-3">
+            Pequenas ações consistentes valem mais do que planos perfeitos.
+          </p>
+        )}
+
+        {!isMinimal && plan.adaptation.level === "normal" && (
+          <div className="mt-4 space-y-1 text-sm text-neutral-500">
+            <p>Tipo: {action.type}</p>
+            {action.trigger ? <p>Momento: {action.trigger}</p> : null}
+            <p>Esforço: {action.effort}</p>
+          </div>
+        )}
+      </div>
+    </section>
+  );
+}
+
+function FeedbackCard({
+  title,
+  description,
+}: {
+  title: string;
+  description: string;
+}) {
+  return (
+    <section className="rounded-2xl bg-neutral-50 p-4 space-y-2">
+      <h2 className="text-xl font-medium">{title}</h2>
+      <p className="text-sm text-neutral-600">{description}</p>
+    </section>
+  );
+}
+
+function getGreeting() {
+  const hour = new Date().getHours();
+  if (hour < 12) return "Bom dia";
+  if (hour < 18) return "Boa tarde";
+  return "Boa noite";
+}
+
+function getTimeOfDay() {
+  const hour = new Date().getHours();
+  if (hour < 12) return "morning";
+  if (hour < 18) return "afternoon";
+  return "evening";
+}
+
+function getDayOfWeek() {
+  return new Intl.DateTimeFormat("en-US", { weekday: "long" })
+    .format(new Date())
+    .toLowerCase();
+}
+```
+
+---
+
+# 7. Página Next para subir isso rápido
+
+```tsx
+// /app/jornada/page.tsx
+
+import { JornadaHome } from "@/components/jornada/JornadaHome";
+
+export default function JornadaPage() {
+  return <JornadaHome userId="demo-user-1" careMode="adult" />;
+}
+```
+
+---
+
+# 8. Route handler de exemplo para o plano
+
+Se você quiser testar já com mock antes de plugar no backend real:
+
+```ts
+// /app/api/jornada/daily-plan/route.ts
+
+import { NextResponse } from "next/server";
+
+export async function POST() {
+  return NextResponse.json({
+    planId: "plan_demo_1",
+    generatedAt: new Date().toISOString(),
+    careMode: "adult",
+    behavioralSegment: "medium",
+    adaptation: {
+      level: "minimal",
+      experimentKey: "medium_adaptation_v1",
+      experimentVariant: "minimal",
+    },
+    actions: [
+      {
+        id: "act_1",
+        type: "nutrition",
+        markerKey: "glucose",
+        recommendedActionType: "protein_intake",
+        title: "Comece o dia com proteína",
+        instruction: "Inclua uma fonte de proteína no café da manhã.",
+        effort: "low",
+        trigger: "breakfast",
+        priority: 1,
+      },
+    ],
+    uiHints: {
+      maxVisibleActions: 1,
+      tone: "calm",
+      showWhy: false,
+      showProgress: true,
+    },
+  });
+}
+```
+
+---
+
+# 9. Route handler de exemplo para eventos
+
+```ts
+// /app/api/behavioral/events/route.ts
+
+import { NextRequest, NextResponse } from "next/server";
+
+export async function POST(req: NextRequest) {
+  const body = await req.json();
+
+  console.log("behavioral_events", body.events);
+
+  return NextResponse.json({
+    ok: true,
+    accepted: Array.isArray(body.events) ? body.events.length : 0,
+  });
+}
+```
+
+---
+
+# 10. O que esse MVP já resolve
+
+Com isso você já tem:
+
+* contrato claro entre app e backend
+* tela principal funcional
+* suporte a `minimal`, `simplified`, `normal`
+* `plan_loaded`, `done`, `missed`
+* fila offline básica
+* ponto perfeito para plugar no experimento `minimal vs simplified`
+
+---
+
+# 11. Próxima evolução certa
+
+A próxima peça mais valiosa agora é esta:
+
+**ligar essa tela ao backend real do LONGEVI**, de modo que `adaptation.level`, `markerKey` e `recommendedActionType` venham do seu motor adaptativo real, não do mock.
+
+Depois disso, a evolução natural é:
+
+* notificações/context triggers
+* mais de uma ação por dia para `normal`
+* tela de histórico curto
+* leitura no admin cruzando `surface × adaptationLevel × completion`
+
+Posso seguir no próximo passo já te entregando o **backend real do endpoint `/api/jornada/daily-plan`**, encaixado no seu loop atual de segmentação/adaptação.

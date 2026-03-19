@@ -9,6 +9,7 @@ export function useNotifications() {
 
     const setup = async () => {
       try {
+        // @ts-ignore — expo-notifications is optional (native only)
         const Notifications = await import("expo-notifications");
 
         const { status } = await Notifications.requestPermissionsAsync();

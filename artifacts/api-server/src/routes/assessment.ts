@@ -32,7 +32,7 @@ function qualLevel(s: number): string {
   return "muito alto";
 }
 
-router.post("/assessment/interpret", async (req, res) => {
+router.post("/interpret", async (req, res) => {
   const { scores } = req.body as { scores: Big5Scores };
 
   if (!scores) {
@@ -43,7 +43,7 @@ router.post("/assessment/interpret", async (req, res) => {
   const dims = ["O", "C", "E", "A", "N"];
   const profileLines = dims.map((d) => {
     const score = (scores as any)[d];
-    const facetsForDim = Object.entries(scores.facets)
+    const facetsForDim = Object.entries(scores.facets ?? {})
       .filter(([k]) => k.startsWith(d))
       .sort(([, a], [, b]) => b - a);
 

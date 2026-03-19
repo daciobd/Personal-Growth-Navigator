@@ -7,7 +7,7 @@ import { CURRENT_ADJECTIVES, FUTURE_ADJECTIVES, CATEGORIES } from "@workspace/co
 const router: IRouter = Router();
 
 // GET /api/admin/stats — dashboard overview
-router.get("/admin/stats", async (_req, res) => {
+router.get("/stats", async (_req, res) => {
   try {
     const [totalPlans] = await db.select({ count: count() }).from(planLogsTable);
     const [recentActivity] = await db
@@ -59,7 +59,7 @@ router.get("/admin/stats", async (_req, res) => {
 });
 
 // GET /api/admin/logs — recent plan logs
-router.get("/admin/logs", async (req, res) => {
+router.get("/logs", async (req, res) => {
   try {
     const limit = Math.min(parseInt(req.query.limit as string) || 20, 100);
     const offset = parseInt(req.query.offset as string) || 0;
@@ -79,12 +79,12 @@ router.get("/admin/logs", async (req, res) => {
 });
 
 // GET /api/admin/interventions — list all static interventions
-router.get("/admin/interventions", (_req, res) => {
+router.get("/interventions", (_req, res) => {
   res.json({ interventions: INTERVENTIONS });
 });
 
 // GET /api/admin/adjectives — list all adjectives organized by category
-router.get("/admin/adjectives", (_req, res) => {
+router.get("/adjectives", (_req, res) => {
   const currentByCategory: Record<string, string[]> = {};
   const futureByCategory: Record<string, string[]> = {};
 
@@ -107,7 +107,7 @@ router.get("/admin/adjectives", (_req, res) => {
 });
 
 // POST /api/admin/simulate — simulate plan generation
-router.post("/admin/simulate", (req, res) => {
+router.post("/simulate", (req, res) => {
   const { currentAdjectives, futureAdjectives } = req.body as {
     currentAdjectives: string[];
     futureAdjectives: string[];

@@ -1,6 +1,4 @@
 import { pgTable, serial, text, integer, boolean, timestamp } from "drizzle-orm/pg-core";
-import { createInsertSchema } from "drizzle-zod";
-import { z } from "zod";
 
 export const dailyCheckinsTable = pgTable("daily_checkins", {
   id: serial("id").primaryKey(),
@@ -18,10 +16,5 @@ export const dailyCheckinsTable = pgTable("daily_checkins", {
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
 });
 
-export const insertDailyCheckinSchema = createInsertSchema(dailyCheckinsTable).omit({
-  id: true,
-  createdAt: true,
-});
-
-export type InsertDailyCheckin = z.infer<typeof insertDailyCheckinSchema>;
+export type InsertDailyCheckin = typeof dailyCheckinsTable.$inferInsert;
 export type DailyCheckin = typeof dailyCheckinsTable.$inferSelect;

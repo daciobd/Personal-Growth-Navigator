@@ -1,6 +1,4 @@
 import { pgTable, serial, text, timestamp, jsonb } from "drizzle-orm/pg-core";
-import { createInsertSchema } from "drizzle-zod";
-import { z } from "zod";
 
 export const planLogsTable = pgTable("plan_logs", {
   id: serial("id").primaryKey(),
@@ -13,6 +11,5 @@ export const planLogsTable = pgTable("plan_logs", {
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
 });
 
-export const insertPlanLogSchema = createInsertSchema(planLogsTable).omit({ id: true, createdAt: true });
-export type InsertPlanLog = z.infer<typeof insertPlanLogSchema>;
+export type InsertPlanLog = typeof planLogsTable.$inferInsert;
 export type PlanLog = typeof planLogsTable.$inferSelect;

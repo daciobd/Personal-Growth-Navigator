@@ -7,7 +7,7 @@
 import { Router, type IRouter } from "express";
 import { anthropic } from "@workspace/integrations-anthropic-ai";
 import { db } from "@workspace/db";
-import { planLogsTable } from "@workspace/db/schema";
+import { planLogsTable, type InsertPlanLog } from "@workspace/db/schema";
 import { selectFutureApproach } from "../data/futureApproaches.js";
 
 const router: IRouter = Router();
@@ -208,11 +208,15 @@ REGRAS:
       planData = { rawText, parseError: true };
     }
 
-    db.insert(planLogsTable).values({
-      currentAdjectives: traits,
-      futureAdjectives: future,
-      plan: planData,
-    }).catch(err => console.error("Plan log error:", err));
+    const logEntry: InsertPlanLog = {
+      currentAdjectives: traits as any,
+      futureAdjectives: future as any,
+      sintese: (planData?.sintese as string | undefined) ?? undefined,
+      fraseIntencao: (planData?.fraseIntencao as string | undefined) ?? undefined,
+      praticas: (planData?.praticas as any[] | undefined) ?? undefined,
+    };
+    db.insert(planLogsTable).values(logEntry)
+      .catch(err => console.error("Plan log error:", err));
 
     res.json({
       success: true,

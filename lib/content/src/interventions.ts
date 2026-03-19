@@ -204,7 +204,7 @@ export const INTERVENTIONS: Intervention[] = [
   },
 ];
 
-export const CURRENT_ADJECTIVES = [
+const CURRENT_ADJECTIVES = [
   "ansioso", "inseguro", "impulsivo", "tímido", "pessimista",
   "procrastinador", "perfeccionista", "rígido", "passivo", "agitado",
   "solitário", "autocrítico", "distraído", "dependente", "conformado",
@@ -212,7 +212,7 @@ export const CURRENT_ADJECTIVES = [
   "culpado", "perdido", "vazio", "acelerado", "medroso",
 ];
 
-export const FUTURE_ADJECTIVES = [
+const FUTURE_ADJECTIVES = [
   "confiante", "calmo", "corajoso", "presente", "positivo",
   "determinado", "flexível", "ativo", "focado", "autêntico",
   "generoso", "equilibrado", "compassivo", "criativo", "sereno",

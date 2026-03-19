@@ -49,7 +49,7 @@ ${lines.join("\n")}
 Adapte suas sugestões para endereçar as barreiras do usuário e apoiar o objetivo acima. Nunca faça diagnósticos.`;
 }
 
-router.post("/coach/message", async (req, res) => {
+router.post("/message", async (req, res) => {
   const { deviceId, message, history, healthContext } = req.body as {
     deviceId: string;
     message: string;
@@ -107,7 +107,7 @@ router.post("/coach/message", async (req, res) => {
   res.json({ response, xpEarned: 2 });
 });
 
-router.get("/coach/history", async (req, res) => {
+router.get("/history", async (req, res) => {
   const { deviceId } = req.query as { deviceId: string };
 
   if (!deviceId) {

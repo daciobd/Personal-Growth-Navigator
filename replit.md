@@ -160,10 +160,20 @@ Estrutura: `{ sintese, fraseIntencao, praticas: [{ abordagem, nome, justificativ
 - `AdjectiveChip`: Chip individual (legado, integrado no CategoryPicker)
 - `ErrorBoundary`: Boundary de erros
 
+## Estrutura de Rotas da API
+**REGRA IMPORTANTE**: Cada subrouter é montado em `routes/index.ts` com um prefixo (ex: `router.use("/coach", coachRouter)`). As rotas DENTRO de cada arquivo devem ser relativas (sem repetir o prefixo). Exemplo:
+- `coach.ts` → `/message` e `/history` (NÃO `/coach/message`)
+- `daily.ts` → `/challenge`, `/checkin`, `/history` (NÃO `/daily/challenge`)
+- `assessment.ts` → `/interpret` (NÃO `/assessment/interpret`)
+- `admin.ts` → `/stats`, `/logs`, `/interventions` (NÃO `/admin/stats`)
+- `auth.ts` → `/register`, `/login`, `/refresh`, `/logout` (montado em `/auth`)
+- `plan.ts` → `/generate` (montado em `/plan`) — já estava correto
+- `journeys.ts` → `/`, `/start`, `/active/:deviceId`, etc. (já correto)
+
 ## Preferências do Usuário
 - Todo texto em pt-BR
 - Nunca usar emojis — usar @expo/vector-icons (Feather)
 - paddingTop: 67 (web), insets.top (native)
 - paddingBottom: 34 (web), insets.bottom (native)
 - Fonte: Inter (400, 500, 600, 700)
-- API calls: usar `process.env.EXPO_PUBLIC_DOMAIN` (nunca hardcode)
+- API calls: usar `getApiUrl()` de `@/utils/api` (nunca hardcode nem `process.env.EXPO_PUBLIC_DOMAIN` diretamente)

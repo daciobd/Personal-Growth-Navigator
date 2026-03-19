@@ -150,7 +150,6 @@ export const ADJECTIVE_B5_MAP: Record<string, AdjectiveWeight> = {
   "pleno":            { E6: +0.80, O6: +0.75, N3: -0.72 },
   "compassivo":       { A6: +0.88, A3: +0.82, A5: +0.68 },
   "justo":            { A2: +0.82, A4: +0.72, C3: +0.68 },
-  "corajoso":         { E3: +0.80, N6: -0.72, C3: +0.68 },
   "espiritual":       { O6: +0.78, O3: +0.72, A6: +0.65 },
   "comprometido":     { C3: +0.88, C4: +0.80, A4: +0.65 },
   "confiante":        { N4: -0.85, E3: +0.78, C1: +0.72 },

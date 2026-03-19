@@ -205,7 +205,7 @@ export default function InterventionScreen() {
         </Text>
 
         <View style={styles.stepsProgress}>
-          {intervention.steps.map((_, i) => (
+          {intervention.steps.map((_: unknown, i: number) => (
             <View
               key={i}
               style={[

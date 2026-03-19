@@ -110,7 +110,7 @@ router.get("/context/:deviceId/:journeyId", async (req, res) => {
   })
     .from(dailyCheckinsTable)
     .where(eq(dailyCheckinsTable.deviceId, deviceId))
-    .orderBy(desc(dailyCheckinsTable.checkinDate))
+    .orderBy(desc(dailyCheckinsTable.createdAt))
     .limit(3);
 
   const adaptiveCtx = analyzeProgress(recentCheckins.reverse());

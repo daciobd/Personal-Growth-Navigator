@@ -1,6 +1,4 @@
 import { pgTable, serial, text, boolean, timestamp } from "drizzle-orm/pg-core";
-import { createInsertSchema } from "drizzle-zod";
-import { z } from "zod";
 
 export const usersTable = pgTable("users", {
   id: serial("id").primaryKey(),
@@ -21,10 +19,8 @@ export const refreshTokensTable = pgTable("refresh_tokens", {
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
 });
 
-export const insertUserSchema = createInsertSchema(usersTable).omit({ id: true, createdAt: true });
-export type InsertUser = z.infer<typeof insertUserSchema>;
+export type InsertUser = typeof usersTable.$inferInsert;
 export type User = typeof usersTable.$inferSelect;
 
-export const insertRefreshTokenSchema = createInsertSchema(refreshTokensTable).omit({ id: true, createdAt: true });
-export type InsertRefreshToken = z.infer<typeof insertRefreshTokenSchema>;
+export type InsertRefreshToken = typeof refreshTokensTable.$inferInsert;
 export type RefreshToken = typeof refreshTokensTable.$inferSelect;

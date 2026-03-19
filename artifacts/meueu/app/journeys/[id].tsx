@@ -106,7 +106,18 @@ export default function JourneyActiveScreen() {
           comment: comment || undefined,
         }),
       });
-      if (completed) await recordCheckin(true, note);
+      if (completed) {
+        const today = new Date().toISOString().split("T")[0];
+        const xp = 10 + (note >= 5 ? 5 : note >= 4 ? 3 : 0);
+        recordCheckin({
+          date: today,
+          completed: true,
+          rating: note,
+          hasNote: false,
+          xpEarned: xp,
+          streak: 0,
+        });
+      }
       setStep("done");
     } finally {
       setSaving(false);

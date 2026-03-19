@@ -27,7 +27,7 @@ function getPracticeIndexForDate(date: string): number {
   return d.getDay() % 3;
 }
 
-router.post("/daily/challenge", async (req, res) => {
+router.post("/challenge", async (req, res) => {
   const { deviceId, date, practice } = req.body as {
     deviceId: string;
     date: string;
@@ -146,7 +146,7 @@ Responda APENAS com a proposição de ação, sem introdução ou explicação.`
   });
 });
 
-router.post("/daily/checkin", async (req, res) => {
+router.post("/checkin", async (req, res) => {
   const { deviceId, date, practiceIndex, practiceName, completed, rating, note } = req.body as {
     deviceId: string;
     date: string;
@@ -285,7 +285,7 @@ Responda APENAS com a mensagem, sem introdução.`,
   res.json({ xpEarned, aiTip, streakDays: streak, alreadyDone: false });
 });
 
-router.get("/daily/history", async (req, res) => {
+router.get("/history", async (req, res) => {
   const { deviceId, days } = req.query as { deviceId: string; days?: string };
 
   if (!deviceId) {

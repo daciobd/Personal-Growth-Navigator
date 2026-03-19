@@ -39,6 +39,8 @@ router.post("/generate", async (req, res) => {
     // Big Five (opcional, de avaliação completa ou estimativa)
     big5Scores,
     assessmentNumber = 1,
+    // Contexto Longevi (opcional)
+    longeviContext,
   } = req.body as {
     traitAdjectives?: string[];
     stateAdjectives?: string[];
@@ -46,6 +48,7 @@ router.post("/generate", async (req, res) => {
     futureAdjectives?: string[];
     big5Scores?: { dims: Record<string, number>; facets: Record<string, number> };
     assessmentNumber?: number;
+    longeviContext?: { context: string; focus: string };
   };
 
   // Normaliza: usa novos campos se disponíveis, senão legados
@@ -79,9 +82,32 @@ router.post("/generate", async (req, res) => {
     ? `ESTADO EMOCIONAL ATUAL (última semana — VOLÁTIL, não confunda com traço):\n  ${states.join(", ")}\n\n`
     : "";
 
+  // Bloco Longevi (contexto clínico externo)
+  const CONTEXT_LABELS: Record<string, string> = {
+    insulin_resistance: "Resistência à Insulina",
+    metabolic_syndrome: "Síndrome Metabólica",
+    chronic_stress:     "Estresse Crônico",
+    sleep_disorder:     "Distúrbio de Sono",
+    gut_health:         "Saúde Intestinal",
+  };
+  const FOCUS_LABELS: Record<string, string> = {
+    sleep_stress:      "Melhora do sono e redução de estresse",
+    habit_consistency: "Consistência de hábitos de saúde",
+    stress_reduction:  "Redução geral de estresse",
+    stress_cortisol:   "Regulação de cortisol e estresse crônico",
+    nutrition_habit:   "Hábitos alimentares saudáveis",
+  };
+  const longeviBlock = longeviContext?.context
+    ? `CONTEXTO CLÍNICO (via Longevi — integre ao plano sem alarmar o usuário):
+  Condição de atenção: ${CONTEXT_LABELS[longeviContext.context] ?? longeviContext.context}
+  Foco de mudança comportamental: ${FOCUS_LABELS[longeviContext.focus] ?? longeviContext.focus}
+  → As práticas devem ter impacto direto neste contexto clínico (ex: sono, cortisol, consistência de rotina, alimentação consciente).
+  → Mencione o contexto de saúde de forma acolhedora na síntese, sem diagnósticos.\n\n`
+    : "";
+
   const prompt = `Você é um psicólogo clínico especialista em psicoterapia integrativa.
 
-${big5Block}${stateBlock}TRAÇOS DE PERSONALIDADE (estáveis — base para o Big Five):
+${longeviBlock}${big5Block}${stateBlock}TRAÇOS DE PERSONALIDADE (estáveis — base para o Big Five):
 ${traits.join(", ")}
 
 EU FUTURO DESEJADO:

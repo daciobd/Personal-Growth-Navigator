@@ -18,6 +18,7 @@ import Big5LivePreview from "@/components/Big5LivePreview";
 import Colors from "@/constants/colors";
 import { useApp } from "@/context/AppContext";
 import { FUTURE_ADJECTIVES } from "@/data/adjectives";
+import { useLongeviContext, FOCUS_ADJECTIVES, FOCUS_LABELS } from "@/hooks/useLongeviContext";
 
 export default function FutureScreen() {
   const colors = Colors.light;
@@ -25,6 +26,7 @@ export default function FutureScreen() {
   const { setFutureAdjectives } = useApp();
   const [selected, setSelected] = useState<string[]>([]);
   const [traitAdj, setTraitAdj] = useState<string[]>([]);
+  const { isFromLongevi, focus, context, isLoaded } = useLongeviContext();
 
   useEffect(() => {
     (async () => {
@@ -36,6 +38,13 @@ export default function FutureScreen() {
       setTraitAdj(adj);
     })();
   }, []);
+
+  useEffect(() => {
+    if (!isLoaded) return;
+    if (isFromLongevi && focus && FOCUS_ADJECTIVES[focus]) {
+      setSelected(FOCUS_ADJECTIVES[focus]);
+    }
+  }, [isLoaded, isFromLongevi, focus]);
 
   const toggle = (label: string) => {
     setSelected((prev) =>
@@ -51,6 +60,10 @@ export default function FutureScreen() {
     }
     router.push("/onboarding/plan");
   };
+
+  const stepLabel = isFromLongevi ? "Etapa 2 de 2" : "Etapa 3 de 3";
+  const totalSteps = isFromLongevi ? 2 : 3;
+  const currentStep = isFromLongevi ? 2 : 3;
 
   return (
     <View
@@ -68,10 +81,10 @@ export default function FutureScreen() {
             <Feather name="arrow-left" size={20} color={colors.text} />
           </Pressable>
           <Text style={[styles.step, { color: colors.textMuted, fontFamily: "Inter_500Medium" }]}>
-            Etapa 3 de 3
+            {stepLabel}
           </Text>
         </View>
-        <ProgressBar progress={3} total={3} />
+        <ProgressBar progress={currentStep} total={totalSteps} />
       </View>
 
       <ScrollView
@@ -87,9 +100,25 @@ export default function FutureScreen() {
             Eu Futuro
           </Text>
           <Text style={[styles.subtitle, { color: colors.textSecondary, fontFamily: "Inter_400Regular" }]}>
-            Quem você quer se tornar? Escolha os adjetivos que descrevem a pessoa que você deseja ser.
+            {isFromLongevi
+              ? "Com base no seu perfil do Longevi, selecionamos os adjetivos mais relevantes para você. Ajuste conforme quiser."
+              : "Quem você quer se tornar? Escolha os adjetivos que descrevem a pessoa que você deseja ser."}
           </Text>
         </View>
+
+        {isFromLongevi && focus && FOCUS_LABELS[focus] && (
+          <View style={[styles.longeviBanner, { backgroundColor: "#F0F9FF", borderColor: "#BAE6FD" }]}>
+            <View style={styles.longeviRow}>
+              <View style={[styles.longeviDot, { backgroundColor: "#0EA5E9" }]} />
+              <Text style={[styles.longeviLabel, { color: "#0284C7", fontFamily: "Inter_600SemiBold" }]}>
+                Personalizado para o seu foco: {FOCUS_LABELS[focus]}
+              </Text>
+            </View>
+            <Text style={[styles.longeviSub, { color: "#0369A1", fontFamily: "Inter_400Regular" }]}>
+              Você pode adicionar ou remover adjetivos conforme seu objetivo pessoal.
+            </Text>
+          </View>
+        )}
 
         <CategoryPicker
           adjectives={FUTURE_ADJECTIVES}
@@ -157,7 +186,9 @@ export default function FutureScreen() {
               },
             ]}
           >
-            {selected.length > 0 ? `Gerar meu plano com ${selected.length} adjetivo${selected.length !== 1 ? "s" : ""}` : "Selecione ao menos um"}
+            {selected.length > 0
+              ? `Gerar meu plano com ${selected.length} adjetivo${selected.length !== 1 ? "s" : ""}`
+              : "Selecione ao menos um"}
           </Text>
         </Pressable>
       </View>
@@ -191,6 +222,18 @@ const styles = StyleSheet.create({
   },
   title: { fontSize: 28, lineHeight: 34 },
   subtitle: { fontSize: 14, lineHeight: 21 },
+
+  longeviBanner: {
+    borderRadius: 14,
+    borderWidth: 1,
+    padding: 14,
+    gap: 6,
+  },
+  longeviRow: { flexDirection: "row", alignItems: "center", gap: 8 },
+  longeviDot: { width: 7, height: 7, borderRadius: 4 },
+  longeviLabel: { fontSize: 13, flex: 1 },
+  longeviSub: { fontSize: 12, lineHeight: 18 },
+
   footer: {
     paddingHorizontal: 20,
     paddingTop: 12,

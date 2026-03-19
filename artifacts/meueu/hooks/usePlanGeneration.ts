@@ -83,6 +83,18 @@ export function usePlanGeneration() {
         } catch { /* estimativa opcional */ }
       }
 
+      // 5. Longevi context (se o usuário veio do Longevi)
+      let longeviContext: { context: string; focus: string } | undefined;
+      try {
+        const longeviRaw = await AsyncStorage.getItem("@meueu_longevi_context");
+        if (longeviRaw) {
+          const parsed = JSON.parse(longeviRaw);
+          if (parsed?.source === "longevi" && parsed?.context) {
+            longeviContext = { context: parsed.context, focus: parsed.focus ?? "" };
+          }
+        }
+      } catch { /* opcional */ }
+
       const res = await fetch(`${domain}/api/plan/generate`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -91,7 +103,8 @@ export function usePlanGeneration() {
           stateAdjectives:  stateAdj,
           futureAdjectives: futureAdjectives,
           assessmentNumber,
-          ...(big5Scores ? { big5Scores } : {}),
+          ...(big5Scores     ? { big5Scores }     : {}),
+          ...(longeviContext ? { longeviContext }  : {}),
         }),
       });
 

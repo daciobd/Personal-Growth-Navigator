@@ -13,6 +13,7 @@ import {
 import Animated, { FadeInDown } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Colors from "@/constants/colors";
+import { useLongeviContext, FOCUS_LABELS, CONTEXT_LABELS } from "@/hooks/useLongeviContext";
 
 const APPROACHES = [
   {
@@ -42,29 +43,44 @@ const APPROACHES = [
   {
     name: "Psicologia Positiva",
     full: "Psicologia Positiva",
-    desc: "Amplifica suas forças e cultivaa gratidão para florescer.",
+    desc: "Amplifica suas forças e cultiva a gratidão para florescer.",
     icon: "star",
     color: "#6B21A8",
     bg: "#FAF5FF",
   },
 ];
 
-const STEPS = [
+const STEPS_DEFAULT = [
   { num: "1", label: "Sua personalidade", desc: "Traços + estado atual" },
   { num: "2", label: "Eu Futuro", desc: "Quem você quer ser" },
   { num: "3", label: "Seu Plano", desc: "IA gera seu caminho" },
 ];
 
+const STEPS_LONGEVI = [
+  { num: "1", label: "Seu contexto", desc: "Vem do Longevi" },
+  { num: "2", label: "Eu Futuro", desc: "Quem você quer ser" },
+  { num: "3", label: "Seu Plano", desc: "IA integra tudo" },
+];
+
 export default function WelcomeScreen() {
   const colors = Colors.light;
   const insets = useSafeAreaInsets();
+  const { isFromLongevi, context, focus, isLoaded } = useLongeviContext();
 
   const handleStart = () => {
     if (Platform.OS !== "web") {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     }
-    router.push("/onboarding/traits");
+    if (isFromLongevi && context) {
+      router.push("/onboarding/future");
+    } else {
+      router.push("/onboarding/traits");
+    }
   };
+
+  const contextLabel = context ? (CONTEXT_LABELS[context] ?? context) : null;
+  const focusLabel   = focus   ? (FOCUS_LABELS[focus]   ?? focus)   : null;
+  const steps = isFromLongevi ? STEPS_LONGEVI : STEPS_DEFAULT;
 
   return (
     <View
@@ -82,78 +98,152 @@ export default function WelcomeScreen() {
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        <Animated.View entering={FadeInDown.delay(50).duration(500)} style={styles.hero}>
-          <View style={[styles.heroIcon, { backgroundColor: colors.primary }]}>
-            <Feather name="refresh-cw" size={32} color="#fff" />
-          </View>
-          <Text
-            style={[styles.heroTitle, { color: colors.text, fontFamily: "Inter_700Bold" }]}
-          >
-            Bem-vindo ao{"\n"}MeuEu
-          </Text>
-          <Text
-            style={[styles.heroSub, { color: colors.textSecondary, fontFamily: "Inter_400Regular" }]}
-          >
-            Uma jornada de autoconhecimento e transformação pessoal, guiada por terapias baseadas em evidências.
-          </Text>
-        </Animated.View>
-
-        <Animated.View entering={FadeInDown.delay(150).duration(500)} style={styles.stepsSection}>
-          <Text style={[styles.sectionLabel, { color: colors.textMuted, fontFamily: "Inter_600SemiBold" }]}>
-            COMO FUNCIONA
-          </Text>
-          <View style={styles.stepsRow}>
-            {STEPS.map((step, i) => (
-              <React.Fragment key={step.num}>
-                <View style={styles.stepItem}>
-                  <View style={[styles.stepBadge, { backgroundColor: colors.primary }]}>
-                    <Text style={[styles.stepNum, { fontFamily: "Inter_700Bold" }]}>{step.num}</Text>
-                  </View>
-                  <Text style={[styles.stepLabel, { color: colors.text, fontFamily: "Inter_600SemiBold" }]}>
-                    {step.label}
-                  </Text>
-                  <Text style={[styles.stepDesc, { color: colors.textMuted, fontFamily: "Inter_400Regular" }]}>
-                    {step.desc}
-                  </Text>
-                </View>
-                {i < STEPS.length - 1 && (
-                  <Feather name="arrow-right" size={16} color={colors.textMuted} style={styles.arrow} />
-                )}
-              </React.Fragment>
-            ))}
-          </View>
-        </Animated.View>
-
-        <Animated.View entering={FadeInDown.delay(250).duration(500)} style={styles.approachesSection}>
-          <Text style={[styles.sectionLabel, { color: colors.textMuted, fontFamily: "Inter_600SemiBold" }]}>
-            ABORDAGENS TERAPÊUTICAS
-          </Text>
-          {APPROACHES.map((a) => (
-            <View
-              key={a.name}
-              style={[styles.approachCard, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}
-            >
-              <View style={[styles.approachIcon, { backgroundColor: a.bg }]}>
-                <Feather name={a.icon as any} size={18} color={a.color} />
+        {isFromLongevi && isLoaded ? (
+          <>
+            <Animated.View entering={FadeInDown.delay(50).duration(500)} style={styles.longeviBanner}>
+              <View style={styles.longeviLogoRow}>
+                <View style={[styles.longeviDot, { backgroundColor: "#0EA5E9" }]} />
+                <Text style={[styles.longeviLogoText, { fontFamily: "Inter_700Bold" }]}>
+                  LONGEVI × MeuEu
+                </Text>
               </View>
-              <View style={styles.approachContent}>
-                <View style={styles.approachRow}>
-                  <View style={[styles.approachBadge, { backgroundColor: a.bg }]}>
-                    <Text style={[styles.approachBadgeText, { color: a.color, fontFamily: "Inter_600SemiBold" }]}>
-                      {a.name}
+              <Text style={[styles.longeviBannerTitle, { fontFamily: "Inter_700Bold" }]}>
+                Sua jornada começa aqui
+              </Text>
+              <Text style={[styles.longeviBannerSub, { fontFamily: "Inter_400Regular" }]}>
+                O Longevi identificou pontos de atenção no seu perfil. O MeuEu vai transformar esses dados em um plano de mudança comportamental personalizado.
+              </Text>
+              {(contextLabel || focusLabel) && (
+                <View style={styles.longeviTags}>
+                  {contextLabel && (
+                    <View style={[styles.longeviTag, { backgroundColor: "#E0F2FE" }]}>
+                      <Feather name="activity" size={12} color="#0284C7" />
+                      <Text style={[styles.longeviTagText, { color: "#0284C7", fontFamily: "Inter_600SemiBold" }]}>
+                        {contextLabel}
+                      </Text>
+                    </View>
+                  )}
+                  {focusLabel && (
+                    <View style={[styles.longeviTag, { backgroundColor: "#F0FDF4" }]}>
+                      <Feather name="target" size={12} color="#16A34A" />
+                      <Text style={[styles.longeviTagText, { color: "#16A34A", fontFamily: "Inter_600SemiBold" }]}>
+                        Foco: {focusLabel}
+                      </Text>
+                    </View>
+                  )}
+                </View>
+              )}
+            </Animated.View>
+
+            <Animated.View entering={FadeInDown.delay(150).duration(500)} style={styles.stepsSection}>
+              <Text style={[styles.sectionLabel, { color: colors.textMuted, fontFamily: "Inter_600SemiBold" }]}>
+                COMO FUNCIONA
+              </Text>
+              <View style={styles.stepsRow}>
+                {steps.map((step, i) => (
+                  <React.Fragment key={step.num}>
+                    <View style={styles.stepItem}>
+                      <View style={[styles.stepBadge, { backgroundColor: "#0EA5E9" }]}>
+                        <Text style={[styles.stepNum, { fontFamily: "Inter_700Bold" }]}>{step.num}</Text>
+                      </View>
+                      <Text style={[styles.stepLabel, { color: colors.text, fontFamily: "Inter_600SemiBold" }]}>
+                        {step.label}
+                      </Text>
+                      <Text style={[styles.stepDesc, { color: colors.textMuted, fontFamily: "Inter_400Regular" }]}>
+                        {step.desc}
+                      </Text>
+                    </View>
+                    {i < steps.length - 1 && (
+                      <Feather name="arrow-right" size={16} color={colors.textMuted} style={styles.arrow} />
+                    )}
+                  </React.Fragment>
+                ))}
+              </View>
+            </Animated.View>
+
+            <Animated.View entering={FadeInDown.delay(250).duration(500)} style={[styles.infoCard, { backgroundColor: "#F0FDF4", borderColor: "#BBF7D0" }]}>
+              <Feather name="shield" size={18} color="#16A34A" />
+              <Text style={[styles.infoCardText, { color: "#166534", fontFamily: "Inter_400Regular" }]}>
+                Seus dados do Longevi são usados apenas para personalizar seu plano. Nenhuma informação clínica é compartilhada com terceiros.
+              </Text>
+            </Animated.View>
+          </>
+        ) : (
+          <>
+            <Animated.View entering={FadeInDown.delay(50).duration(500)} style={styles.hero}>
+              <View style={[styles.heroIcon, { backgroundColor: colors.primary }]}>
+                <Feather name="refresh-cw" size={32} color="#fff" />
+              </View>
+              <Text
+                style={[styles.heroTitle, { color: colors.text, fontFamily: "Inter_700Bold" }]}
+              >
+                Bem-vindo ao{"\n"}MeuEu
+              </Text>
+              <Text
+                style={[styles.heroSub, { color: colors.textSecondary, fontFamily: "Inter_400Regular" }]}
+              >
+                Uma jornada de autoconhecimento e transformação pessoal, guiada por terapias baseadas em evidências.
+              </Text>
+            </Animated.View>
+
+            <Animated.View entering={FadeInDown.delay(150).duration(500)} style={styles.stepsSection}>
+              <Text style={[styles.sectionLabel, { color: colors.textMuted, fontFamily: "Inter_600SemiBold" }]}>
+                COMO FUNCIONA
+              </Text>
+              <View style={styles.stepsRow}>
+                {steps.map((step, i) => (
+                  <React.Fragment key={step.num}>
+                    <View style={styles.stepItem}>
+                      <View style={[styles.stepBadge, { backgroundColor: colors.primary }]}>
+                        <Text style={[styles.stepNum, { fontFamily: "Inter_700Bold" }]}>{step.num}</Text>
+                      </View>
+                      <Text style={[styles.stepLabel, { color: colors.text, fontFamily: "Inter_600SemiBold" }]}>
+                        {step.label}
+                      </Text>
+                      <Text style={[styles.stepDesc, { color: colors.textMuted, fontFamily: "Inter_400Regular" }]}>
+                        {step.desc}
+                      </Text>
+                    </View>
+                    {i < steps.length - 1 && (
+                      <Feather name="arrow-right" size={16} color={colors.textMuted} style={styles.arrow} />
+                    )}
+                  </React.Fragment>
+                ))}
+              </View>
+            </Animated.View>
+
+            <Animated.View entering={FadeInDown.delay(250).duration(500)} style={styles.approachesSection}>
+              <Text style={[styles.sectionLabel, { color: colors.textMuted, fontFamily: "Inter_600SemiBold" }]}>
+                ABORDAGENS TERAPÊUTICAS
+              </Text>
+              {APPROACHES.map((a) => (
+                <View
+                  key={a.name}
+                  style={[styles.approachCard, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}
+                >
+                  <View style={[styles.approachIcon, { backgroundColor: a.bg }]}>
+                    <Feather name={a.icon as any} size={18} color={a.color} />
+                  </View>
+                  <View style={styles.approachContent}>
+                    <View style={styles.approachRow}>
+                      <View style={[styles.approachBadge, { backgroundColor: a.bg }]}>
+                        <Text style={[styles.approachBadgeText, { color: a.color, fontFamily: "Inter_600SemiBold" }]}>
+                          {a.name}
+                        </Text>
+                      </View>
+                    </View>
+                    <Text style={[styles.approachName, { color: colors.text, fontFamily: "Inter_600SemiBold" }]}>
+                      {a.full}
+                    </Text>
+                    <Text style={[styles.approachDesc, { color: colors.textSecondary, fontFamily: "Inter_400Regular" }]}>
+                      {a.desc}
                     </Text>
                   </View>
                 </View>
-                <Text style={[styles.approachName, { color: colors.text, fontFamily: "Inter_600SemiBold" }]}>
-                  {a.full}
-                </Text>
-                <Text style={[styles.approachDesc, { color: colors.textSecondary, fontFamily: "Inter_400Regular" }]}>
-                  {a.desc}
-                </Text>
-              </View>
-            </View>
-          ))}
-        </Animated.View>
+              ))}
+            </Animated.View>
+          </>
+        )}
 
         <View style={{ height: 24 }} />
       </ScrollView>
@@ -171,16 +261,21 @@ export default function WelcomeScreen() {
           onPress={handleStart}
           style={({ pressed }) => [
             styles.startButton,
-            { backgroundColor: colors.primary, opacity: pressed ? 0.85 : 1 },
+            {
+              backgroundColor: isFromLongevi ? "#0EA5E9" : colors.primary,
+              opacity: pressed ? 0.85 : 1,
+            },
           ]}
         >
           <Text style={[styles.startText, { fontFamily: "Inter_600SemiBold" }]}>
-            Começar minha jornada
+            {isFromLongevi ? "Criar meu plano personalizado" : "Começar minha jornada"}
           </Text>
           <Feather name="arrow-right" size={18} color="#fff" />
         </Pressable>
         <Text style={[styles.footerNote, { color: colors.textMuted, fontFamily: "Inter_400Regular" }]}>
-          Leva cerca de 5 minutos · Completamente gratuito
+          {isFromLongevi
+            ? "Leva cerca de 2 minutos · Personalizado para você"
+            : "Leva cerca de 5 minutos · Completamente gratuito"}
         </Text>
       </View>
     </View>
@@ -191,6 +286,41 @@ const styles = StyleSheet.create({
   container: { flex: 1 },
   scroll: { flex: 1 },
   scrollContent: { paddingHorizontal: 24, paddingTop: 16, gap: 32 },
+
+  longeviBanner: {
+    borderRadius: 18,
+    backgroundColor: "#F0F9FF",
+    borderWidth: 1,
+    borderColor: "#BAE6FD",
+    padding: 20,
+    gap: 12,
+  },
+  longeviLogoRow: { flexDirection: "row", alignItems: "center", gap: 8 },
+  longeviDot: { width: 8, height: 8, borderRadius: 4 },
+  longeviLogoText: { fontSize: 12, letterSpacing: 1.5, color: "#0284C7" },
+  longeviBannerTitle: { fontSize: 22, lineHeight: 28, color: "#0C4A6E" },
+  longeviBannerSub: { fontSize: 14, lineHeight: 21, color: "#0369A1" },
+  longeviTags: { flexDirection: "row", gap: 8, flexWrap: "wrap", marginTop: 4 },
+  longeviTag: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 100,
+  },
+  longeviTagText: { fontSize: 12 },
+
+  infoCard: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: 10,
+    borderRadius: 14,
+    borderWidth: 1,
+    padding: 14,
+  },
+  infoCardText: { flex: 1, fontSize: 13, lineHeight: 19 },
+
   hero: { gap: 16 },
   heroIcon: {
     width: 64,
@@ -208,11 +338,7 @@ const styles = StyleSheet.create({
     alignItems: "flex-start",
     justifyContent: "space-between",
   },
-  stepItem: {
-    flex: 1,
-    alignItems: "center",
-    gap: 6,
-  },
+  stepItem: { flex: 1, alignItems: "center", gap: 6 },
   stepBadge: {
     width: 36,
     height: 36,

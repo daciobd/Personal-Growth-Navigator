@@ -1,0 +1,308 @@
+Claro. Vou explicar do jeito mais direto.
+
+## O que é “conectar ao MeuEu”
+
+Significa que o LONGEVI vai **mandar um pedido** para a API do MeuEu e receber de volta uma resposta.
+
+Exemplo:
+
+* LONGEVI envia:
+  “usuário com ferritina baixa, objetivo é melhorar adesão ao ferro, barreiras são enjoo e esquecimento”
+
+* MeuEu responde:
+  “plano de 7 dias”, ou
+  “mensagem curta do coach”, ou
+  “resultado do check-in”
+
+Então a conexão é basicamente isso:
+
+```txt
+LONGEVI -> API do MeuEu -> resposta -> LONGEVI mostra na tela
+```
+
+---
+
+# O que você precisa, na prática
+
+São 4 coisas.
+
+## 1. A URL da API do MeuEu
+
+Exemplo:
+
+```txt
+https://personal-growth-navigator.replit.app/api
+```
+
+Você já tem isso no documento do MeuEu. 
+
+---
+
+## 2. Saber quais rotas o MeuEu expõe
+
+No seu documento, as principais são:
+
+* `POST /plan/generate`
+* `POST /daily/checkin`
+* `POST /coach/message`
+* `POST /daily/challenge` 
+
+Essas são as “portas” de entrada.
+
+---
+
+## 3. Um payload que o LONGEVI vai enviar
+
+Exemplo para gerar plano:
+
+```json
+{
+  "deviceId": "abc-123",
+  "traitAdjectives": ["prático", "sobrecarregado"],
+  "stateAdjectives": ["cansado", "preocupado"],
+  "futureAdjectives": ["constante", "disciplinado", "energizado"],
+  "assessmentNumber": 0,
+  "healthContext": {
+    "careMode": "adult",
+    "examContext": {
+      "examId": "exam_1",
+      "examDate": "2026-03-19"
+    },
+    "biomarkerFocus": {
+      "key": "ferritin",
+      "label": "Ferritina",
+      "status": "suboptimal",
+      "value": 19,
+      "unit": "ng/mL"
+    },
+    "clinicalSummary": "Seu Ferritina está em 19 ng/mL. Para longevidade, o alvo ideal é 30–300 ng/mL.",
+    "targetOutcome": "melhorar reservas de ferro e aumentar consistência na suplementação",
+    "barriers": ["enjoo", "esqueço de tomar"]
+  }
+}
+```
+
+---
+
+## 4. Um lugar no LONGEVI que faça essa chamada
+
+Esse lugar pode ser:
+
+* no frontend direto, ou
+* melhor: no backend do LONGEVI, como proxy
+
+O melhor é o segundo.
+
+---
+
+# O que exatamente precisa existir no MeuEu
+
+Para o LONGEVI conseguir usar o MeuEu, o MeuEu precisa estar com:
+
+## A. API online
+
+O servidor do MeuEu precisa estar rodando e acessível.
+
+## B. Rotas funcionando
+
+Por exemplo, esta rota precisa responder:
+
+```txt
+POST /api/plan/generate
+```
+
+## C. Formato aceitando o payload
+
+O corpo enviado pelo LONGEVI precisa ser compatível com o que o MeuEu espera.
+
+Esse é o ponto mais importante.
+
+Porque a conexão não quebra por “falta de ideia”.
+Ela quebra quando:
+
+* a rota existe, mas espera outro formato
+* o campo tem outro nome
+* a autenticação não está configurada
+* a URL está errada
+
+---
+
+# O que você precisa fazer no LONGEVI
+
+No LONGEVI, você precisa criar 3 rotas suas:
+
+* `/api/behavioral/plan`
+* `/api/behavioral/checkin`
+* `/api/behavioral/coach`
+
+Essas rotas do LONGEVI recebem o pedido do app e repassam ao MeuEu.
+
+---
+
+# Fluxo real, bem simples
+
+## 1. Usuário abre resultado
+
+LONGEVI escolhe o alvo:
+
+* ferritina
+
+## 2. LONGEVI monta o `behavioralInput`
+
+Exemplo:
+
+* biomarcador: ferritina
+* summary: ferritina baixa
+* objetivo: aderência ao ferro
+* barreiras: enjoo, esquecimento
+
+## 3. LONGEVI chama o MeuEu
+
+Exemplo:
+
+```ts
+fetch("https://.../api/plan/generate", {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify(payload)
+})
+```
+
+## 4. MeuEu responde
+
+Com algo como:
+
+* intenção
+* práticas
+* mensagem inicial
+
+## 5. LONGEVI mostra isso no card
+
+Pronto: conexão feita.
+
+---
+
+# O que falta validar para a conexão funcionar de verdade
+
+Você só precisa confirmar 3 coisas no MeuEu:
+
+## 1. A rota responde hoje?
+
+Exemplo:
+
+```txt
+POST /api/plan/generate
+```
+
+## 2. Ela aceita esses campos extras?
+
+Por exemplo:
+
+* `healthContext`
+* `deviceId`
+* `traitAdjectives`
+* `stateAdjectives`
+* `futureAdjectives`
+
+## 3. Precisa de autenticação?
+
+Por exemplo:
+
+* bearer token
+* api key
+* nada
+
+Se não precisar de autenticação, fica muito mais fácil no MVP.
+
+---
+
+# Em resumo, o mínimo necessário
+
+Para conectar ao MeuEu, você precisa de:
+
+* URL da API do MeuEu
+* rota funcionando
+* formato de payload compatível
+* chamada HTTP do LONGEVI para essa rota
+
+Só isso.
+
+---
+
+# Exemplo mínimo de conexão
+
+## No backend do LONGEVI
+
+```ts
+const response = await fetch("https://personal-growth-navigator.replit.app/api/plan/generate", {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json",
+  },
+  body: JSON.stringify({
+    deviceId: "abc-123",
+    traitAdjectives: ["prático"],
+    stateAdjectives: ["cansado"],
+    futureAdjectives: ["constante", "energizado"],
+    assessmentNumber: 0,
+    healthContext: {
+      careMode: "adult",
+      biomarkerFocus: {
+        key: "ferritin",
+        label: "Ferritina",
+        status: "suboptimal",
+        value: 19,
+        unit: "ng/mL"
+      },
+      clinicalSummary: "Seu Ferritina está em 19 ng/mL. Para longevidade, o alvo ideal é 30–300 ng/mL.",
+      targetOutcome: "melhorar reservas de ferro",
+      barriers: ["esqueço de tomar"]
+    }
+  }),
+});
+```
+
+Se isso responder `200 OK` com JSON, a conexão existe.
+
+---
+
+# O ponto mais honesto aqui
+
+Você **não precisa ainda integrar tudo**.
+
+Para provar a conexão, basta testar **uma rota só**:
+
+## comece por:
+
+`POST /plan/generate`
+
+Se isso funcionar:
+
+* o resto fica muito mais fácil
+
+Se isso não funcionar:
+
+* o problema está no contrato entre LONGEVI e MeuEu
+
+---
+
+# Minha recomendação objetiva
+
+Faça nesta ordem:
+
+1. testar manualmente `POST /plan/generate`
+2. ver o JSON que volta
+3. criar `/api/behavioral/plan` no LONGEVI
+4. mostrar o resultado num card simples
+
+Depois disso:
+
+* check-in
+* coach
+* challenge
+
+Se você quiser, no próximo passo eu posso te entregar **o teste mínimo exato**, com:
+
+* payload pronto
+* rota Express do LONGEVI
+* e como verificar se o MeuEu respondeu corretamente.

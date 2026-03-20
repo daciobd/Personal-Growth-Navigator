@@ -119,7 +119,7 @@ router.post("/generate", async (req, res) => {
   Condição de atenção: ${CONTEXT_LABELS[longeviContext.context] ?? longeviContext.context}
   Foco de mudança comportamental: ${FOCUS_LABELS[longeviContext.focus] ?? longeviContext.focus}
   → As práticas devem ter impacto direto neste contexto clínico.
-  → Mencione o contexto de saúde de forma acolhedora na síntese, sem diagnósticos.\n\n`
+  → Mencione o contexto de saúde de forma direta e gentil na síntese, sem diagnósticos.\n\n`
     : "";
 
   // Bloco healthContext rico (API Longevi)
@@ -144,11 +144,19 @@ router.post("/generate", async (req, res) => {
       healthBlock = `CONTEXTO DE SAÚDE (dados clínicos do Longevi — use para personalizar o plano):
 ${lines.join("\n")}
   → As práticas devem endereçar diretamente essas barreiras e apoiar o objetivo de mudança.
-  → Linguagem acolhedora, sem alarmismo. Não faça diagnósticos.\n\n`;
+  → Linguagem direta e gentil, sem alarmismo. Não faça diagnósticos.\n\n`;
     }
   }
 
   const prompt = `Você é um psicólogo clínico especialista em psicoterapia integrativa.
+
+LINGUAGEM OBRIGATÓRIA:
+- Português brasileiro casual, como um amigo inteligente falando
+- Frases curtas. Máximo 3 frases por parágrafo
+- NUNCA use estas palavras: ressignificar, protagonismo, potencializar, acolher (no sentido terapêutico), processar emoções, jornada de autoconhecimento, empoderar, introspecção profunda, autodesenvolvimento
+- USE estas palavras no lugar: entender (não compreender), mudar (não transformar), ajuda (não suporte), perceber (não conscientizar), crescer (não desenvolver)
+- Seja direto e humano. Evite enrolação e frases de efeito
+- Não comece frases com "É importante que..." ou "Vale ressaltar que..."
 
 ${healthBlock}${longeviBlock}${big5Block}${stateBlock}TRAÇOS DE PERSONALIDADE (estáveis — base para o Big Five):
 ${traits.join(", ")}

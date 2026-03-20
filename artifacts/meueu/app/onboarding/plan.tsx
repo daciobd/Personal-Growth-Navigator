@@ -18,6 +18,7 @@ import Colors from "@/constants/colors";
 import { useApp } from "@/context/AppContext";
 import { useAuth } from "@/context/AuthContext";
 import { usePlanGeneration, type GeneratedPlan, type GeneratedApproach } from "@/hooks/usePlanGeneration";
+import ApproachSelector, { type ApproachOption } from "@/components/ApproachSelector";
 
 type Practice = {
   abordagem: string;
@@ -60,6 +61,7 @@ export default function PlanScreen() {
   const [loading, setLoading] = useState(true);
   const [loadingMsg, setLoadingMsg] = useState(LOADING_MESSAGES[0]);
   const [skipSave, setSkipSave] = useState(false);
+  const [approachSelected, setApproachSelected] = useState<string | null>(null);
   const msgIndex = useRef(0);
 
   const generatePlan = async () => {
@@ -318,6 +320,23 @@ export default function PlanScreen() {
                 </Animated.View>
               );
             })}
+
+            {/* Approach selector — shown after practices, disappears after selection */}
+            {!approachSelected && plan.praticas?.length > 0 && (
+              <Animated.View entering={FadeInDown.delay(550).duration(500)}>
+                <ApproachSelector
+                  options={plan.praticas.map((p: Practice, i: number): ApproachOption => ({
+                    key: p.abordagem.toLowerCase().replace(/\s+/g, "-"),
+                    label: p.abordagem,
+                    title: p.nome,
+                    description: p.justificativa.slice(0, 100) + (p.justificativa.length > 100 ? "..." : ""),
+                    color: (["#3A5A8C", "#1B6B5A", "#E8A838"] as string[])[i] ?? "#6B8F7E",
+                    bgColor: (["#EDF2FB", "#E8F5F1", "#FFF8EC"] as string[])[i] ?? "#F5F8F6",
+                  }))}
+                  onSelect={(key) => setApproachSelected(key)}
+                />
+              </Animated.View>
+            )}
 
             <View style={{ height: 24 }} />
           </ScrollView>

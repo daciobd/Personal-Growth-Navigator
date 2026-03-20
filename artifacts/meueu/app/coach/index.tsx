@@ -16,6 +16,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Colors from "@/constants/colors";
 import { useGamification } from "@/context/GamificationContext";
 import { getApiUrl } from "@/utils/api";
+import { usePreferredApproach } from "@/hooks/usePreferredApproach";
 
 type Message = {
   role: "user" | "assistant";
@@ -29,6 +30,7 @@ export default function CoachScreen() {
   const segments = useSegments();
   const isInTabs = segments.includes("(tabs)" as never);
   const { deviceId, recordCoachMessage } = useGamification();
+  const { preferred } = usePreferredApproach();
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
@@ -76,7 +78,12 @@ export default function CoachScreen() {
       const response = await fetch(`${domain}/api/coach/message`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ deviceId, message: text, history }),
+        body: JSON.stringify({
+          deviceId,
+          message: text,
+          history,
+          preferredApproach: preferred?.key,
+        }),
       });
 
       const data = await response.json();

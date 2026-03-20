@@ -5,17 +5,52 @@ import { eq, asc } from "drizzle-orm";
 
 const router: IRouter = Router();
 
-const BASE_SYSTEM_PROMPT = `Você é um coach terapêutico empático e encorajador chamado "Eu". Você faz parte do app MeuEu, um aplicativo de transformação pessoal.
+// ─── Abordagem por chave ──────────────────────────────────────────────────────
+const APPROACH_INSTRUCTIONS: Record<string, string> = {
+  tcc: `Você usa a linguagem da TCC. Foca em pensamentos automáticos, evidências, registros.
+Pergunta "o que você estava pensando?" em vez de "como se sentiu?".
+Propõe experimentos comportamentais concretos.`,
 
-Seu papel:
-- Apoiar o usuário em sua jornada de transformação pessoal
-- Usar linguagem simples, calorosa e em português brasileiro
-- Fazer perguntas reflexivas quando apropriado
-- Validar sentimentos sem julgamento
-- Sugerir exercícios práticos baseados em TCC, ACT, Mindfulness ou Psicologia Positiva quando útil
-- Manter respostas concisas (máximo 3-4 frases), a menos que o usuário peça mais detalhes
+  act: `Você usa a linguagem da ACT. Foca em valores e ação comprometida.
+Não tenta mudar pensamentos — ajuda a agir apesar deles.
+Usa metáforas de ACT (passageiros no ônibus, desfusão cognitiva).`,
 
-Você NÃO é um terapeuta e deve lembrar disso se o usuário mencionar crises graves.`;
+  "psicologia-positiva": `Você usa Psicologia Positiva. Foca no que está funcionando.
+Busca exceções, forças de caráter, pequenas vitórias.
+Nunca começa pela análise do problema — começa pelo que já existe de bom.`,
+
+  cft: `Você usa CFT (Terapia Focada na Compaixão). Tom sempre gentil, nunca exigente.
+Usa a voz do "amigo compassivo". Normaliza o sofrimento como parte humana.
+Propõe práticas de autocompaixão antes de qualquer mudança comportamental.`,
+
+  narrativa: `Você usa Terapia Narrativa. Vê a vida como história que pode ser reescrita.
+Busca "resultados únicos" — momentos em que a pessoa agiu diferente da história-problema.
+Externaliza o problema: não "você é ansioso" mas "a ansiedade aparece quando...".`,
+
+  tfs: `Você usa TFS (Terapia Focada na Solução). Zero análise de problema.
+Foca no que a pessoa quer, não no que não quer. Usa escalas de 0 a 10.
+Pergunta: "o que estaria diferente na sua vida se o problema já estivesse resolvido?"`,
+
+  humanista: `Você usa abordagem Humanista/Rogeriana. Confia na sabedoria do usuário.
+Usa reflexão empática mais que conselhos. Cria espaço, não dá direção.
+Acredita na tendência atualizante — a pessoa sabe o que precisa.`,
+};
+
+// ─── System prompt base ───────────────────────────────────────────────────────
+const BASE_SYSTEM = `Você é o Coach IA do MeuEu — um coach de desenvolvimento pessoal.
+
+LINGUAGEM OBRIGATÓRIA:
+- Português brasileiro casual, como um amigo inteligente
+- Frases curtas. Máximo 3 frases por parágrafo
+- NUNCA use: "ressignificar", "protagonismo", "potencializar", "acolher", "processar emoções"
+- USE: "entender" (não "compreender"), "mudar" (não "transformar"), "ajuda" (não "suporte")
+- Seja direto. Evite enrolação.
+
+REGRAS:
+- Nunca diagnostique condições clínicas
+- Se a pessoa parecer em crise, indique ajuda profissional
+- Máximo de 4 parágrafos por resposta
+- Termine com UMA pergunta ou UMA sugestão prática — nunca os dois`;
 
 type Message = { role: "user" | "assistant"; content: string };
 
@@ -27,33 +62,66 @@ type HealthContext = {
   barriers?: string[];
 };
 
-function buildSystemPrompt(healthContext?: HealthContext): string {
-  if (!healthContext) return BASE_SYSTEM_PROMPT;
+function buildSystemPrompt(
+  preferredApproach?: string,
+  practiceName?: string,
+  planContext?: string,
+  healthContext?: HealthContext
+): string {
+  let system = BASE_SYSTEM;
 
-  const lines: string[] = [];
-  if (healthContext.clinicalSummary) lines.push(`Contexto clínico: ${healthContext.clinicalSummary}`);
-  if (healthContext.biomarkerFocus) {
-    const b = healthContext.biomarkerFocus;
-    const v = b.value !== undefined ? ` (${b.value} ${b.unit ?? ""})` : "";
-    lines.push(`Biomarcador em atenção: ${b.label}${v} — ${b.status}`);
+  // Abordagem preferida
+  if (preferredApproach && APPROACH_INSTRUCTIONS[preferredApproach]) {
+    system += `\n\nABORDAGEM PREFERIDA PELO USUÁRIO:\n${APPROACH_INSTRUCTIONS[preferredApproach]}`;
+    system += `\nSe o usuário pedir uma perspectiva diferente, mude sem resistência.`;
   }
-  if (healthContext.targetOutcome) lines.push(`Objetivo do usuário: ${healthContext.targetOutcome}`);
-  if (healthContext.barriers?.length) lines.push(`Barreiras relatadas: ${healthContext.barriers.join(", ")}`);
 
-  if (lines.length === 0) return BASE_SYSTEM_PROMPT;
+  // Contexto da prática
+  if (practiceName) {
+    system += `\n\nCONTEXTO: O usuário acabou de fazer (ou está pensando em fazer) a prática "${practiceName}". Relate sua resposta a isso quando relevante.`;
+  }
 
-  return `${BASE_SYSTEM_PROMPT}
+  // Contexto do plano
+  if (planContext) {
+    system += `\n\nPLANO DO USUÁRIO:\n${planContext}`;
+  }
 
-CONTEXTO DE SAÚDE (via Longevi — use para personalizar as respostas, sem alarmismo):
-${lines.join("\n")}
-Adapte suas sugestões para endereçar as barreiras do usuário e apoiar o objetivo acima. Nunca faça diagnósticos.`;
+  // Contexto de saúde (Longevi)
+  if (healthContext) {
+    const lines: string[] = [];
+    if (healthContext.clinicalSummary) lines.push(`Contexto clínico: ${healthContext.clinicalSummary}`);
+    if (healthContext.biomarkerFocus) {
+      const b = healthContext.biomarkerFocus;
+      const v = b.value !== undefined ? ` (${b.value} ${b.unit ?? ""})` : "";
+      lines.push(`Biomarcador em atenção: ${b.label}${v} — ${b.status}`);
+    }
+    if (healthContext.targetOutcome) lines.push(`Objetivo do usuário: ${healthContext.targetOutcome}`);
+    if (healthContext.barriers?.length) lines.push(`Barreiras relatadas: ${healthContext.barriers.join(", ")}`);
+    if (lines.length > 0) {
+      system += `\n\nCONTEXTO DE SAÚDE (via Longevi — use para personalizar, sem alarmismo):\n${lines.join("\n")}\nAdapte suas sugestões para endereçar as barreiras do usuário. Nunca faça diagnósticos.`;
+    }
+  }
+
+  return system;
 }
 
+// ─── POST /message ────────────────────────────────────────────────────────────
 router.post("/message", async (req, res) => {
-  const { deviceId, message, history, healthContext } = req.body as {
+  const {
+    deviceId,
+    message,
+    history,
+    preferredApproach,
+    practiceName,
+    planContext,
+    healthContext,
+  } = req.body as {
     deviceId: string;
     message: string;
     history?: Message[];
+    preferredApproach?: string;
+    practiceName?: string;
+    planContext?: string;
     healthContext?: HealthContext;
   };
 
@@ -62,6 +130,7 @@ router.post("/message", async (req, res) => {
     return;
   }
 
+  // Carrega histórico do DB se não veio no body
   let dbHistory: Message[] = [];
   if (!history || history.length === 0) {
     const stored = await db
@@ -86,8 +155,8 @@ router.post("/message", async (req, res) => {
   try {
     const aiResponse = await anthropic.messages.create({
       model: "claude-haiku-4-5",
-      max_tokens: 300,
-      system: buildSystemPrompt(healthContext),
+      max_tokens: 600,
+      system: buildSystemPrompt(preferredApproach, practiceName, planContext, healthContext),
       messages,
     });
 
@@ -95,8 +164,8 @@ router.post("/message", async (req, res) => {
     if (content.type === "text") {
       response = content.text.trim();
     }
-  } catch {
-    // keep default response
+  } catch (err) {
+    console.error("Coach error:", err);
   }
 
   await db.insert(coachMessagesTable).values([
@@ -107,6 +176,7 @@ router.post("/message", async (req, res) => {
   res.json({ response, xpEarned: 2 });
 });
 
+// ─── GET /history ─────────────────────────────────────────────────────────────
 router.get("/history", async (req, res) => {
   const { deviceId } = req.query as { deviceId: string };
 

@@ -162,6 +162,17 @@ LINGUAGEM OBRIGATÓRIA:
 - Seja direto e humano. Evite enrolação e frases de efeito
 - Não comece frases com "É importante que..." ou "Vale ressaltar que..."
 
+NOMES DE ABORDAGENS — use sempre assim:
+- ACT → "ACT — Valores e Ação"
+- TCC ou CBT → "TCC — Pensamentos e Comportamento"
+- CFT → "CFT — Autocompaixão"
+- DBT → "DBT — Equilíbrio Emocional"
+- Mindfulness → "Atenção Plena"
+
+TÍTULOS DAS PRÁTICAS — devem ser em português simples e direto.
+Exemplos bons: "Escreva seus pensamentos", "Respire fundo por 5 minutos", "Liste 3 coisas que foram bem".
+Exemplos ruins: "Defusão Cognitiva do Pensamento X", "Reestruturação Cognitiva", "Mindfulness de Aceitação".
+
 JORNADA: ${journey?.title}
 DIA: ${day}/30 | FASE: ${dayData.phase}/3
 PRÁTICA BASE: "${dayData.title}"

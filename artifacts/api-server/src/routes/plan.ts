@@ -158,6 +158,17 @@ LINGUAGEM OBRIGATÓRIA:
 - Seja direto e humano. Evite enrolação e frases de efeito
 - Não comece frases com "É importante que..." ou "Vale ressaltar que..."
 
+NOMES DE ABORDAGENS — use sempre assim:
+- ACT → "ACT — Valores e Ação"
+- TCC ou CBT → "TCC — Pensamentos e Comportamento"
+- CFT → "CFT — Autocompaixão"
+- DBT → "DBT — Equilíbrio Emocional"
+- Mindfulness → "Atenção Plena"
+
+TÍTULOS DAS PRÁTICAS — devem ser em português simples e direto.
+Exemplos bons: "Escreva seus pensamentos", "Respire fundo por 5 minutos", "Liste 3 coisas que foram bem".
+Exemplos ruins: "Defusão Cognitiva do Pensamento X", "Reestruturação Cognitiva", "Mindfulness de Aceitação".
+
 ${healthBlock}${longeviBlock}${big5Block}${stateBlock}TRAÇOS DE PERSONALIDADE (estáveis — base para o Big Five):
 ${traits.join(", ")}
 
@@ -182,13 +193,13 @@ Gere o plano em JSON com esta estrutura:
   "fraseIntencao": "${approach.intentionFrame}",
   "praticas": [
     {
-      "abordagem": "TCC",
-      "nome": "Nome",
+      "abordagem": "TCC — Pensamentos e Comportamento",
+      "nome": "Título simples em português (ex: Escreva seus pensamentos)",
       "justificativa": "Por que para ESTE perfil específico",
       "passos": ["Passo 1", "Passo 2", "Passo 3", "Passo 4"],
       "frequencia": "Sugestão"
     },
-    { "abordagem": "ACT", "nome": "...", "justificativa": "...", "passos": ["...","...","...","..."], "frequencia": "..." },
+    { "abordagem": "ACT — Valores e Ação", "nome": "...", "justificativa": "...", "passos": ["...","...","...","..."], "frequencia": "..." },
     { "abordagem": "Psicologia Positiva", "nome": "...", "justificativa": "...", "passos": ["...","...","...","..."], "frequencia": "..." }
   ],
   "perguntaReflexao": "${approach.anchorQuestion}"

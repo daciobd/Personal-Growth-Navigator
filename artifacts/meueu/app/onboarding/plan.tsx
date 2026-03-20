@@ -32,11 +32,17 @@ type Plan = GeneratedPlan;
 type PlanApproach = GeneratedApproach;
 
 const APPROACH_COLORS: Record<string, { bg: string; text: string; icon: string }> = {
+  "TCC — Pensamentos e Comportamento": { bg: "#EFF6FF", text: "#1D4ED8", icon: "edit-3" },
   TCC: { bg: "#EFF6FF", text: "#1D4ED8", icon: "edit-3" },
+  "ACT — Valores e Ação": { bg: "#F0FDF4", text: "#166534", icon: "compass" },
   ACT: { bg: "#F0FDF4", text: "#166534", icon: "compass" },
   "Psicologia Positiva": { bg: "#FAF5FF", text: "#6B21A8", icon: "star" },
+  "Atenção Plena": { bg: "#FFF7ED", text: "#9A3412", icon: "wind" },
   Mindfulness: { bg: "#FFF7ED", text: "#9A3412", icon: "wind" },
-  DBT: { bg: "#FFF7ED", text: "#9A3412", icon: "wind" },
+  "CFT — Autocompaixão": { bg: "#FDF2F8", text: "#9D174D", icon: "heart" },
+  CFT: { bg: "#FDF2F8", text: "#9D174D", icon: "heart" },
+  "DBT — Equilíbrio Emocional": { bg: "#FFFBEB", text: "#92400E", icon: "sliders" },
+  DBT: { bg: "#FFFBEB", text: "#92400E", icon: "sliders" },
 };
 
 const LOADING_MESSAGES = [

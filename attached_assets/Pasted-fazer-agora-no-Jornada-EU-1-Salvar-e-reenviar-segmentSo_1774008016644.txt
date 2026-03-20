@@ -1,0 +1,124 @@
+fazer agora no Jornada-EU
+1. Salvar e reenviar segmentSource
+
+O daily-plan agora traz:
+
+behavioralSegment
+
+segmentSource
+
+O app deve:
+
+guardar ambos no estado local do plano do dia
+
+reenviar segmentSource nos eventos plan_loaded, done, missed, se o endpoint aceitar metadata
+
+Mesmo que hoje o admin principal ainda não use isso, esse campo vira ouro para leitura futura:
+
+population performa diferente de personal?
+
+usuários segmentados por fallback pessoal convertem mais ou menos?
+
+o grupo none tem comportamento muito diferente?
+
+Se não quiser mexer no schema agora, manda em metadata.segmentSource.
+
+2. Exibir experiência neutra quando vier unknown
+
+Agora o unknown ficou restrito a quem não tem histórico nenhum.
+
+No app, isso pede um pequeno cuidado:
+
+não mostrar linguagem de personalização forte
+
+manter copy neutra e simples
+
+evitar qualquer impressão de “sabemos seu perfil” quando segmentSource = none
+
+Exemplo:
+
+em vez de “Montamos isso no seu ritmo”
+
+usar “Sua ação de hoje”
+
+Isso evita prometer adaptação onde ainda não há histórico.
+
+3. Logar melhor a superfície de origem
+
+Como vocês já abriram “Por fonte” no admin, o Jornada-EU deve garantir consistência do campo source.
+
+Eu padronizaria no app algo assim:
+
+app → ação feita pela tela principal
+
+plan_view → só visualização da ação/plano
+
+sync → reenvio offline
+
+notification → quando vier depois
+
+Hoje, no mínimo, garantir que:
+
+plan_loaded tenha source coerente
+
+done/missed também
+
+eventos reenviados offline preservem o source original e, se quiser, adicionem algo como metadata.syncedLater = true
+
+4. Evitar múltiplos plan_loaded desnecessários
+
+Agora que o admin está mais observável, vale blindar o app contra ruído.
+
+No Jornada-EU:
+
+disparar plan_loaded apenas quando o plano do dia realmente foi carregado pela primeira vez
+
+não reenviar toda vez que o usuário entra e sai da aba no mesmo dia, salvo se isso for intencional
+
+Se quiser manter a telemetria de reabertura, usar outro evento depois.
+Mas plan_loaded precisa continuar significando algo limpo.
+
+5. Garantir exclusão lógica entre done e missed
+
+Se isso ainda não estiver blindado no app, eu travaria agora:
+
+se marcou done, não deixar marcar missed no mesmo plano/ação sem reset explícito
+
+se marcou missed, não deixar duplicar evento sem motivo
+
+Como o status já persiste em AsyncStorage, isso deve ser simples.
+
+6. Preparar o app para a futura troca de deviceId
+
+Não precisa migrar agora.
+Mas no Jornada-EU eu deixaria a estrutura pronta para aceitar:
+
+userId
+
+deviceId
+
+ao mesmo tempo.
+
+Ou seja:
+
+continuar mandando deviceId
+
+mas organizar o código para o identificador não ficar hardcoded em toda parte
+
+Isso reduz custo quando vier a migração para identidade estável.
+
+O que eu não faria agora no Jornada-EU
+
+Eu não mexeria ainda em:
+
+healthContext expandido
+
+telas adicionais
+
+lógica comportamental local
+
+múltiplas ações
+
+copy muito sofisticada
+
+experimentação visual

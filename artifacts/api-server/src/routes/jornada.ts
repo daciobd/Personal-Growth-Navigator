@@ -113,6 +113,7 @@ router.post("/daily-plan", async (req, res) => {
       )
     );
   const checkinCount = Number(checkinRow?.cnt ?? 0);
+  const segmentSource: "personal" | "none" = checkinCount > 0 ? "personal" : "none";
   const segment = segmentFromCount(checkinCount);
   const adaptLevel = adaptationFromSegment(segment);
   const experimentKey = `segment_adaptation_v1`;
@@ -159,6 +160,7 @@ router.post("/daily-plan", async (req, res) => {
     generatedAt: new Date().toISOString(),
     careMode,
     behavioralSegment: segment,
+    segmentSource,
     adaptation: {
       level: adaptLevel,
       experimentKey,

@@ -1,0 +1,416 @@
+Perfeito — agora vamos transformar isso em um **design system estilo Figma real**, com:
+
+* layout estruturado (grid + hierarquia)
+* spacing consistente
+* tokens (cores, tipografia, radius, shadow)
+* pronto pra handoff dev
+
+Isso aqui você consegue literalmente recriar no Figma em minutos.
+
+---
+
+# 🎨 1. DESIGN SYSTEM (TOKENS)
+
+## 🎯 Cores
+
+```ts
+// COLORS
+primary: #111111
+secondary: #6B7280
+background: #FFFFFF
+surface: #F9FAFB
+border: #E5E7EB
+
+accent: #2563EB
+success: #16A34A
+warning: #F59E0B
+```
+
+---
+
+## ✍️ Tipografia
+
+```ts
+// FONT
+font-family: Inter
+
+// SCALE
+text-xs   → 12px
+text-sm   → 14px
+text-base → 16px
+text-lg   → 18px
+text-xl   → 20px
+text-2xl  → 24px
+text-3xl  → 30px
+
+// WEIGHTS
+regular: 400
+medium: 500
+semibold: 600
+bold: 700
+```
+
+---
+
+## 📏 Spacing (base 4)
+
+```ts
+1  → 4px
+2  → 8px
+3  → 12px
+4  → 16px
+5  → 20px
+6  → 24px
+8  → 32px
+10 → 40px
+12 → 48px
+16 → 64px
+```
+
+---
+
+## 🔲 Radius
+
+```ts
+sm → 8px
+md → 12px
+lg → 16px
+xl → 20px
+2xl → 24px
+```
+
+---
+
+## 🌫 Shadow
+
+```ts
+card:
+0 4px 12px rgba(0,0,0,0.08)
+
+hover:
+0 8px 24px rgba(0,0,0,0.12)
+```
+
+---
+
+# 🧱 2. GRID DO LAYOUT
+
+## Desktop
+
+```txt
+Max width: 1200px
+Columns: 12
+Gutter: 24px
+Margin: 24px
+```
+
+---
+
+## Estrutura visual
+
+```txt
+[ HEADER ]
+
+[ HERO (full width) ]
+
+[ PERSONALIZATION (full width) ]
+
+[ PRACTICES GRID (2 cols) ]
+
+[ EXTRA GRID (2–3 cols) ]
+```
+
+---
+
+# 🏠 3. FRAME PRINCIPAL (FIGMA)
+
+## Frame
+
+```txt
+Desktop 1440
+Padding: 32
+Background: #FFFFFF
+```
+
+---
+
+## Container interno
+
+```txt
+Max width: 1200
+Center aligned
+Auto layout vertical
+Gap: 32
+```
+
+---
+
+# 🔰 4. HEADER
+
+```txt
+Auto layout (vertical)
+Gap: 8
+```
+
+### Title
+
+* 30px / bold
+* cor: primary
+
+### Subtitle
+
+* 16px
+* cor: secondary
+
+---
+
+# 🌟 5. HERO CARD
+
+```txt
+Auto layout vertical
+Padding: 24
+Gap: 16
+
+Fill: #111111
+Text: white
+Radius: 24
+Shadow: card
+```
+
+---
+
+## Conteúdo interno
+
+### Título
+
+* 20px / semibold
+
+### Descrição
+
+* 14px / gray-300
+
+### Benefícios
+
+* lista vertical (gap: 4)
+
+### Footer
+
+```txt
+Auto layout horizontal
+Justify: space-between
+Align: center
+```
+
+Botão:
+
+* background: white
+* text: black
+* radius: 12px
+* padding: 10px 16px
+
+---
+
+# 🧠 6. PERSONALIZATION PANEL
+
+```txt
+Fill: #F9FAFB
+Padding: 24
+Radius: 20
+Auto layout vertical
+Gap: 16
+```
+
+---
+
+## Conteúdo
+
+Título:
+
+* 18px / semibold
+
+Lista:
+
+* bullet custom
+* gap: 8
+
+Insight final:
+
+* medium
+* levemente destacado
+
+---
+
+# 🧩 7. PRACTICE CARD
+
+```txt
+Auto layout vertical
+Padding: 20
+Gap: 12
+
+Border: 1px solid #E5E7EB
+Radius: 20
+Hover: shadow
+```
+
+---
+
+## Estrutura
+
+Título:
+
+* 18px / semibold
+
+Descrição:
+
+* 14px / secondary
+
+Benefícios:
+
+* lista pequena
+
+Footer:
+
+* tempo + CTA
+
+CTA:
+
+* underline
+* medium
+
+---
+
+# 📚 8. EXTRA PRACTICES
+
+```txt
+Grid:
+2–3 colunas
+Gap: 16
+```
+
+---
+
+## Card pequeno
+
+```txt
+Padding: 16
+Border
+Radius: 16
+```
+
+Título:
+
+* 16px / medium
+
+Descrição:
+
+* 14px / secondary
+
+Tempo:
+
+* 12px
+
+---
+
+# 🔘 9. BOTÕES (PADRÃO GLOBAL)
+
+## Primary
+
+```txt
+bg: #111
+text: white
+padding: 10px 16px
+radius: 12px
+```
+
+---
+
+## Secondary
+
+```txt
+bg: transparent
+text: #111
+underline
+```
+
+---
+
+# 🧠 10. SISTEMA DE HIERARQUIA (IMPORTANTÍSSIMO)
+
+No Figma, garanta isso:
+
+### Nível 1 (atenção máxima)
+
+* Hero card
+
+### Nível 2
+
+* Título da página
+
+### Nível 3
+
+* Practices
+
+### Nível 4
+
+* Extras
+
+👉 Isso guia o comportamento do usuário sem ele perceber.
+
+---
+
+# ✨ 11. MICROINTERAÇÕES (no Figma + Dev depois)
+
+Definir:
+
+* hover: elevar card
+* botão: opacity 0.9
+* clique: scale 0.98
+* transição: 150ms ease
+
+---
+
+# 🧬 12. COMPONENTES NO FIGMA
+
+Crie como componentes:
+
+* `HeroCard`
+* `PracticeCard`
+* `ExtraCard`
+* `Button`
+* `SectionHeader`
+
+---
+
+# 🚀 RESULTADO FINAL
+
+Você agora tem:
+
+### ✅ Um design system consistente
+
+### ✅ Um layout pronto pra Figma
+
+### ✅ Base perfeita pra escalar produto
+
+### ✅ 1:1 com o código que você já tem
+
+---
+
+# 🔥 PRÓXIMO PASSO (alto nível mesmo)
+
+Posso te entregar agora:
+
+### 👉 versão “premium”
+
+* dark mode
+* animações pensadas
+* sensação de produto nível Headspace / Apple
+
+OU
+
+### 👉 versão growth
+
+* otimizada pra conversão
+* onboarding mais agressivo
+* gatilhos psicológicos mais fortes
+
+Qual caminho você quer seguir?

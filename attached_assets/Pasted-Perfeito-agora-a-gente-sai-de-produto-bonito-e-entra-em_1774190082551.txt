@@ -1,0 +1,380 @@
+Perfeito — agora a gente sai de “produto bonito” e entra em **produto que converte e engaja de verdade**.
+
+Vou te entregar uma versão **growth-first**, com:
+
+* onboarding agressivo (sem fricção inútil)
+* gatilhos psicológicos bem aplicados
+* estrutura pensada pra ativação rápida
+* pontos claros de retenção
+
+---
+
+# 🚀 1. PRINCÍPIO BASE (MUDA TUDO)
+
+Seu produto NÃO vende autoconhecimento.
+
+Ele vende:
+
+> **sair da inércia HOJE**
+
+---
+
+# 🧠 2. ESTRATÉGIA DE CONVERSÃO
+
+### Objetivo do onboarding:
+
+👉 levar o usuário até a **primeira ação real** em menos de 2 minutos
+
+---
+
+## 📉 O que remover
+
+* explicações longas
+* “entenda como funciona”
+* qualquer coisa que não leve à ação
+
+---
+
+## 📈 O que adicionar
+
+* urgência leve
+* personalização imediata
+* sensação de progresso
+* microvitória rápida
+
+---
+
+# 🔥 3. NOVO ONBOARDING (FLOW COMPLETO)
+
+---
+
+## 🟩 TELA 1 — HOOK
+
+### Título:
+
+**Você não precisa de mais motivação.**
+
+### Sub:
+
+Precisa de direção.
+
+---
+
+### CTA:
+
+**Começar agora**
+
+---
+
+### Gatilhos usados:
+
+* quebra de crença
+* identificação imediata
+
+---
+
+## 🟩 TELA 2 — PROBLEMA
+
+### Título:
+
+**Onde você mais trava hoje?**
+
+### Opções (tap rápido):
+
+* Não consigo começar
+* Procrastino demais
+* Perco foco fácil
+* Me sinto perdido
+* Falta de disciplina
+
+---
+
+👉 Sem texto explicativo
+👉 Sem scroll
+
+---
+
+### Gatilhos:
+
+* autoidentificação
+* simplicidade extrema
+
+---
+
+## 🟩 TELA 3 — INTENSIDADE
+
+### Título:
+
+**Com que frequência isso acontece?**
+
+* Quase todo dia
+* Algumas vezes na semana
+* Raramente
+
+---
+
+👉 Serve pra personalização + comprometimento
+
+---
+
+## 🟩 TELA 4 — MICRO-COMPROMISSO
+
+### Título:
+
+**Se você tivesse um próximo passo claro…**
+
+### Sub:
+
+Você começaria hoje?
+
+* Sim
+* Talvez
+* Não
+
+---
+
+👉 Isso aumenta conversão depois
+
+---
+
+## 🟩 TELA 5 — PROGRESSO (ANIMAÇÃO)
+
+### Texto:
+
+**Criando seu plano…**
+
+Sub:
+
+* analisando seu padrão
+* identificando bloqueios
+* definindo próximos passos
+
+(3–5 segundos com loading animado)
+
+---
+
+👉 Gatilhos:
+
+* expectativa
+* valor percebido
+* personalização
+
+---
+
+## 🟩 TELA 6 — RESULTADO (A MAIS IMPORTANTE)
+
+### Título:
+
+**Aqui está seu próximo passo**
+
+---
+
+### Card principal:
+
+**Ação de 5 minutos**
+Comece por isso — é o que mais vai destravar você agora.
+
+---
+
+### CTA:
+
+**Começar agora**
+
+---
+
+👉 IMPORTANTE:
+NÃO MOSTRAR MUITAS OPÇÕES
+
+---
+
+# ⚡ 4. DASHBOARD (VERSÃO GROWTH)
+
+---
+
+## 🧠 Regra principal
+
+👉 sempre 1 ação dominante
+
+---
+
+## Estrutura:
+
+### 1. HERO (sempre visível)
+
+**Seu próximo passo agora**
+
+---
+
+### 2. PROGRESS BAR
+
+```txt
+Hoje: 0% → 100%
+```
+
+👉 ativa dopamina de progresso
+
+---
+
+### 3. STREAK
+
+```txt
+🔥 3 dias seguidos
+```
+
+👉 retenção
+
+---
+
+### 4. REFORÇO
+
+Após ação:
+
+**Boa. Você está criando consistência.**
+
+---
+
+# 🧠 5. GATILHOS PSICOLÓGICOS EMBUTIDOS
+
+---
+
+## 🧩 1. PROGRESSO VISÍVEL
+
+* barra de progresso
+* checklist
+* “faltam 2 passos”
+
+---
+
+## 🔥 2. CONSISTÊNCIA
+
+* streak
+* “você já começou”
+* “não quebre a sequência”
+
+---
+
+## 🧠 3. IDENTIDADE
+
+* “você responde bem a ação simples”
+* “seu perfil é orientado à prática”
+
+---
+
+## ⚡ 4. MICROVITÓRIAS
+
+* tarefas de 3–5 min
+* feedback imediato
+
+---
+
+## ⏳ 5. URGÊNCIA LEVE
+
+* “faça isso agora”
+* “leva menos de 5 minutos”
+
+---
+
+# 🎯 6. COPY DE ALTA CONVERSÃO (PRONTA)
+
+Use isso no produto inteiro:
+
+---
+
+## Botões
+
+* **Começar agora**
+* **Fazer isso**
+* **Continuar**
+* **Dar o próximo passo**
+
+---
+
+## Feedback
+
+**Boa. Você saiu da inércia.**
+
+ou
+
+**Tudo bem. Vamos ajustar e tentar de novo.**
+
+---
+
+## Reforço de ação
+
+* “Só isso já muda seu dia”
+* “Comece pequeno”
+* “Isso já é progresso”
+
+---
+
+# 🧱 7. MUDANÇAS DE UI IMPORTANTES
+
+---
+
+## ❌ Antes
+
+* vários cards iguais
+* escolha difícil
+* excesso de conteúdo
+
+---
+
+## ✅ Depois
+
+* 1 ação principal
+* 2 alternativas no máximo
+* resto escondido
+
+---
+
+# 📊 8. MÉTRICAS QUE ISSO IMPACTA
+
+---
+
+### 🚀 Ativação
+
+↑ MUITO (primeira ação rápida)
+
+### 🔁 Retenção
+
+↑ (streak + progresso)
+
+### 💰 Conversão futura
+
+↑ (usuário sente valor cedo)
+
+---
+
+# 🧬 9. RESUMO DO UPGRADE
+
+Você saiu de:
+
+👉 produto bem explicado
+
+para:
+
+👉 produto que **faz a pessoa agir**
+
+---
+
+# 🚀 PRÓXIMO PASSO (nível fundador)
+
+Se quiser, posso agora montar:
+
+### 👉 versão “growth + monetização”
+
+* paywall inteligente
+* trial otimizado
+* momento certo de cobrança
+
+OU
+
+### 👉 versão com tracking real
+
+* eventos (Mixpanel / Posthog)
+* funil completo
+* onde você perde usuário
+
+---
+
+Qual você quer agora?

@@ -1,0 +1,264 @@
+Perfeito — peguei o que você estruturou e agora vou dar o **próximo passo real de produto**: transformar isso em **arquitetura de componentes pronta pra produção**.
+
+Vou organizar em:
+
+* estrutura de pastas
+* componentes separados
+* props bem definidas
+* já pensando em escala
+
+(E mantendo a lógica e copy que você criou )
+
+---
+
+# 🧱 1. ESTRUTURA DE COMPONENTES
+
+```bash
+/components
+  /dashboard
+    DashboardPage.tsx
+    HeroPracticeCard.tsx
+    PracticeCard.tsx
+    PersonalizationPanel.tsx
+    ExtraPracticeGrid.tsx
+```
+
+---
+
+# 🏠 2. DASHBOARD PAGE (orquestrador)
+
+```tsx
+import HeroPracticeCard from "./HeroPracticeCard";
+import PracticeCard from "./PracticeCard";
+import PersonalizationPanel from "./PersonalizationPanel";
+import ExtraPracticeGrid from "./ExtraPracticeGrid";
+
+export default function DashboardPage() {
+  return (
+    <div className="max-w-6xl mx-auto px-4 py-8 space-y-8">
+      
+      <header>
+        <h1 className="text-3xl font-bold">Seu próximo passo hoje</h1>
+        <p className="text-gray-600">
+          Pequenas ações, feitas com consistência, geram transformação real.
+        </p>
+      </header>
+
+      <HeroPracticeCard />
+
+      <PersonalizationPanel />
+
+      <section className="grid md:grid-cols-2 gap-6">
+        <PracticeCard />
+        <PracticeCard />
+      </section>
+
+      <ExtraPracticeGrid />
+
+    </div>
+  );
+}
+```
+
+---
+
+# 🌟 3. HERO PRACTICE (ação principal)
+
+```tsx
+export default function HeroPracticeCard() {
+  return (
+    <div className="bg-black text-white rounded-2xl p-6 shadow-lg">
+      <h2 className="text-xl font-semibold">
+        Lembre quando você conseguiu agir mesmo sem vontade
+      </h2>
+
+      <p className="text-gray-300 mt-2">
+        Isso te ajuda a recuperar confiança e sair da inércia mais rápido.
+      </p>
+
+      <ul className="mt-4 space-y-1 text-sm">
+        <li>✔ Mais clareza</li>
+        <li>✔ Mais confiança</li>
+        <li>✔ Mais ação</li>
+      </ul>
+
+      <div className="flex items-center justify-between mt-6">
+        <span className="text-sm text-gray-400">⏱ 5 min</span>
+
+        <button className="bg-white text-black px-4 py-2 rounded-xl font-medium hover:opacity-90">
+          Começar agora
+        </button>
+      </div>
+    </div>
+  );
+}
+```
+
+---
+
+# 🧩 4. PRACTICE CARD (reutilizável)
+
+```tsx
+type Props = {
+  title: string;
+  description: string;
+  benefits: string[];
+  time: string;
+};
+
+export default function PracticeCard({
+  title,
+  description,
+  benefits,
+  time,
+}: Props) {
+  return (
+    <div className="border rounded-2xl p-5 hover:shadow-md transition">
+      <h3 className="font-semibold text-lg">{title}</h3>
+
+      <p className="text-gray-600 mt-2 text-sm">{description}</p>
+
+      <ul className="mt-3 text-sm space-y-1">
+        {benefits.map((b, i) => (
+          <li key={i}>✔ {b}</li>
+        ))}
+      </ul>
+
+      <div className="flex justify-between items-center mt-5">
+        <span className="text-xs text-gray-500">⏱ {time}</span>
+
+        <button className="text-sm font-medium underline">
+          Ver como fazer
+        </button>
+      </div>
+    </div>
+  );
+}
+```
+
+---
+
+# 🧠 5. PERSONALIZATION PANEL (diferencial do produto)
+
+```tsx
+export default function PersonalizationPanel() {
+  return (
+    <div className="bg-gray-100 rounded-2xl p-6">
+      <h3 className="font-semibold text-lg">
+        Por que estamos sugerindo isso para você
+      </h3>
+
+      <ul className="mt-4 space-y-2 text-sm text-gray-700">
+        <li>• Você tende a travar quando perde clareza</li>
+        <li>• Responde bem a ações simples e diretas</li>
+        <li>• Pequenas vitórias aumentam seu ritmo rapidamente</li>
+      </ul>
+
+      <p className="mt-4 text-sm font-medium">
+        → Por isso, focamos em ações imediatas.
+      </p>
+    </div>
+  );
+}
+```
+
+---
+
+# 📚 6. EXTRA PRACTICES GRID
+
+```tsx
+export default function ExtraPracticeGrid() {
+  const practices = [
+    {
+      title: "Respiração 4-7-8",
+      desc: "Acalme sua mente em minutos",
+      time: "5 min",
+    },
+    {
+      title: "Organize seus pensamentos",
+      desc: "Reduza confusão mental",
+      time: "10 min",
+    },
+  ];
+
+  return (
+    <section>
+      <h3 className="text-xl font-semibold mb-4">
+        Outras formas de avançar agora
+      </h3>
+
+      <div className="grid md:grid-cols-2 gap-4">
+        {practices.map((p, i) => (
+          <div key={i} className="border rounded-xl p-4">
+            <h4 className="font-medium">{p.title}</h4>
+            <p className="text-sm text-gray-600">{p.desc}</p>
+
+            <span className="text-xs text-gray-500 block mt-2">
+              ⏱ {p.time}
+            </span>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+```
+
+---
+
+# ⚡ 7. O QUE VOCÊ GANHOU AQUI (IMPORTANTE)
+
+Isso aqui não é só UI.
+
+Você agora tem:
+
+### ✅ Estrutura escalável
+
+* fácil adicionar novas práticas
+* fácil conectar API depois
+
+### ✅ Copy já embutida no produto
+
+* orientada à ação
+* clara em 3 segundos
+* consistente (como você definiu)
+
+### ✅ Hierarquia psicológica correta
+
+1. ação principal (hero)
+2. explicação personalizada
+3. alternativas
+4. extras
+
+👉 Isso segue exatamente o que você desenhou no documento  — só que agora pronto pra código real.
+
+---
+
+# 🚀 PRÓXIMO PASSO (alto impacto)
+
+Se quiser evoluir ainda mais, posso:
+
+### 1. Conectar com estado real
+
+* progresso do usuário
+* práticas concluídas
+* recomendação dinâmica
+
+### 2. Criar versão “gamificada leve”
+
+* streak
+* progresso visual
+* reforço positivo inteligente
+
+### 3. Integrar com o Coach IA
+
+* clicar na prática → abrir chat contextual
+* sugestões automáticas
+
+---
+
+Se quiser, eu posso agora transformar isso em:
+
+👉 **design estilo Figma (layout + spacing + tokens)**
+ou
+👉 **versão com dados mockados + lógica real (tipo MVP pronto)**

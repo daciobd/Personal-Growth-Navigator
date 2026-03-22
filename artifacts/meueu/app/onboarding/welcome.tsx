@@ -1,7 +1,8 @@
 import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { router } from "expo-router";
-import React from "react";
+import React, { useEffect } from "react";
+import { track } from "@/utils/analytics";
 import {
   Platform,
   Pressable,
@@ -19,6 +20,10 @@ export default function WelcomeScreen() {
   const colors = Colors.light;
   const insets = useSafeAreaInsets();
   const { isFromLongevi, context, focus, isLoaded } = useLongeviContext();
+
+  useEffect(() => {
+    track("onboarding_started");
+  }, []);
 
   const handleStart = () => {
     if (Platform.OS !== "web") {

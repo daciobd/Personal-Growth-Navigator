@@ -3,6 +3,7 @@ import * as Haptics from "expo-haptics";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { router } from "expo-router";
 import React from "react";
+import { track } from "@/utils/analytics";
 import {
   Platform,
   Pressable,
@@ -61,6 +62,7 @@ export default function ProblemScreen() {
     if (Platform.OS !== "web") {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     }
+    track("onboarding_problem_selected", { problem: problem.key, label: problem.label });
     await AsyncStorage.setItem(
       "@meueu_onboarding_problem",
       JSON.stringify({

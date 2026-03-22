@@ -6,6 +6,7 @@ import Adjectives from "@/pages/Adjectives";
 import Simulator from "@/pages/Simulator";
 import Logs from "@/pages/Logs";
 import TabRelatorio from "@/pages/TabRelatorio";
+import Growth from "@/pages/Growth";
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { staleTime: 15000 } },
@@ -13,6 +14,7 @@ const queryClient = new QueryClient({
 
 const NAV = [
   { href: "/", label: "Dashboard", icon: "📊" },
+  { href: "/growth", label: "Growth", icon: "🚀" },
   { href: "/library", label: "Intervenções", icon: "📚" },
   { href: "/adjectives", label: "Adjetivos", icon: "🏷️" },
   { href: "/logs", label: "Logs de Planos", icon: "📋" },
@@ -79,6 +81,7 @@ function Router() {
       <Route path="/adjectives" component={Adjectives} />
       <Route path="/logs" component={Logs} />
       <Route path="/simulator" component={Simulator} />
+      <Route path="/growth" component={Growth} />
       <Route path="/relatorio" component={TabRelatorio} />
       <Route>
         <div className="text-center py-24 text-muted-foreground">Página não encontrada</div>

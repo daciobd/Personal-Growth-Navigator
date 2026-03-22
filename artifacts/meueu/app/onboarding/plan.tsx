@@ -3,6 +3,7 @@ import * as Haptics from "expo-haptics";
 import { router } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import React, { useEffect, useRef, useState } from "react";
+import { track } from "@/utils/analytics";
 import {
   ActivityIndicator,
   Platform,
@@ -81,6 +82,7 @@ export default function PlanScreen() {
       setPlanLocal(result.plan as Plan);
       setPlan(result.plan as any);
       setApproach(result.approach);
+      track("plan_generated", { approach: result.approach?.name ?? "unknown" });
       if (Platform.OS !== "web") {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       }

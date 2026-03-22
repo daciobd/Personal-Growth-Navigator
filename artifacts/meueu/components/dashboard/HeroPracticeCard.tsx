@@ -3,6 +3,7 @@ import { router } from "expo-router";
 import React from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { shadow } from "@/constants/tokens";
+import { track } from "@/utils/analytics";
 import type { Practice } from "@/context/AppContext";
 
 const APPROACH_DARK: Record<string, string> = {
@@ -101,15 +102,19 @@ export default function HeroPracticeCard({
               styles.primaryBtn,
               { opacity: pressed ? 0.85 : 1 },
             ]}
-            onPress={() =>
+            onPress={() => {
+              track("practice_started", {
+                practice: practice.nome,
+                abordagem: practice.abordagem,
+              });
               router.push({
                 pathname: "/intervention/[id]",
                 params: {
                   id: `plan-${practiceIdx}`,
                   practice: JSON.stringify(practice),
                 },
-              })
-            }
+              });
+            }}
           >
             <Text
               style={[styles.primaryBtnText, { fontFamily: "Inter_700Bold" }]}
@@ -126,7 +131,10 @@ export default function HeroPracticeCard({
         <View style={styles.checkinRow}>
           <Pressable
             style={styles.checkinBtn}
-            onPress={() => onCheckin("done")}
+            onPress={() => {
+              track("practice_completed", { practice: practice.nome, abordagem: practice.abordagem });
+              onCheckin("done");
+            }}
           >
             <Feather name="check" size={13} color="rgba(255,255,255,0.7)" />
             <Text
@@ -140,7 +148,10 @@ export default function HeroPracticeCard({
           </Pressable>
           <Pressable
             style={styles.checkinBtn}
-            onPress={() => onCheckin("missed")}
+            onPress={() => {
+              track("practice_missed", { practice: practice.nome, abordagem: practice.abordagem });
+              onCheckin("missed");
+            }}
           >
             <Feather name="x" size={13} color="rgba(255,255,255,0.5)" />
             <Text

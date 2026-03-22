@@ -25,3 +25,4 @@ export * from "./coach-messages";
 export * from "./users";
 export * from "./journeys";
 export * from "./behavioral-events";
+export * from "./analytics-events";

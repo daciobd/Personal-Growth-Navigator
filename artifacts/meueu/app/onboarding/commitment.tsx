@@ -3,6 +3,7 @@ import * as Haptics from "expo-haptics";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { router } from "expo-router";
 import React from "react";
+import { track } from "@/utils/analytics";
 import {
   Platform,
   Pressable,
@@ -31,7 +32,7 @@ export default function CommitmentScreen() {
     if (Platform.OS !== "web") {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     }
-
+    track("onboarding_commitment_answered", { answer: key });
     await AsyncStorage.setItem("@meueu_onboarding_commitment", key);
 
     const problemRaw = await AsyncStorage.getItem("@meueu_onboarding_problem");

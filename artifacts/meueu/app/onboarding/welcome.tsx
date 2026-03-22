@@ -32,7 +32,7 @@ export default function WelcomeScreen() {
     if (isFromLongevi && context) {
       router.push("/onboarding/future");
     } else {
-      router.push("/onboarding/problem");
+      router.push("/onboarding/intro");
     }
   };
 

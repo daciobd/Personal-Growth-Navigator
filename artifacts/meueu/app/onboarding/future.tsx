@@ -43,6 +43,14 @@ export default function FutureScreen() {
     if (!isLoaded) return;
     if (isFromLongevi && focus && FOCUS_ADJECTIVES[focus]) {
       setSelected(FOCUS_ADJECTIVES[focus]);
+    } else if (!isFromLongevi) {
+      (async () => {
+        const raw = await AsyncStorage.getItem("@meueu_onboarding_problem");
+        if (raw) {
+          const problem = JSON.parse(raw) as { future: string[] };
+          setSelected(problem.future);
+        }
+      })();
     }
   }, [isLoaded, isFromLongevi, focus]);
 
@@ -58,11 +66,15 @@ export default function FutureScreen() {
     if (Platform.OS !== "web") {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     }
-    router.push("/onboarding/plan");
+    if (isFromLongevi) {
+      router.push("/onboarding/plan");
+    } else {
+      router.push("/onboarding/commitment");
+    }
   };
 
-  const stepLabel = isFromLongevi ? "Etapa 2 de 2" : "Etapa 3 de 3";
-  const totalSteps = isFromLongevi ? 2 : 3;
+  const stepLabel = isFromLongevi ? "Passo 2 de 2" : "Passo 3 de 5";
+  const totalSteps = isFromLongevi ? 2 : 5;
   const currentStep = isFromLongevi ? 2 : 3;
 
   return (

@@ -15,7 +15,6 @@ import Animated, { FadeInDown } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Colors from "@/constants/colors";
 import { radius, shadow, spacing } from "@/constants/tokens";
-import { useApp } from "@/context/AppContext";
 
 const OPTIONS = [
   { key: "yes", label: "Sim", sublabel: "Estou pronto agora", icon: "check-circle" },
@@ -26,7 +25,6 @@ const OPTIONS = [
 export default function CommitmentScreen() {
   const colors = Colors.light;
   const insets = useSafeAreaInsets();
-  const { setCurrentAdjectives, setFutureAdjectives } = useApp();
 
   const handleSelect = async (key: string) => {
     if (Platform.OS !== "web") {
@@ -34,16 +32,6 @@ export default function CommitmentScreen() {
     }
     track("onboarding_commitment_answered", { answer: key });
     await AsyncStorage.setItem("@meueu_onboarding_commitment", key);
-
-    const problemRaw = await AsyncStorage.getItem("@meueu_onboarding_problem");
-    if (problemRaw) {
-      const problem = JSON.parse(problemRaw) as {
-        current: string[];
-        future: string[];
-      };
-      setCurrentAdjectives(problem.current);
-      setFutureAdjectives(problem.future);
-    }
 
     router.push("/onboarding/plan");
   };
@@ -67,20 +55,9 @@ export default function CommitmentScreen() {
           <Pressable onPress={() => router.back()} hitSlop={12}>
             <Feather name="arrow-left" size={20} color={colors.text} />
           </Pressable>
-          <View style={styles.dots}>
-            {[0, 1, 2, 3].map((i) => (
-              <View
-                key={i}
-                style={[
-                  styles.dot,
-                  {
-                    backgroundColor: i <= 2 ? colors.primary : colors.cardBorder,
-                    width: i === 2 ? 20 : 6,
-                  },
-                ]}
-              />
-            ))}
-          </View>
+          <Text style={[styles.stepLabel, { color: colors.textMuted, fontFamily: "Inter_500Medium" }]}>
+            Passo 4 de 5
+          </Text>
         </View>
 
         <View style={styles.titleBlock}>
@@ -162,4 +139,5 @@ const styles = StyleSheet.create({
   optionText: { flex: 1, gap: 4 },
   optionLabel: { fontSize: 18 },
   optionSub: { fontSize: 13 },
+  stepLabel: { fontSize: 13 },
 });

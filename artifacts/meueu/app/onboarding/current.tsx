@@ -1,7 +1,8 @@
 import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { router } from "expo-router";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Platform,
   Pressable,
@@ -23,6 +24,16 @@ export default function CurrentScreen() {
   const insets = useSafeAreaInsets();
   const { setCurrentAdjectives } = useApp();
   const [selected, setSelected] = useState<string[]>([]);
+
+  useEffect(() => {
+    (async () => {
+      const raw = await AsyncStorage.getItem("@meueu_onboarding_problem");
+      if (raw) {
+        const problem = JSON.parse(raw) as { current: string[] };
+        setSelected(problem.current);
+      }
+    })();
+  }, []);
 
   const toggle = (label: string) => {
     setSelected((prev) =>
@@ -55,10 +66,10 @@ export default function CurrentScreen() {
             <Feather name="arrow-left" size={20} color={colors.text} />
           </Pressable>
           <Text style={[styles.step, { color: colors.textMuted, fontFamily: "Inter_500Medium" }]}>
-            Etapa 1 de 2
+            Passo 2 de 5
           </Text>
         </View>
-        <ProgressBar progress={1} total={2} />
+        <ProgressBar progress={2} total={5} />
       </View>
 
       <ScrollView

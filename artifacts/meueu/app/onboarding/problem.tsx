@@ -72,7 +72,7 @@ export default function ProblemScreen() {
         future: problem.future,
       })
     );
-    router.push("/onboarding/frequency");
+    router.push("/onboarding/current");
   };
 
   return (
@@ -94,20 +94,9 @@ export default function ProblemScreen() {
           <Pressable onPress={() => router.back()} hitSlop={12}>
             <Feather name="arrow-left" size={20} color={colors.text} />
           </Pressable>
-          <View style={styles.dots}>
-            {[0, 1, 2, 3].map((i) => (
-              <View
-                key={i}
-                style={[
-                  styles.dot,
-                  {
-                    backgroundColor: i === 0 ? colors.primary : colors.cardBorder,
-                    width: i === 0 ? 20 : 6,
-                  },
-                ]}
-              />
-            ))}
-          </View>
+          <Text style={[styles.stepLabel, { color: colors.textMuted, fontFamily: "Inter_500Medium" }]}>
+            Passo 1 de 5
+          </Text>
         </View>
 
         <Text style={[styles.title, { color: colors.text, fontFamily: "Inter_700Bold" }]}>
@@ -156,8 +145,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
   },
-  dots: { flexDirection: "row", alignItems: "center", gap: spacing[1] },
-  dot: { height: 6, borderRadius: 3 },
+  stepLabel: { fontSize: 13 },
   title: { fontSize: 28, lineHeight: 36 },
   options: { gap: spacing[3], flex: 1, justifyContent: "center" },
   optionCard: {

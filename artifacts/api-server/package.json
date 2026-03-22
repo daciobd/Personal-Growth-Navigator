@@ -20,7 +20,8 @@
     "cors": "^2",
     "drizzle-orm": "catalog:",
     "express": "^5",
-    "jsonwebtoken": "^9.0.3"
+    "jsonwebtoken": "^9.0.3",
+    "resend": "^6.9.4"
   },
   "devDependencies": {
     "@types/cookie-parser": "^1.4.10",

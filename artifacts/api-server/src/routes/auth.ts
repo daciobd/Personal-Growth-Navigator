@@ -2,8 +2,16 @@ import { Router, type IRouter } from "express";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import crypto from "crypto";
+import { Resend } from "resend";
 import { db, usersTable, refreshTokensTable, dailyCheckinsTable, coachMessagesTable, planLogsTable } from "@workspace/db";
-import { eq, and, gt } from "drizzle-orm";
+import { passwordResetTokensTable } from "@workspace/db/schema";
+import { eq, and, gt, isNull } from "drizzle-orm";
+
+function getResend(): Resend {
+  const key = process.env.RESEND_API_KEY;
+  if (!key) throw new Error("RESEND_API_KEY não configurada.");
+  return new Resend(key);
+}
 
 const router: IRouter = Router();
 
@@ -145,6 +153,105 @@ router.post("/refresh", async (req, res) => {
   } catch (err) {
     console.error("Refresh error:", err);
     res.status(500).json({ error: "Erro ao renovar sessão." });
+  }
+});
+
+// POST /api/auth/forgot-password
+router.post("/forgot-password", async (req, res) => {
+  const { email } = req.body as { email?: string };
+
+  // Always return 200 to avoid email enumeration
+  res.json({ success: true, message: "Se este email estiver cadastrado, você receberá um link em breve." });
+
+  if (!email) return;
+
+  try {
+    const [user] = await db
+      .select({ id: usersTable.id, email: usersTable.email, name: usersTable.name })
+      .from(usersTable)
+      .where(eq(usersTable.email, email.toLowerCase().trim()))
+      .limit(1);
+
+    if (!user) return;
+
+    const token = crypto.randomUUID();
+    const expiresAt = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
+
+    await db.insert(passwordResetTokensTable).values({
+      userId: user.id,
+      token,
+      expiresAt,
+    });
+
+    const resetLink = `https://personal-growth-navigator.replit.app/auth/reset-password?token=${token}`;
+
+    await getResend().emails.send({
+      from: "onboarding@resend.dev",
+      to: user.email,
+      subject: "Redefinir sua senha — Jornada",
+      text: `Olá, ${user.name}!
+
+Recebemos uma solicitação para redefinir a senha da sua conta no Jornada.
+
+Clique no link abaixo para criar uma nova senha:
+${resetLink}
+
+O link é válido por 1 hora. Se você não solicitou a redefinição, ignore este email — sua senha permanece a mesma.
+
+Equipe Jornada`,
+    });
+  } catch (err) {
+    console.error("Forgot-password error:", err);
+    // Silent: user already received 200
+  }
+});
+
+// POST /api/auth/reset-password
+router.post("/reset-password", async (req, res) => {
+  const { token, newPassword } = req.body as { token?: string; newPassword?: string };
+
+  if (!token || !newPassword) {
+    res.status(400).json({ error: "Token e nova senha são obrigatórios." });
+    return;
+  }
+
+  if (newPassword.length < 6) {
+    res.status(400).json({ error: "A senha deve ter pelo menos 6 caracteres." });
+    return;
+  }
+
+  try {
+    const [resetToken] = await db
+      .select()
+      .from(passwordResetTokensTable)
+      .where(
+        and(
+          eq(passwordResetTokensTable.token, token),
+          gt(passwordResetTokensTable.expiresAt, new Date()),
+          isNull(passwordResetTokensTable.usedAt)
+        )
+      )
+      .limit(1);
+
+    if (!resetToken) {
+      res.status(400).json({ error: "Link inválido ou expirado. Solicite um novo." });
+      return;
+    }
+
+    const passwordHash = await bcrypt.hash(newPassword, 12);
+
+    await db.update(usersTable)
+      .set({ passwordHash })
+      .where(eq(usersTable.id, resetToken.userId));
+
+    await db.update(passwordResetTokensTable)
+      .set({ usedAt: new Date() })
+      .where(eq(passwordResetTokensTable.id, resetToken.id));
+
+    res.json({ success: true, message: "Senha redefinida com sucesso." });
+  } catch (err) {
+    console.error("Reset-password error:", err);
+    res.status(500).json({ error: "Erro ao redefinir senha. Tente novamente." });
   }
 });
 

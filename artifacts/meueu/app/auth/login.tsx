@@ -141,6 +141,15 @@ export default function LoginScreen() {
           </View>
 
           <Pressable
+            onPress={() => router.push("/auth/forgot-password")}
+            style={styles.forgotBtn}
+          >
+            <Text style={[styles.forgotText, { color: colors.primary, fontFamily: "Inter_400Regular" }]}>
+              Esqueci minha senha
+            </Text>
+          </Pressable>
+
+          <Pressable
             onPress={handleLogin}
             disabled={loading}
             style={[styles.primaryBtn, { backgroundColor: loading ? colors.textMuted : colors.primary }]}
@@ -236,6 +245,8 @@ const styles = StyleSheet.create({
     borderWidth: 1.5,
   },
   secondaryBtnText: { fontSize: 15 },
+  forgotBtn: { alignItems: "flex-end", marginTop: -4 },
+  forgotText: { fontSize: 13 },
   skipBtn: { alignItems: "center", paddingVertical: 8 },
   skipText: { fontSize: 13 },
 });

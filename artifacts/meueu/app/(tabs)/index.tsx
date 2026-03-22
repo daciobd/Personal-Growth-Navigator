@@ -308,13 +308,14 @@ export default function TodayScreen() {
                 )}
               </View>
 
-              {/* Justificativa com truncamento */}
+              {/* Justificativa — 1 linha com "ver mais" inline */}
               <Text
                 style={[
                   styles.justificativa,
                   { color: colors.textSecondary, fontFamily: "Inter_400Regular" },
                 ]}
-                numberOfLines={isExpanded ? undefined : 2}
+                numberOfLines={isExpanded ? undefined : 1}
+                ellipsizeMode="tail"
               >
                 {practice.justificativa}
               </Text>
@@ -329,7 +330,7 @@ export default function TodayScreen() {
                 </Text>
               </Pressable>
 
-              {/* Frequência + Ver passos */}
+              {/* Frequência */}
               <View style={styles.frequencyRow}>
                 <Feather name="clock" size={12} color={colors.textMuted} />
                 <Text
@@ -340,51 +341,69 @@ export default function TodayScreen() {
                 >
                   {practice.frequencia}
                 </Text>
-                <Pressable
-                  onPress={() =>
-                    router.push({
-                      pathname: "/intervention/[id]",
-                      params: {
-                        id: `plan-${i}`,
-                        practice: JSON.stringify(practice),
-                      },
-                    })
-                  }
-                  style={[styles.detailsBtn, { backgroundColor: aColor.bg }]}
-                >
-                  <Text
-                    style={[
-                      styles.detailsBtnText,
-                      { color: aColor.text, fontFamily: "Inter_600SemiBold" },
-                    ]}
-                  >
-                    Ver passos
-                  </Text>
-                  <Feather name="arrow-right" size={12} color={aColor.text} />
-                </Pressable>
               </View>
 
-              {/* Botões de check-in inline */}
+              {/* Ação principal: Ver passos (botão primário sólido) */}
+              <Pressable
+                onPress={() =>
+                  router.push({
+                    pathname: "/intervention/[id]",
+                    params: {
+                      id: `plan-${i}`,
+                      practice: JSON.stringify(practice),
+                    },
+                  })
+                }
+                style={({ pressed }) => [
+                  styles.primaryActionBtn,
+                  { backgroundColor: aColor.text, opacity: pressed ? 0.85 : 1 },
+                ]}
+              >
+                <Text
+                  style={[
+                    styles.primaryActionText,
+                    { fontFamily: "Inter_600SemiBold" },
+                  ]}
+                >
+                  Ver passos
+                </Text>
+                <Feather name="arrow-right" size={14} color="#fff" />
+              </Pressable>
+
+              {/* Check-in secundário (outline) */}
               {!status && (
                 <View style={styles.checkinRow}>
                   <Pressable
-                    style={[styles.checkinBtn, styles.checkinDone]}
+                    style={[
+                      styles.checkinBtn,
+                      styles.checkinDoneOutline,
+                      { borderColor: "#22C55E" },
+                    ]}
                     onPress={() => handlePracticeCheckin(i, "done")}
                   >
-                    <Feather name="check" size={14} color="#fff" />
-                    <Text style={[styles.checkinBtnText, { fontFamily: "Inter_600SemiBold" }]}>
+                    <Feather name="check" size={13} color="#22C55E" />
+                    <Text
+                      style={[
+                        styles.checkinBtnOutlineText,
+                        { color: "#22C55E", fontFamily: "Inter_500Medium" },
+                      ]}
+                    >
                       Fiz
                     </Text>
                   </Pressable>
                   <Pressable
-                    style={[styles.checkinBtn, styles.checkinMissed]}
+                    style={[
+                      styles.checkinBtn,
+                      styles.checkinMissedOutline,
+                      { borderColor: "#D1D5DB" },
+                    ]}
                     onPress={() => handlePracticeCheckin(i, "missed")}
                   >
-                    <Feather name="x" size={14} color="#EF4444" />
+                    <Feather name="x" size={13} color="#9CA3AF" />
                     <Text
                       style={[
-                        styles.checkinBtnText,
-                        { color: "#EF4444", fontFamily: "Inter_600SemiBold" },
+                        styles.checkinBtnOutlineText,
+                        { color: "#9CA3AF", fontFamily: "Inter_500Medium" },
                       ]}
                     >
                       Não consegui
@@ -593,6 +612,16 @@ export default function TodayScreen() {
           </View>
           <Text
             style={[
+              styles.miniDesc,
+              { color: colors.textSecondary, fontFamily: "Inter_400Regular" },
+            ]}
+            numberOfLines={1}
+            ellipsizeMode="tail"
+          >
+            {intervention.description}
+          </Text>
+          <Text
+            style={[
               styles.miniTherapy,
               { color: colors.textMuted, fontFamily: "Inter_400Regular" },
             ]}
@@ -705,40 +734,43 @@ const styles = StyleSheet.create({
     gap: 5,
   },
   frequencyText: { fontSize: 12, flex: 1 },
-  detailsBtn: {
+  // Botão primário sólido — Ver passos
+  primaryActionBtn: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 4,
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 8,
+    justifyContent: "center",
+    gap: 6,
+    paddingVertical: 11,
+    borderRadius: 10,
   },
-  detailsBtnText: { fontSize: 12 },
+  primaryActionText: {
+    fontSize: 14,
+    color: "#fff",
+  },
 
-  // Check-in inline
+  // Check-in secundário (outline)
   checkinRow: {
     flexDirection: "row",
     gap: 8,
-    marginTop: 2,
   },
   checkinBtn: {
     flex: 1,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    gap: 6,
-    paddingVertical: 10,
-    borderRadius: 10,
+    gap: 5,
+    paddingVertical: 8,
+    borderRadius: 8,
+    borderWidth: 1,
   },
-  checkinDone: {
-    backgroundColor: "#22C55E",
+  checkinDoneOutline: {
+    backgroundColor: "transparent",
   },
-  checkinMissed: {
-    backgroundColor: "#FEE2E2",
+  checkinMissedOutline: {
+    backgroundColor: "transparent",
   },
-  checkinBtnText: {
-    fontSize: 13,
-    color: "#fff",
+  checkinBtnOutlineText: {
+    fontSize: 12,
   },
   undoRow: {
     flexDirection: "row",
@@ -814,5 +846,6 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
   },
   miniTitle: { fontSize: 14 },
+  miniDesc: { fontSize: 12, lineHeight: 17 },
   miniTherapy: { fontSize: 12 },
 });

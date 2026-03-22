@@ -32,6 +32,7 @@ type CheckinSource = "journey" | "plan" | "both";
 
 type Props = {
   onComplete?: (xpGained: number) => void;
+  journeyOnly?: boolean;
 };
 
 const NOTE_LABELS = ["", "Muito difícil", "Difícil", "Mais ou menos", "Boa", "Excelente"];
@@ -47,7 +48,7 @@ const SIGNAL_LABELS: Record<string, string> = {
 
 type Step = "loading" | "challenge" | "checkin" | "done";
 
-export default function UnifiedCheckin({ onComplete }: Props) {
+export default function UnifiedCheckin({ onComplete, journeyOnly = false }: Props) {
   const { recordCheckin, addXP, streak } = useGamification();
 
   const [step, setStep]               = useState<Step>("loading");
@@ -69,6 +70,7 @@ export default function UnifiedCheckin({ onComplete }: Props) {
   const [saving, setSaving]           = useState(false);
   const [xpResult, setXpResult]       = useState(0);
   const [journeyDone, setJourneyDone] = useState(false);
+  const [hidden, setHidden]           = useState(false);
 
   const domain = getApiUrl();
 
@@ -113,7 +115,12 @@ export default function UnifiedCheckin({ onComplete }: Props) {
           setAdaptiveHint(chalData.adaptiveUiHint ?? "");
         }
       } else {
-        // Sem jornada ativa: usa plano personalizado
+        // Sem jornada ativa
+        if (journeyOnly) {
+          // Em modo journeyOnly, não exibe nada se não houver jornada ativa
+          setHidden(true);
+          return;
+        }
         setSource("plan");
         const plan = JSON.parse(await AsyncStorage.getItem("@meueu_plan") ?? "null");
         if (plan?.praticas?.length) {
@@ -196,6 +203,8 @@ export default function UnifiedCheckin({ onComplete }: Props) {
   }
 
   const color = journeyId ? journeyColor : "#1B6B5A";
+
+  if (hidden) return null;
 
   // LOADING
   if (step === "loading") return (

@@ -1,0 +1,367 @@
+Perfeito — agora vamos montar um **dashboard real de growth**, do jeito que founders e PMs usam no dia a dia.
+
+Isso aqui é **plug-and-play no Mixpanel ou PostHog**.
+
+---
+
+# 🧠 1. VISÃO GERAL DO DASHBOARD
+
+Você vai criar **4 blocos principais**:
+
+1. 🚀 Ativação (primeira vitória)
+2. 🔁 Retenção (volta do usuário)
+3. ⚡ Engajamento (uso real)
+4. 💰 Sinais de valor (indicadores fortes)
+
+---
+
+# 🚀 2. ATIVAÇÃO (O MAIS IMPORTANTE)
+
+## 🔽 FUNIL PRINCIPAL
+
+```txt
+onboarding_started
+→ onboarding_problem_selected
+→ plan_generated
+→ practice_started
+→ practice_completed
+```
+
+---
+
+## 📊 Gráfico: Funnel
+
+No Mixpanel/PostHog:
+
+* tipo: **Funnel**
+* conversão por step
+* janela: 24h
+
+---
+
+## 🎯 O que olhar
+
+* onde maior drop acontece
+* tempo entre steps
+
+---
+
+## 🚨 Diagnóstico rápido
+
+| Problema                        | Interpretação      |
+| ------------------------------- | ------------------ |
+| Drop alto no plan_generated     | plano não convence |
+| Drop alto no practice_started   | CTA fraco          |
+| Drop alto no practice_completed | prática ruim       |
+
+---
+
+# 🔁 3. RETENÇÃO (COHORT)
+
+## 📊 Gráfico: Retention
+
+Evento base:
+
+```txt
+practice_completed
+```
+
+Evento de retorno:
+
+```txt
+app_opened
+```
+
+---
+
+## Configuração
+
+* tipo: **Retention → Cohort**
+* intervalo: diário
+* período: últimos 30 dias
+
+---
+
+## 🎯 Meta saudável
+
+| Dia | Meta |
+| --- | ---- |
+| D1  | 30%+ |
+| D3  | 15%+ |
+| D7  | 10%+ |
+
+---
+
+## 🧠 Insight poderoso
+
+Se D1 for baixo:
+
+👉 problema NÃO é retenção
+👉 problema é ativação fraca
+
+---
+
+# ⚡ 4. ENGAJAMENTO
+
+---
+
+## 📊 Gráfico: Events per User
+
+Evento:
+
+```txt
+practice_completed
+```
+
+---
+
+## Pergunta:
+
+👉 quantas práticas por usuário?
+
+---
+
+## Interpretação
+
+| Resultado | Significado |
+| --------- | ----------- |
+| 1 só      | curiosidade |
+| 2–3       | interesse   |
+| 4+        | valor real  |
+
+---
+
+---
+
+## 📊 Gráfico: Top Events
+
+Eventos:
+
+* practice_started
+* practice_completed
+* coach_message_sent
+
+---
+
+👉 mostra o que realmente está sendo usado
+
+---
+
+# 💰 5. SINAIS DE VALOR (NORTH STAR)
+
+---
+
+## 📊 Gráfico: Trend
+
+Evento:
+
+```txt
+practice_completed
+```
+
+---
+
+## Visual:
+
+* eixo Y: contagem
+* eixo X: tempo
+
+---
+
+👉 isso mostra crescimento real do produto
+
+---
+
+# 🧪 6. ANÁLISE DE DROP-OFF
+
+---
+
+## 📊 Gráfico: Breakdown do Funnel
+
+Quebrar por:
+
+```txt
+problem
+frequency
+commitment_answer
+```
+
+---
+
+## Você vai descobrir:
+
+👉 quem converte mais
+
+Ex:
+
+* “procrastinação” → converte mais
+* “disciplina” → converte menos
+
+---
+
+👉 isso guia produto e marketing
+
+---
+
+# 🧠 7. TEMPO ATÉ ATIVAÇÃO
+
+---
+
+## 📊 Gráfico: Time to Convert
+
+Evento:
+
+```txt
+onboarding_started → practice_started
+```
+
+---
+
+## Meta:
+
+👉 < 2 minutos
+
+---
+
+## Se alto:
+
+* onboarding longo
+* fricção
+* confusão
+
+---
+
+# 🔥 8. DASHBOARD FINAL (ESTRUTURA)
+
+Crie exatamente isso:
+
+---
+
+## 🧱 Dashboard: Growth Overview
+
+---
+
+### 🔹 Seção 1: Ativação
+
+* Funnel completo
+* Tempo até primeira prática
+
+---
+
+### 🔹 Seção 2: Retenção
+
+* Cohort (practice_completed → app_opened)
+* Retorno por dia
+
+---
+
+### 🔹 Seção 3: Engajamento
+
+* Practices por usuário
+* Top eventos
+
+---
+
+### 🔹 Seção 4: Valor
+
+* Trend de practice_completed
+
+---
+
+---
+
+# 🧠 9. COMO USAR ISSO (O MAIS IMPORTANTE)
+
+---
+
+## Toda semana você responde:
+
+1. Onde perdi mais usuário?
+2. O que posso melhorar ali?
+3. Testo 1 mudança
+4. Meço impacto
+
+---
+
+👉 Isso é growth de verdade.
+
+---
+
+# ⚡ 10. EXEMPLO REAL DE DECISÃO
+
+---
+
+### Problema:
+
+drop alto em `practice_started`
+
+---
+
+### Ação:
+
+* mudar copy do botão
+* destacar tempo (5 min)
+* reduzir opções
+
+---
+
+### Resultado esperado:
+
+↑ activation rate
+
+---
+
+# 🚀 11. NÍVEL AVANÇADO (PRÓXIMO PASSO)
+
+Se quiser ir além, posso montar:
+
+---
+
+## 👉 Dashboard de experimentos (A/B test)
+
+* comparação automática
+* significância
+
+---
+
+## 👉 Sistema de alerts
+
+* se ativação cair → alerta
+* se retenção subir → alerta
+
+---
+
+## 👉 Segmentação avançada
+
+* usuários bons vs ruins
+* comportamento diferente
+
+---
+
+# 🧬 RESUMO
+
+Você agora tem:
+
+✅ dashboard completo
+✅ funil claro
+✅ cohort retention
+✅ métricas que importam
+✅ sistema de decisão
+
+---
+
+Se você usar isso direito, você sai de:
+
+👉 “acho que o produto tá bom”
+
+para:
+
+👉 **“eu sei exatamente onde melhorar”**
+
+---
+
+Se quiser, o próximo passo mais poderoso é:
+
+👉 **ligar isso com monetização (paywall + trial otimizado)**
+
+porque aí você transforma crescimento em receita real.

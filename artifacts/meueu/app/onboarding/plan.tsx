@@ -46,12 +46,12 @@ const APPROACH_COLORS: Record<string, { bg: string; text: string; icon: string }
 };
 
 const LOADING_MESSAGES = [
-  "Analisando seu perfil...",
-  "Identificando perspectiva terapêutica ideal...",
-  "Cruzando adjetivos com abordagens terapêuticas...",
+  "Analisando seu padrão...",
+  "Identificando seus bloqueios...",
+  "Definindo seus próximos passos...",
   "Selecionando práticas personalizadas...",
-  "Formulando sua frase de intenção...",
-  "Finalizando seu plano...",
+  "Formulando seu plano de ação...",
+  "Finalizando...",
 ];
 
 export default function PlanScreen() {

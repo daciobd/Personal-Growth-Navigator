@@ -3,6 +3,7 @@ import { router } from "expo-router";
 import React from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import Colors from "@/constants/colors";
+import { shadow } from "@/constants/tokens";
 import type { Intervention } from "@/data/interventions";
 
 const THERAPY_COLORS: Record<string, { bg: string; text: string }> = {
@@ -176,6 +177,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     padding: 14,
     gap: 5,
+    ...shadow.soft,
   },
   cardHeader: {
     flexDirection: "row",

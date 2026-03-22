@@ -2,6 +2,7 @@ import { Feather } from "@expo/vector-icons";
 import React from "react";
 import { StyleSheet, Text, View } from "react-native";
 import Colors from "@/constants/colors";
+import { shadow } from "@/constants/tokens";
 
 type Props = {
   sintese: string;
@@ -134,6 +135,7 @@ const styles = StyleSheet.create({
     borderRadius: 18,
     padding: 16,
     gap: 12,
+    ...shadow.soft,
   },
   titleRow: {
     flexDirection: "row",

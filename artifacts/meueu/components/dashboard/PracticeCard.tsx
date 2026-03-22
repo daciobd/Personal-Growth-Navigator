@@ -3,6 +3,7 @@ import { router } from "expo-router";
 import React from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import Colors from "@/constants/colors";
+import { shadow } from "@/constants/tokens";
 import type { Practice } from "@/context/AppContext";
 
 const APPROACH_COLORS: Record<string, { bg: string; text: string; icon: string }> = {
@@ -208,6 +209,7 @@ const styles = StyleSheet.create({
     borderRadius: 18,
     padding: 16,
     gap: 10,
+    ...shadow.soft,
   },
   header: {
     flexDirection: "row",

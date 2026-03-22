@@ -2,6 +2,7 @@ import { Feather } from "@expo/vector-icons";
 import { router } from "expo-router";
 import React from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
+import { shadow } from "@/constants/tokens";
 import type { Practice } from "@/context/AppContext";
 
 const APPROACH_DARK: Record<string, string> = {
@@ -165,6 +166,7 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     padding: 20,
     gap: 12,
+    ...shadow.card,
   },
   badge: {
     alignSelf: "flex-start",

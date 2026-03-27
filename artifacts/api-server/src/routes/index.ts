@@ -12,6 +12,7 @@ import jornadaRouter       from "./jornada.js";
 import behavioralRouter    from "./behavioral.js";
 import analyticsRouter     from "./analytics.js";
 import analyticsAdminRouter from "./analytics-admin.js";
+import guardianRouter       from "./guardian.js";
 
 const router = Router();
 
@@ -27,5 +28,6 @@ router.use("/journeys",          journeysRouter);
 router.use("/jornada",           jornadaRouter);
 router.use("/behavioral",        behavioralRouter);
 router.use("/analytics",         analyticsRouter);
+router.use("/guardian",          guardianRouter);
 
 export default router;

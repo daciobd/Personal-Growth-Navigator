@@ -3,6 +3,7 @@ import React, { useEffect } from "react";
 import { ActivityIndicator, StyleSheet, View } from "react-native";
 import Colors from "@/constants/colors";
 import { useApp } from "@/context/AppContext";
+import { getGuidedPracticeRecord } from "@/features/guided-practice/hooks/useGuidedPractice";
 
 export default function EntryScreen() {
   const { profile, isLoading } = useApp();
@@ -10,11 +11,20 @@ export default function EntryScreen() {
 
   useEffect(() => {
     if (isLoading) return;
-    if (profile.onboardingComplete) {
-      router.replace("/(tabs)");
-    } else {
+
+    if (!profile.onboardingComplete) {
       router.replace("/onboarding/welcome");
+      return;
     }
+
+    // Onboarding done — check if guided practice was completed
+    getGuidedPracticeRecord().then((record) => {
+      if (record.completed) {
+        router.replace("/(tabs)");
+      } else {
+        router.replace("/onboarding/first_mission");
+      }
+    });
   }, [isLoading, profile.onboardingComplete]);
 
   return (

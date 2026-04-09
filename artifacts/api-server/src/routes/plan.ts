@@ -9,6 +9,7 @@ import { anthropic } from "@workspace/integrations-anthropic-ai";
 import { db } from "@workspace/db";
 import { planLogsTable, type InsertPlanLog } from "@workspace/db/schema";
 import { selectFutureApproach } from "../data/futureApproaches.js";
+import { buildAdaptivePromptBlock } from "./adaptivePrompt.js";
 
 const router: IRouter = Router();
 
@@ -43,6 +44,8 @@ router.post("/generate", async (req, res) => {
     longeviContext,
     // Contexto de saúde rico (via API Longevi)
     healthContext,
+    // Perfil adaptativo (onboarding adaptativo)
+    adaptiveProfile,
   } = req.body as {
     traitAdjectives?: string[];
     stateAdjectives?: string[];
@@ -64,6 +67,12 @@ router.post("/generate", async (req, res) => {
       targetOutcome?: string;
       barriers?: string[];
       examContext?: { examId?: string; examDate?: string };
+    };
+    adaptiveProfile?: {
+      primaryStruggle: string;
+      deepDiveAnswer: string;
+      patternFrequency: string;
+      inferredTags: string[];
     };
   };
 
@@ -148,6 +157,11 @@ ${lines.join("\n")}
     }
   }
 
+  // Bloco adaptativo (onboarding adaptativo)
+  const adaptiveBlock = adaptiveProfile
+    ? buildAdaptivePromptBlock(adaptiveProfile)
+    : "";
+
   const prompt = `Você é um psicólogo clínico especialista em psicoterapia integrativa.
 
 LINGUAGEM OBRIGATÓRIA:
@@ -169,7 +183,7 @@ TÍTULOS DAS PRÁTICAS — devem ser em português simples e direto.
 Exemplos bons: "Escreva seus pensamentos", "Respire fundo por 5 minutos", "Liste 3 coisas que foram bem".
 Exemplos ruins: "Defusão Cognitiva do Pensamento X", "Reestruturação Cognitiva", "Mindfulness de Aceitação".
 
-${healthBlock}${longeviBlock}${big5Block}${stateBlock}TRAÇOS DE PERSONALIDADE (estáveis — base para o Big Five):
+${healthBlock}${longeviBlock}${adaptiveBlock}${big5Block}${stateBlock}TRAÇOS DE PERSONALIDADE (estáveis — base para o Big Five):
 ${traits.join(", ")}
 
 EU FUTURO DESEJADO:

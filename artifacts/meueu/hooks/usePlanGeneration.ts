@@ -5,6 +5,7 @@
 import { useState, useCallback } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { getApiUrl } from "@/utils/api";
+import type { AdaptiveProfile } from "@/data/adaptive-onboarding";
 
 export type GeneratedApproach = {
   key: string;
@@ -38,7 +39,8 @@ export function usePlanGeneration() {
   const [error, setError]     = useState<string | null>(null);
 
   const generate = useCallback(async (
-    futureAdjectives: string[]
+    futureAdjectives: string[],
+    adaptiveProfile?: AdaptiveProfile | null
   ): Promise<PlanResult | null> => {
     setLoading(true);
     setError(null);
@@ -103,8 +105,9 @@ export function usePlanGeneration() {
           stateAdjectives:  stateAdj,
           futureAdjectives: futureAdjectives,
           assessmentNumber,
-          ...(big5Scores     ? { big5Scores }     : {}),
-          ...(longeviContext ? { longeviContext }  : {}),
+          ...(big5Scores       ? { big5Scores }       : {}),
+          ...(longeviContext   ? { longeviContext }   : {}),
+          ...(adaptiveProfile  ? { adaptiveProfile }  : {}),
         }),
       });
 

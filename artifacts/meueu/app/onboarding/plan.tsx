@@ -76,7 +76,8 @@ export default function PlanScreen() {
     setError(null);
     try {
       const result = await generate(
-        profile.futureAdjectives
+        profile.futureAdjectives,
+        profile.adaptiveProfile
       );
       if (!result) throw new Error(hookError ?? "Erro ao gerar plano");
       setPlanLocal(result.plan as Plan);
@@ -111,10 +112,7 @@ export default function PlanScreen() {
     if (Platform.OS !== "web") {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     }
-    // dismissAll clears the entire onboarding stack (welcome → current → future → plan)
-    // so replace("/(tabs)") results in a clean history with no back-to-onboarding
-    try { router.dismissAll(); } catch {}
-    router.replace("/(tabs)");
+    router.replace("/onboarding/first_mission");
   };
 
   return (
@@ -357,9 +355,9 @@ export default function PlanScreen() {
                 { backgroundColor: colors.primary, opacity: pressed ? 0.85 : 1 },
               ]}
             >
-              <Feather name="check" size={18} color="#fff" />
+              <Feather name="play" size={18} color="#fff" />
               <Text style={[styles.doneText, { fontFamily: "Inter_600SemiBold" }]}>
-                Começar minha transformação
+                Fazer minha primeira prática
               </Text>
             </Pressable>
           </View>

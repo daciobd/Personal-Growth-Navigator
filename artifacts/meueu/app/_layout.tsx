@@ -39,8 +39,13 @@ function RootLayoutNavInner() {
         <Stack.Screen name="onboarding/traits" />
         <Stack.Screen name="onboarding/state" />
         <Stack.Screen name="onboarding/current" />
+        <Stack.Screen name="onboarding/current_primary_issue" />
+        <Stack.Screen name="onboarding/current_deep_dive" />
+        <Stack.Screen name="onboarding/adaptive_frequency" />
+        <Stack.Screen name="onboarding/first_mission" />
         <Stack.Screen name="onboarding/future" />
         <Stack.Screen name="onboarding/plan" />
+        <Stack.Screen name="daily-practice" />
         <Stack.Screen name="(tabs)" />
         <Stack.Screen name="intervention/[id]" />
         <Stack.Screen name="coach/index" options={{ presentation: "modal" }} />

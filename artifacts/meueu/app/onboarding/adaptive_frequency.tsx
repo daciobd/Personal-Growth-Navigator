@@ -1,6 +1,5 @@
 import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { router } from "expo-router";
 import React from "react";
 import { track } from "@/utils/analytics";
@@ -15,64 +14,48 @@ import Animated, { FadeInDown } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Colors from "@/constants/colors";
 import { radius, shadow, spacing } from "@/constants/tokens";
+import { useApp } from "@/context/AppContext";
+import {
+  FREQUENCY_OPTIONS,
+  inferTags,
+  type FrequencyOption,
+} from "@/data/adaptive-onboarding";
 
-const PROBLEMS = [
-  {
-    key: "cant-start",
-    label: "Não consigo começar",
-    icon: "pause-circle",
-    current: ["travado", "inseguro", "paralisado"],
-    future: ["ativo", "determinado", "corajoso"],
-  },
-  {
-    key: "procrastination",
-    label: "Procrastino demais",
-    icon: "clock",
-    current: ["procrastinador", "passivo", "adiador"],
-    future: ["disciplinado", "produtivo", "focado"],
-  },
-  {
-    key: "lack-focus",
-    label: "Perco foco fácil",
-    icon: "wind",
-    current: ["disperso", "ansioso", "impulsivo"],
-    future: ["focado", "presente", "calmo"],
-  },
-  {
-    key: "feeling-lost",
-    label: "Me sinto perdido",
-    icon: "compass",
-    current: ["perdido", "confuso", "inseguro"],
-    future: ["claro", "confiante", "direcionado"],
-  },
-  {
-    key: "no-discipline",
-    label: "Falta de disciplina",
-    icon: "sliders",
-    current: ["inconsistente", "impulsivo", "resistente"],
-    future: ["disciplinado", "consistente", "comprometido"],
-  },
-] as const;
-
-export default function ProblemScreen() {
+export default function AdaptiveFrequencyScreen() {
   const colors = Colors.light;
   const insets = useSafeAreaInsets();
+  const { adaptiveDraft, setAdaptiveProfile } = useApp();
 
-  const handleSelect = async (problem: (typeof PROBLEMS)[number]) => {
+  const handleSelect = (option: FrequencyOption) => {
     if (Platform.OS !== "web") {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     }
-    track("onboarding_problem_selected", { problem: problem.key, label: problem.label });
-    await AsyncStorage.setItem(
-      "@meueu_onboarding_problem",
-      JSON.stringify({
-        key: problem.key,
-        label: problem.label,
-        current: problem.current,
-        future: problem.future,
-      })
-    );
-    router.push("/onboarding/current_primary_issue");
+
+    const { primaryStruggle, deepDiveAnswer } = adaptiveDraft;
+
+    if (!primaryStruggle || !deepDiveAnswer) {
+      router.back();
+      return;
+    }
+
+    const frequency = option.id;
+    const inferredTags = inferTags(primaryStruggle, deepDiveAnswer, frequency);
+
+    track("onboarding_adaptive_complete", {
+      primary: primaryStruggle,
+      deepDive: deepDiveAnswer,
+      frequency,
+      tags: inferredTags,
+    });
+
+    setAdaptiveProfile({
+      primaryStruggle,
+      deepDiveAnswer,
+      patternFrequency: frequency,
+      inferredTags,
+    });
+
+    router.push("/onboarding/future");
   };
 
   return (
@@ -95,20 +78,20 @@ export default function ProblemScreen() {
             <Feather name="arrow-left" size={20} color={colors.text} />
           </Pressable>
           <Text style={[styles.stepLabel, { color: colors.textMuted, fontFamily: "Inter_500Medium" }]}>
-            Passo 1 de 5
+            Passo 2 de 5
           </Text>
         </View>
 
         <Text style={[styles.title, { color: colors.text, fontFamily: "Inter_700Bold" }]}>
-          Onde você mais trava hoje?
+          Com que frequência isso acontece?
         </Text>
       </Animated.View>
 
       <View style={[styles.options, { paddingHorizontal: spacing[5] }]}>
-        {PROBLEMS.map((problem, i) => (
-          <Animated.View key={problem.key} entering={FadeInDown.delay(100 + i * 60).duration(450)}>
+        {FREQUENCY_OPTIONS.map((option, i) => (
+          <Animated.View key={option.id} entering={FadeInDown.delay(100 + i * 80).duration(450)}>
             <Pressable
-              onPress={() => handleSelect(problem)}
+              onPress={() => handleSelect(option)}
               style={({ pressed }) => [
                 styles.optionCard,
                 {
@@ -121,12 +104,12 @@ export default function ProblemScreen() {
               ]}
             >
               <View style={[styles.optionIcon, { backgroundColor: colors.chip.default }]}>
-                <Feather name={problem.icon as any} size={18} color={colors.primary} />
+                <Feather name={option.icon as any} size={20} color={colors.primary} />
               </View>
               <Text
                 style={[styles.optionLabel, { color: colors.text, fontFamily: "Inter_500Medium" }]}
               >
-                {problem.label}
+                {option.label}
               </Text>
               <Feather name="chevron-right" size={16} color={colors.textMuted} />
             </Pressable>
@@ -139,7 +122,7 @@ export default function ProblemScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  header: { gap: spacing[5], marginBottom: spacing[6] },
+  header: { gap: spacing[5], marginBottom: spacing[8] },
   stepRow: {
     flexDirection: "row",
     alignItems: "center",
@@ -147,22 +130,22 @@ const styles = StyleSheet.create({
   },
   stepLabel: { fontSize: 13 },
   title: { fontSize: 28, lineHeight: 36 },
-  options: { gap: spacing[3], flex: 1, justifyContent: "center" },
+  options: { gap: spacing[4], flex: 1, justifyContent: "center" },
   optionCard: {
     flexDirection: "row",
     alignItems: "center",
     gap: spacing[4],
-    paddingVertical: spacing[4],
+    paddingVertical: spacing[5],
     paddingHorizontal: spacing[4],
     borderRadius: radius.xl,
     borderWidth: 1,
   },
   optionIcon: {
-    width: 40,
-    height: 40,
+    width: 44,
+    height: 44,
     borderRadius: radius.md,
     alignItems: "center",
     justifyContent: "center",
   },
-  optionLabel: { flex: 1, fontSize: 16, lineHeight: 22 },
+  optionLabel: { flex: 1, fontSize: 17, lineHeight: 24 },
 });

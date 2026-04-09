@@ -21,6 +21,17 @@ export type GeneratedPlan = {
   praticas: Practice[];
 };
 
+import type {
+  AdaptiveProfile,
+  DeepDiveId,
+  PrimaryStruggleId,
+} from "@/data/adaptive-onboarding";
+
+export type AdaptiveDraft = {
+  primaryStruggle?: PrimaryStruggleId;
+  deepDiveAnswer?: DeepDiveId;
+};
+
 export type UserProfile = {
   currentAdjectives: string[];
   futureAdjectives: string[];
@@ -29,10 +40,16 @@ export type UserProfile = {
   lastInterventionDate: string | null;
   streakDays: number;
   generatedPlan: GeneratedPlan | null;
+  adaptiveProfile: AdaptiveProfile | null;
 };
 
 type AppContextType = {
   profile: UserProfile;
+  adaptiveDraft: AdaptiveDraft;
+  setAdaptivePrimary: (id: PrimaryStruggleId) => void;
+  setAdaptiveDeepDive: (id: DeepDiveId) => void;
+  clearAdaptiveDraft: () => void;
+  setAdaptiveProfile: (ap: AdaptiveProfile) => void;
   setCurrentAdjectives: (adjs: string[]) => void;
   setFutureAdjectives: (adjs: string[]) => void;
   completeOnboarding: (plan?: GeneratedPlan) => void;
@@ -50,6 +67,7 @@ const defaultProfile: UserProfile = {
   lastInterventionDate: null,
   streakDays: 0,
   generatedPlan: null,
+  adaptiveProfile: null,
 };
 
 const STORAGE_KEY = "@meueu_profile_v2";
@@ -62,6 +80,7 @@ const AppContext = createContext<AppContextType | null>(null);
 
 export function AppProvider({ children }: { children: React.ReactNode }) {
   const [profile, setProfile] = useState<UserProfile>(defaultProfile);
+  const [adaptiveDraft, setAdaptiveDraft] = useState<AdaptiveDraft>({});
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -173,14 +192,50 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     [profile, save]
   );
 
+  const setAdaptivePrimary = useCallback(
+    (id: PrimaryStruggleId) => {
+      setAdaptiveDraft((prev) =>
+        prev.primaryStruggle === id
+          ? prev
+          : { primaryStruggle: id }
+      );
+    },
+    []
+  );
+
+  const setAdaptiveDeepDive = useCallback(
+    (id: DeepDiveId) => {
+      setAdaptiveDraft((prev) => ({ ...prev, deepDiveAnswer: id }));
+    },
+    []
+  );
+
+  const clearAdaptiveDraft = useCallback(() => {
+    setAdaptiveDraft({});
+  }, []);
+
+  const setAdaptiveProfile = useCallback(
+    (ap: AdaptiveProfile) => {
+      save({ ...profile, adaptiveProfile: ap });
+      setAdaptiveDraft({});
+    },
+    [profile, save]
+  );
+
   const resetProfile = useCallback(() => {
     save({ ...defaultProfile });
+    setAdaptiveDraft({});
   }, [save]);
 
   return (
     <AppContext.Provider
       value={{
         profile,
+        adaptiveDraft,
+        setAdaptivePrimary,
+        setAdaptiveDeepDive,
+        clearAdaptiveDraft,
+        setAdaptiveProfile,
         setCurrentAdjectives,
         setFutureAdjectives,
         completeOnboarding,

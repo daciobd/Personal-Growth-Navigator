@@ -23,6 +23,8 @@ import { useGamification } from "@/context/GamificationContext";
 import { getRelevantInterventions } from "@/data/interventions";
 import { getApiUrl } from "@/utils/api";
 import { LEVELS, getProgressInLevel } from "@/data/gamification";
+import { D1ContinuityBanner } from "@/features/guided-practice/components/D1ContinuityBanner";
+import { DailyPracticeHomeCard } from "@/features/daily-practice/components/DailyPracticeHomeCard";
 
 function getGreeting(): string {
   const hour = new Date().getHours();
@@ -46,6 +48,7 @@ export default function TodayScreen() {
   const domain = getApiUrl();
 
   const [hasAssessment, setHasAssessment] = useState(true);
+  const [showD1Banner, setShowD1Banner] = useState(true);
   const [practiceCheckins, setPracticeCheckins] = useState<
     Record<number, CheckinStatus>
   >({});
@@ -82,6 +85,7 @@ export default function TodayScreen() {
     async (idx: number, status: CheckinStatus) => {
       const updated = { ...practiceCheckins, [idx]: status };
       setPracticeCheckins(updated);
+      setShowD1Banner(false);
       await AsyncStorage.setItem(CHECKINS_KEY, JSON.stringify(updated));
 
       if (!domain || !plan?.praticas?.[idx]) return;
@@ -168,6 +172,14 @@ export default function TodayScreen() {
           </Text>
         </View>
       </View>
+
+      {/* ── Banner de continuidade D1 ─────────────────────── */}
+      {showD1Banner && (
+        <D1ContinuityBanner onDismiss={() => setShowD1Banner(false)} />
+      )}
+
+      {/* ── Prática diária ──────────────────────────────────── */}
+      <DailyPracticeHomeCard />
 
       {/* ── Banner salvar progresso ────────────────────────── */}
       {!isLoggedIn && (

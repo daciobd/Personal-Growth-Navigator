@@ -1,0 +1,87 @@
+Leia o código antes de editar.
+
+TAREFA — Melhorar fluidez do fluxo com feedback imediato, microanimação e auto-advance
+
+CONTEXTO
+A clareza de navegação já foi ajustada:
+- x = sair do fluxo
+- arrow-left = voltar um passo
+- textos e affordance visual foram refinados
+
+Agora o objetivo é melhorar a sensação de fluidez nas telas de escolha única, reduzindo micro-fricção.
+
+OBJETIVO
+Quero que perguntas de resposta única pareçam instantâneas e fluidas:
+1. toque registra imediatamente
+2. usuário percebe que a escolha foi aceita
+3. tela avança sozinha logo depois
+
+ESCOPO
+Aplicar primeiro em:
+- onboarding/frequency.tsx
+- onboarding/adaptive_frequency.tsx
+- telas equivalentes de single-choice no onboarding/intervention/assessment, se existirem
+
+PASSO 1 — Auditar
+Identifique quais telas do app são single-choice e podem usar auto-advance com segurança.
+
+Para cada uma, informe:
+- arquivo
+- tipo de input
+- se já existe estado selected
+- se é seguro auto-avançar
+
+PASSO 2 — Implementar feedback imediato
+Ao tocar numa opção:
+- atualizar visual instantaneamente
+- destacar claramente a opção selecionada
+- manter consistência com o design system atual
+- se já houver feedback visual, refiná-lo para ficar mais evidente
+
+Se o projeto já usar haptics, adicionar feedback tátil leve apenas onde fizer sentido.
+Se não usar, não introduzir dependência desnecessária sem necessidade.
+
+PASSO 3 — Implementar microanimação
+Ao selecionar uma opção:
+- aplicar microanimação curta e sutil
+- priorizar sensação de resposta do toque
+- evitar animações decorativas
+- duração total curta, sem atrasar o fluxo
+
+PASSO 4 — Implementar auto-advance
+Para telas de escolha única:
+- após seleção, avançar automaticamente para a próxima etapa
+- usar delay curto (~250–300ms) para permitir percepção da escolha
+- impedir múltiplos disparos
+- garantir que não haja navegação duplicada nem race conditions
+
+PASSO 5 — Restrições
+Não aplicar auto-advance em:
+- multi-select
+- inputs livres
+- telas que exigem revisão/confirmação
+- qualquer caso em que avançar automaticamente possa parecer brusco
+
+PASSO 6 — Entrega esperada
+Quero receber:
+1. telas auditadas
+2. telas onde auto-advance foi aplicado
+3. como o feedback visual foi implementado
+4. como a microanimação foi implementada
+5. arquivos modificados
+6. riscos evitados (double tap, navegação duplicada, etc.)
+
+CRITÉRIO DE SUCESSO
+O fluxo deve parecer:
+- responsivo
+- claro
+- contínuo
+
+Ao tocar uma opção, o usuário deve sentir:
+“minha escolha foi registrada e o app está me guiando”
+
+CRITÉRIO DE FALHA
+- avanço brusco demais
+- falta de feedback visual
+- animação lenta ou decorativa
+- bugs de navegação dupla

@@ -35,3 +35,19 @@ EXPO_PUBLIC_DOMAIN = "app.jornada-eu.com.br"
 
 [nix]
 channel = "stable-25_05"
+
+[[ports]]
+localPort = 8080
+externalPort = 80
+
+[[ports]]
+localPort = 8081
+externalPort = 8081
+
+[[ports]]
+localPort = 23744
+externalPort = 3001
+
+[[ports]]
+localPort = 24626
+externalPort = 3000

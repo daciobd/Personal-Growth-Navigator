@@ -1,7 +1,7 @@
 import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { router } from "expo-router";
-import React from "react";
+import React, { useRef, useState } from "react";
 import { track } from "@/utils/analytics";
 import {
   Platform,
@@ -21,14 +21,19 @@ export default function CurrentPrimaryIssueScreen() {
   const colors = Colors.light;
   const insets = useSafeAreaInsets();
   const { setAdaptivePrimary } = useApp();
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const navigating = useRef(false);
 
   const handleSelect = (option: PrimaryOption) => {
+    if (navigating.current) return;
+    navigating.current = true;
+    setSelectedId(option.id);
     if (Platform.OS !== "web") {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     }
     track("onboarding_primary_struggle_selected", { struggle: option.id });
     setAdaptivePrimary(option.id);
-    router.push("/onboarding/current_deep_dive");
+    setTimeout(() => router.push("/onboarding/current_deep_dive"), 280);
   };
 
   return (
@@ -61,33 +66,60 @@ export default function CurrentPrimaryIssueScreen() {
       </Animated.View>
 
       <View style={[styles.options, { paddingHorizontal: spacing[5] }]}>
-        {PRIMARY_OPTIONS.map((option, i) => (
-          <Animated.View key={option.id} entering={FadeInDown.delay(100 + i * 60).duration(450)}>
-            <Pressable
-              onPress={() => handleSelect(option)}
-              style={({ pressed }) => [
-                styles.optionCard,
-                {
-                  backgroundColor: colors.card,
-                  borderColor: colors.cardBorder,
-                  ...shadow.soft,
-                  opacity: pressed ? 0.88 : 1,
-                  transform: [{ scale: pressed ? 0.98 : 1 }],
-                },
-              ]}
-            >
-              <View style={[styles.optionIcon, { backgroundColor: colors.chip.default }]}>
-                <Feather name={option.icon as any} size={18} color={colors.primary} />
-              </View>
-              <Text
-                style={[styles.optionLabel, { color: colors.text, fontFamily: "Inter_500Medium" }]}
+        {PRIMARY_OPTIONS.map((option, i) => {
+          const isSelected = selectedId === option.id;
+          return (
+            <Animated.View key={option.id} entering={FadeInDown.delay(100 + i * 60).duration(450)}>
+              <Pressable
+                onPress={() => handleSelect(option)}
+                disabled={!!selectedId}
+                style={({ pressed }) => [
+                  styles.optionCard,
+                  {
+                    backgroundColor: isSelected ? colors.primary : colors.card,
+                    borderColor: isSelected ? colors.primary : colors.cardBorder,
+                    ...shadow.soft,
+                    opacity: pressed && !isSelected ? 0.88 : 1,
+                    transform: [{ scale: pressed && !isSelected ? 0.98 : 1 }],
+                  },
+                ]}
               >
-                {option.label}
-              </Text>
-              <Feather name="chevron-right" size={16} color={colors.textMuted} />
-            </Pressable>
-          </Animated.View>
-        ))}
+                <View
+                  style={[
+                    styles.optionIcon,
+                    {
+                      backgroundColor: isSelected
+                        ? "rgba(255,255,255,0.2)"
+                        : colors.chip.default,
+                    },
+                  ]}
+                >
+                  <Feather
+                    name={isSelected ? "check" : (option.icon as any)}
+                    size={18}
+                    color={isSelected ? "#fff" : colors.primary}
+                  />
+                </View>
+                <Text
+                  style={[
+                    styles.optionLabel,
+                    {
+                      color: isSelected ? "#fff" : colors.text,
+                      fontFamily: "Inter_500Medium",
+                    },
+                  ]}
+                >
+                  {option.label}
+                </Text>
+                <Feather
+                  name={isSelected ? "check-circle" : "chevron-right"}
+                  size={16}
+                  color={isSelected ? "rgba(255,255,255,0.7)" : colors.textMuted}
+                />
+              </Pressable>
+            </Animated.View>
+          );
+        })}
       </View>
     </View>
   );

@@ -2,7 +2,7 @@ import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { router } from "expo-router";
-import React from "react";
+import React, { useRef, useState } from "react";
 import { track } from "@/utils/analytics";
 import {
   Platform,
@@ -25,15 +25,19 @@ const OPTIONS = [
 export default function CommitmentScreen() {
   const colors = Colors.light;
   const insets = useSafeAreaInsets();
+  const [selectedKey, setSelectedKey] = useState<string | null>(null);
+  const navigating = useRef(false);
 
   const handleSelect = async (key: string) => {
+    if (navigating.current) return;
+    navigating.current = true;
+    setSelectedKey(key);
     if (Platform.OS !== "web") {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     }
     track("onboarding_commitment_answered", { answer: key });
     await AsyncStorage.setItem("@meueu_onboarding_commitment", key);
-
-    router.push("/onboarding/plan");
+    setTimeout(() => router.push("/onboarding/plan"), 280);
   };
 
   return (
@@ -71,43 +75,57 @@ export default function CommitmentScreen() {
       </Animated.View>
 
       <View style={[styles.options, { paddingHorizontal: spacing[5] }]}>
-        {OPTIONS.map((option, i) => (
-          <Animated.View key={option.key} entering={FadeInDown.delay(120 + i * 80).duration(450)}>
-            <Pressable
-              onPress={() => handleSelect(option.key)}
-              style={({ pressed }) => [
-                styles.optionCard,
-                {
-                  backgroundColor: colors.card,
-                  borderColor: colors.cardBorder,
-                  ...shadow.soft,
-                  opacity: pressed ? 0.88 : 1,
-                  transform: [{ scale: pressed ? 0.98 : 1 }],
-                },
-              ]}
-            >
-              <View style={styles.optionText}>
-                <Text
-                  style={[
-                    styles.optionLabel,
-                    { color: colors.text, fontFamily: "Inter_600SemiBold" },
-                  ]}
-                >
-                  {option.label}
-                </Text>
-                <Text
-                  style={[
-                    styles.optionSub,
-                    { color: colors.textMuted, fontFamily: "Inter_400Regular" },
-                  ]}
-                >
-                  {option.sublabel}
-                </Text>
-              </View>
-              <Feather name={option.icon as any} size={22} color={colors.primary} />
-            </Pressable>
-          </Animated.View>
-        ))}
+        {OPTIONS.map((option, i) => {
+          const isSelected = selectedKey === option.key;
+          return (
+            <Animated.View key={option.key} entering={FadeInDown.delay(120 + i * 80).duration(450)}>
+              <Pressable
+                onPress={() => handleSelect(option.key)}
+                disabled={!!selectedKey}
+                style={({ pressed }) => [
+                  styles.optionCard,
+                  {
+                    backgroundColor: isSelected ? colors.primary : colors.card,
+                    borderColor: isSelected ? colors.primary : colors.cardBorder,
+                    ...shadow.soft,
+                    opacity: pressed && !isSelected ? 0.88 : 1,
+                    transform: [{ scale: pressed && !isSelected ? 0.98 : 1 }],
+                  },
+                ]}
+              >
+                <View style={styles.optionText}>
+                  <Text
+                    style={[
+                      styles.optionLabel,
+                      {
+                        color: isSelected ? "#fff" : colors.text,
+                        fontFamily: "Inter_600SemiBold",
+                      },
+                    ]}
+                  >
+                    {option.label}
+                  </Text>
+                  <Text
+                    style={[
+                      styles.optionSub,
+                      {
+                        color: isSelected ? "rgba(255,255,255,0.75)" : colors.textMuted,
+                        fontFamily: "Inter_400Regular",
+                      },
+                    ]}
+                  >
+                    {option.sublabel}
+                  </Text>
+                </View>
+                <Feather
+                  name={isSelected ? "check" : (option.icon as any)}
+                  size={22}
+                  color={isSelected ? "#fff" : colors.primary}
+                />
+              </Pressable>
+            </Animated.View>
+          );
+        })}
       </View>
     </View>
   );
@@ -121,8 +139,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
   },
-  dots: { flexDirection: "row", alignItems: "center", gap: spacing[1] },
-  dot: { height: 6, borderRadius: 3 },
   titleBlock: { gap: spacing[2] },
   pretitle: { fontSize: 15, lineHeight: 22 },
   title: { fontSize: 30, lineHeight: 38 },

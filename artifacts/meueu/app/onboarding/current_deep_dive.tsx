@@ -1,7 +1,7 @@
 import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { router } from "expo-router";
-import React from "react";
+import React, { useEffect } from "react";
 import { track } from "@/utils/analytics";
 import {
   Platform,
@@ -41,8 +41,13 @@ export default function CurrentDeepDiveScreen() {
     router.push("/onboarding/adaptive_frequency");
   };
 
+  useEffect(() => {
+    if (!config) {
+      router.back();
+    }
+  }, [config]);
+
   if (!config) {
-    router.back();
     return null;
   }
 

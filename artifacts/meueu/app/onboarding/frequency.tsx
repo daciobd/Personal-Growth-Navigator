@@ -71,7 +71,7 @@ export default function FrequencyScreen() {
         </View>
 
         <Text style={[styles.title, { color: colors.text, fontFamily: "Inter_700Bold" }]}>
-          Com que frequência isso acontece?
+          Com que frequência isso costuma acontecer?
         </Text>
       </Animated.View>
 

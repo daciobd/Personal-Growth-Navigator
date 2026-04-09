@@ -28,11 +28,26 @@ export async function getGuidedPracticeRecord(): Promise<GuidedPracticeRecord> {
 }
 
 async function markCompleted(): Promise<void> {
-  const record: GuidedPracticeRecord = {
-    completed: true,
-    completedAt: new Date().toISOString(),
-  };
-  await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(record));
+  const now = new Date().toISOString();
+  const today = now.split("T")[0];
+
+  const guidedRecord: GuidedPracticeRecord = { completed: true, completedAt: now };
+  await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(guidedRecord));
+
+  // Also mark the daily practice as completed for today so DailyPracticeHomeCard
+  // reflects "completed" immediately after the guided practice is done.
+  const DAILY_KEY = "@meueu_daily_practice";
+  try {
+    const raw = await AsyncStorage.getItem(DAILY_KEY);
+    const existing = raw ? JSON.parse(raw) : { currentStreak: 0 };
+    const yesterday = new Date(Date.now() - 86_400_000).toISOString().split("T")[0];
+    const wasYesterday = existing.lastCompletedDate === yesterday;
+    const newStreak = wasYesterday ? (existing.currentStreak ?? 0) + 1 : 1;
+    await AsyncStorage.setItem(
+      DAILY_KEY,
+      JSON.stringify({ lastCompletedDate: today, currentStreak: newStreak, lastStartedStepIndex: null })
+    );
+  } catch {}
 }
 
 // ─── Analytics base ─────────────────────────────────────────────────────────

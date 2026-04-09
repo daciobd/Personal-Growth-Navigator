@@ -223,9 +223,38 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   );
 
   const resetProfile = useCallback(() => {
-    save({ ...defaultProfile });
+    // Reset in-memory state immediately for instant UI response
+    setProfile({ ...defaultProfile });
     setAdaptiveDraft({});
-  }, [save]);
+
+    // Clear ALL persisted keys in the background (fire-and-forget)
+    const KNOWN_KEYS = [
+      "@meueu_profile_v2",
+      "@meueu_plan",
+      "@meueu_future_adjectives",
+      "@meueu_trait_adjectives",
+      "@meueu_current_adjectives",
+      "@meueu_state_adjectives",
+      "@meueu_daily_practice",
+      "@meueu_first_guided_practice",
+      "@meueu_assessments",
+      "@meueu_current_approach",
+      "@meueu_longevi_context",
+      "meueu_onboarding_goals",
+      "meueu_behavior_category",
+    ];
+    (async () => {
+      try {
+        const allKeys = await AsyncStorage.getAllKeys();
+        const checkinKeys = allKeys.filter((k) => k.startsWith("@meueu_plan_checkins_"));
+        await AsyncStorage.multiRemove([...KNOWN_KEYS, ...checkinKeys]);
+      } catch {
+        for (const key of KNOWN_KEYS) {
+          await AsyncStorage.removeItem(key).catch(() => {});
+        }
+      }
+    })();
+  }, []);
 
   return (
     <AppContext.Provider

@@ -1,0 +1,243 @@
+Perfeito — agora entramos na parte **mais importante de produto real**:
+👉 o que você mostrou não é bug técnico só — é **bug de fluxo + estado do usuário**
+
+Vou te explicar exatamente o que está acontecendo.
+
+---
+
+# 🧠 O PROBLEMA PRINCIPAL (LOOP)
+
+Pelo que você mostrou:
+
+1. Você faz a prática → aparece:
+
+   > “Você conseguiu”
+
+2. Clica em fechar → volta para Home
+
+3. A Home ainda mostra:
+
+   > “Mapeie seu padrão de pensamentos” → **Começar**
+
+👉 Ou seja:
+
+> ❌ o sistema NÃO está marcando corretamente que a prática do dia foi concluída
+
+---
+
+# 🎯 DIAGNÓSTICO
+
+Isso indica que:
+
+👉 `daily_practice_completed` **não está refletindo na Home**
+
+Possíveis causas:
+
+### 1. ❌ Estado não persistido corretamente
+
+* completion salva, mas Home não lê
+
+### 2. ❌ Home não está re-renderizando
+
+* state atualizado, mas UI não reage
+
+### 3. ❌ lógica de “já fiz hoje” quebrada
+
+* `lastCompletedDate` não bate com `today`
+
+---
+
+# 🧪 COMO CONFIRMAR RÁPIDO
+
+No código, procure:
+
+```ts
+lastCompletedDate === today
+```
+
+👉 Muito comum o bug ser:
+
+* timezone
+* formato de data (YYYY-MM-DD vs timestamp)
+
+---
+
+# 💥 RESULTADO DO BUG
+
+O app entra nesse estado:
+
+> 👉 “completei” → “não completei” → loop infinito
+
+Isso destrói retenção.
+
+---
+
+# 🧠 SEGUNDO PROBLEMA (LOGIN)
+
+Você falou:
+
+> não entrou senha
+> pediu reset
+> email não chegou
+
+👉 Isso é outro problema separado:
+
+## Possíveis causas:
+
+### 1. ❌ Email não configurado no backend
+
+* SMTP não ativo
+* serviço de email não ligado
+
+### 2. ❌ fluxo de auth incompleto
+
+* frontend chama endpoint que não envia email
+
+---
+
+# 🎯 IMPACTO
+
+Hoje o app está em estado:
+
+* usuário não consegue criar conta
+* não consegue recuperar senha
+* não consegue sair
+* não consegue resetar progresso
+
+👉 Isso trava qualquer validação real de produto
+
+---
+
+# 🧠 TERCEIRO PROBLEMA (CRÍTICO)
+
+## 👉 NÃO EXISTE “RESET / RECOMEÇAR”
+
+Você percebeu isso corretamente.
+
+Hoje só tem:
+
+> “Entrar / Criar conta”
+
+Mas não tem:
+
+> ❌ “Resetar progresso”
+> ❌ “Começar do zero”
+> ❌ “Sair”
+
+---
+
+# 🔥 ISSO É PRIORIDADE ALTA
+
+Porque:
+
+* você precisa testar onboarding várias vezes
+* usuário precisa recomeçar sem fricção
+* você precisa debugar estados
+
+---
+
+# ✅ SOLUÇÃO IMEDIATA (PRÁTICA)
+
+## 1. Corrigir o loop da prática
+
+No completion:
+
+👉 garantir que salva corretamente:
+
+```ts
+lastCompletedDate = today
+```
+
+E na Home:
+
+👉 usar mesma função de “today”
+
+Sugestão segura:
+
+```ts
+const today = new Date().toISOString().split("T")[0]
+```
+
+---
+
+## 2. Forçar refresh da Home
+
+Depois de completar:
+
+* ou usar state global (context)
+* ou refetch
+* ou navigation.replace
+
+---
+
+## 3. Adicionar botão “Resetar”
+
+Rápido e essencial:
+
+Na sidebar ou settings:
+
+```text
+Recomeçar do zero
+```
+
+E faz:
+
+```ts
+AsyncStorage.clear()
+```
+
+ou pelo menos:
+
+```ts
+removeItem("@meueu_daily_practice")
+removeItem("@meueu_first_guided_practice")
+```
+
+---
+
+## 4. Adicionar botão “Sair”
+
+Mesmo sem auth perfeita:
+
+* limpar estado local
+* voltar para onboarding
+
+---
+
+## 5. Ignorar login por enquanto
+
+👉 sério
+
+Você está em fase de validação de produto
+
+Auth agora só atrapalha.
+
+---
+
+# 🧠 PRIORIDADE CORRETA AGORA
+
+1. 🔴 corrigir loop da prática (crítico)
+2. 🔴 adicionar reset/recomeçar
+3. 🟡 estabilizar Home state
+4. 🟡 depois resolver auth
+
+---
+
+# 💬 VERDADE IMPORTANTE
+
+Você não está travado por código.
+
+Você está travado por:
+
+> 👉 inconsistência de estado do usuário
+
+---
+
+# 🚀 PRÓXIMO PASSO
+
+Se quiser, me manda:
+
+👉 o trecho do `useDailyPractice` (completion)
+👉 e o trecho da Home (condição de completed)
+
+Eu te digo exatamente **onde está o bug do loop**.

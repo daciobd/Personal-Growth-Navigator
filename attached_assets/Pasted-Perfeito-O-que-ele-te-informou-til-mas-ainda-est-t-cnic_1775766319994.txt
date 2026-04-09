@@ -1,0 +1,217 @@
+Perfeito. O que ele te informou é útil, mas ainda está **técnico demais e pouco orientado a UX**.
+
+Ele respondeu basicamente:
+
+> “não achei ícone de menu errado no código”
+
+Só que o problema que você levantou não era só isso. Era:
+
+> **a navegação do produto está clara e consistente para o usuário?**
+
+Então o prompt certo agora não é “procura bug de menu”.
+É:
+
+> **padronize a linguagem de navegação do app inteiro**
+
+Aqui vai o prompt pronto para mandar ao Claude.
+
+Leia o código antes de editar.
+
+TAREFA — Padronizar a linguagem de navegação do app (menu vs voltar vs fechar)
+
+CONTEXTO
+Já verificamos que não existe nenhum ícone de menu ligado a router.back() no código atual. O único menu real está no WebSidebar, o que está correto.
+
+Mesmo assim, a percepção do fluxo ainda está confusa:
+em telas de onboarding/prática, o usuário pode interpretar o botão do canto superior esquerdo como “menu”, quando na verdade a ação é voltar.
+
+Então o problema não é só técnico.
+É de clareza e consistência de UX.
+
+Objetivo:
+Definir e aplicar uma regra clara para navegação no app inteiro, de forma consistente.
+
+---
+
+## PRINCÍPIO DE UX
+
+Quero trabalhar com 3 tipos de tela:
+
+1. TELAS DE FLUXO
+   Exemplos:
+
+* onboarding
+* first guided practice
+* daily practice
+* intervention
+* qualquer fluxo passo a passo
+
+Regra:
+
+* NÃO usar menu
+* usar apenas voltar (arrow-left) OU fechar (x)
+* priorizar clareza sobre estética
+
+2. TELAS DE TRANSIÇÃO / CONCLUSÃO
+   Exemplos:
+
+* tela "Você conseguiu"
+* tela de completion
+* sucesso / feedback final
+
+Regra:
+
+* sem header interativo se possível
+* foco total na mensagem e no CTA principal
+
+3. TELAS DE EXPLORAÇÃO
+   Exemplos:
+
+* Home
+* Coach
+* Jornadas
+* Guia
+
+Regra:
+
+* menu/sidebar só aqui, quando fizer sentido
+* não aplicar padrão de fluxo nessas telas
+
+---
+
+## PASSO 1 — Auditar as telas
+
+Liste as telas do app por categoria:
+
+* fluxo
+* transição/conclusão
+* exploração
+
+Quero saber:
+
+* quais arquivos entram em cada grupo
+* qual padrão de header cada um usa hoje
+
+---
+
+## PASSO 2 — Propor padrão ideal
+
+Para cada grupo, definir:
+
+* headerShown true/false
+* qual ícone usar no canto superior esquerdo (se houver)
+* qual ação esse ícone executa
+* quando usar arrow-left
+* quando usar x
+* quando não mostrar nada
+
+Minha direção preferida:
+
+* telas de fluxo: usar x para sair do fluxo inteiro OU arrow-left se for claramente “voltar um passo”
+* telas de conclusão: sem header
+* telas de exploração: manter navegação estrutural existente
+
+Mas quero sua leitura do código antes de aplicar.
+
+---
+
+## PASSO 3 — Aplicar padronização
+
+Depois da auditoria, aplicar no código:
+
+* onboarding
+* first guided practice
+* daily practice
+* intervention
+* telas de conclusão relacionadas
+
+Objetivo:
+Deixar impossível confundir “menu” com “voltar”.
+
+Se o fluxo for imersivo, prefiro x ou nenhum header.
+Se a tela for passo a passo e o usuário puder voltar um passo, arrow-left é aceitável.
+
+---
+
+## PASSO 4 — Revisar clareza visual
+
+Mesmo quando o ícone estiver tecnicamente correto, verificar se o visual está ambíguo.
+
+Quero revisar:
+
+* tamanho do ícone
+* stroke width
+* área clicável
+* padding
+* contraste
+* posição
+
+Se necessário, ajustar para deixar explicitamente com cara de:
+
+* voltar
+  ou
+* fechar
+
+---
+
+## PASSO 5 — Não mexer no que já está certo
+
+Não mexer:
+
+* WebSidebar
+* navegação estrutural da web
+* tabs principais se já estiverem corretas
+
+O foco aqui é:
+fluxos internos e sua clareza.
+
+---
+
+## ENTREGA ESPERADA
+
+Quero receber:
+
+1. Lista das telas auditadas por categoria
+2. Problemas encontrados de consistência
+3. Padrão final adotado para cada grupo
+4. Arquivos modificados
+5. O que mudou visualmente e por quê
+
+---
+
+## CRITÉRIO DE SUCESSO
+
+O usuário nunca deve olhar para o canto superior esquerdo e pensar:
+“isso é um menu?”
+quando a ação real é voltar ou fechar.
+
+A navegação precisa parecer intencional e previsível.
+
+---
+
+## CRITÉRIO DE FALHA
+
+* ícones corretos tecnicamente, mas ainda ambíguos visualmente
+* mistura inconsistente de menu, voltar e fechar
+* telas de fluxo parecendo telas de exploração
+
+## Como eu leio a resposta dele até agora
+
+O que ele disse foi útil para uma coisa:
+
+* descartou o bug óbvio de implementação errada (`menu` chamando `router.back()`)
+
+Mas ainda faltam duas camadas que importam mais:
+
+* **clareza visual**
+* **consistência de modelo mental**
+
+Então esse prompt acima é o passo certo porque muda a conversa de:
+
+> “acha o erro”
+
+para:
+
+> **“define a regra de navegação do produto”**
+
+Quando ele te devolver a auditoria, me manda que eu te digo qual padrão adotar sem deixar a experiência confusa.

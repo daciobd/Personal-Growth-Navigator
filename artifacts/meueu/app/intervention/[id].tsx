@@ -156,8 +156,8 @@ export default function InterventionScreen() {
       ]}
     >
       <View style={styles.navRow}>
-        <Pressable onPress={() => router.back()} style={styles.backBtn2}>
-          <Feather name="arrow-left" size={22} color={colors.text} />
+        <Pressable onPress={() => router.back()} style={styles.closeBtn} hitSlop={12}>
+          <Feather name="x" size={22} color={colors.text} />
         </Pressable>
         <View style={[styles.therapyBadge, { backgroundColor: therapyColor.bg }]}>
           <Text
@@ -333,8 +333,8 @@ const styles = StyleSheet.create({
     zIndex: 10,
     padding: 8,
   },
-  backBtn2: {
-    padding: 4,
+  closeBtn: {
+    padding: 8,
   },
   therapyBadge: {
     flex: 1,

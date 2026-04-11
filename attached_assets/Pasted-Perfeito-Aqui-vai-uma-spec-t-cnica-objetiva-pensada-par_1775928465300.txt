@@ -1,0 +1,996 @@
+Perfeito. Aqui vai uma **spec técnica objetiva**, pensada para MVP real de produção do parser de exames do Longevi.
+
+# Spec técnica — Parser robusto de exames laboratoriais
+
+## 1. Objetivo
+
+Construir um pipeline capaz de receber exames laboratoriais em PDF ou imagem, extrair resultados com robustez, normalizar marcadores clínicos, interpretar referências quando possível e devolver dados confiáveis para uso no produto.
+
+O sistema deve funcionar mesmo quando:
+
+* o PDF é escaneado
+* não existe texto embutido
+* o laboratório varia
+* a nomenclatura muda
+* a referência é complexa
+* parte do conteúdo é ilegível
+
+## 2. Objetivos do MVP
+
+O MVP precisa resolver cinco coisas bem:
+
+1. aceitar PDF com texto e PDF escaneado
+2. extrair os principais biomarcadores com confiança por item
+3. evitar falso negativo de “isso não é um exame”
+4. permitir importação parcial
+5. suportar revisão manual leve quando necessário
+
+## 3. Não objetivos do MVP
+
+Não entrar agora em:
+
+* interpretação clínica avançada automática
+* suporte universal a todo tipo de laudo
+* laudos de imagem, anatomopatológico, genética, microbiologia complexa
+* correção clínica de todos os cenários pediátricos ou obstétricos
+* OCR perfeito em documentos ruins
+
+O foco do MVP é: **transformar exame real em dados utilizáveis com segurança operacional**.
+
+---
+
+# 4. Arquitetura de alto nível
+
+```text
+Upload
+  -> Ingestão
+  -> Detecção de texto embutido
+  -> OCR fallback ou OCR obrigatório
+  -> Reconstrução de layout
+  -> Classificação do documento
+  -> Segmentação em blocos de exames
+  -> Extração de medições
+  -> Normalização de marcadores/unidades
+  -> Parsing de referência
+  -> Score de confiança
+  -> Persistência
+  -> Revisão manual opcional
+  -> Importação final para o domínio clínico
+```
+
+---
+
+# 5. Fluxo funcional
+
+## 5.1 Upload
+
+Entrada:
+
+* PDF
+* JPG
+* PNG
+* múltiplas páginas
+
+Saída inicial:
+
+* `document_id`
+* status = `uploaded`
+
+## 5.2 Ingestão
+
+Responsável por:
+
+* salvar arquivo original
+* identificar tipo do arquivo
+* contar páginas
+* gerar imagens por página
+* tentar extração de texto embutido
+
+## 5.3 OCR
+
+Se o documento não tiver texto embutido, ou se o texto embutido vier vazio ou muito pobre:
+
+* rodar OCR por página
+* armazenar texto e estrutura espacial
+
+## 5.4 Classificação
+
+Determinar:
+
+* parece ou não laudo laboratorial
+* nível de confiança
+* laboratório provável
+* documento com texto nativo ou escaneado
+
+## 5.5 Segmentação
+
+Quebrar cada página em blocos lógicos:
+
+* hemograma
+* glicose
+* colesterol
+* TSH
+* etc.
+
+## 5.6 Extração
+
+Ler cada bloco e produzir medições:
+
+* nome do exame
+* valor
+* unidade
+* referência
+* método
+* material
+* data de coleta
+
+## 5.7 Normalização
+
+Mapear nomes brutos para biomarcadores canônicos:
+
+* “GLICOSE - JEJUM” -> `glucose_fasting`
+* “TRANSAMINASE PIRÚVICA” -> `alt`
+* “HEMOGLOBINA GLICADA (A1C)” -> `hba1c`
+
+## 5.8 Validação e confiança
+
+Cada medição recebe score:
+
+* alta
+* média
+* baixa
+
+## 5.9 Revisão humana opcional
+
+Itens ambíguos são mostrados para correção rápida.
+
+## 5.10 Importação
+
+Após validação:
+
+* salvar no domínio de exames do paciente
+* disparar recálculo do dashboard
+
+---
+
+# 6. Componentes do sistema
+
+## 6.1 Document Ingestion Service
+
+Responsável por:
+
+* upload
+* metadados
+* armazenamento
+* renderização das páginas
+
+## 6.2 Text Extraction Service
+
+Responsável por:
+
+* extração de texto embutido
+* OCR
+* reconstrução de linhas/blocos
+
+## 6.3 Document Classification Service
+
+Responsável por:
+
+* detectar se parece laudo laboratorial
+* detectar vendor provável
+* detectar grau de legibilidade
+
+## 6.4 Exam Block Segmenter
+
+Responsável por:
+
+* dividir documento em blocos
+* encontrar títulos
+* agrupar linhas relacionadas
+
+## 6.5 Measurement Extractor
+
+Responsável por:
+
+* extrair resultados de cada bloco
+* lidar com um-para-um e um-para-muitos
+* ex.: hemograma gera muitos marcadores
+
+## 6.6 Normalization Engine
+
+Responsável por:
+
+* biomarcadores
+* aliases
+* unidades
+* valores numéricos
+
+## 6.7 Reference Parser
+
+Responsável por:
+
+* transformar “valor de referência” em estrutura, quando possível
+
+## 6.8 Confidence Engine
+
+Responsável por:
+
+* score por documento
+* score por bloco
+* score por medição
+
+## 6.9 Review Service
+
+Responsável por:
+
+* revisão assistida
+* correções
+* auditoria
+
+---
+
+# 7. Modelo de dados
+
+## 7.1 Documento
+
+```ts
+type LabDocument = {
+  id: string;
+  userId: string;
+  sourceFileUrl: string;
+  fileType: "pdf" | "jpg" | "png";
+  pageCount: number;
+  hasEmbeddedText: boolean;
+  ocrStatus: "pending" | "done" | "failed" | "not_needed";
+  classificationStatus: "pending" | "done" | "failed";
+  isLabReport: boolean | null;
+  classificationConfidence: number | null;
+  vendorName?: string | null;
+  collectedAt?: string | null;
+  uploadedAt: string;
+};
+```
+
+## 7.2 Página
+
+```ts
+type LabDocumentPage = {
+  id: string;
+  documentId: string;
+  pageNumber: number;
+  imageUrl: string;
+  embeddedText?: string | null;
+  ocrText?: string | null;
+  layoutJson?: unknown;
+};
+```
+
+## 7.3 Bloco de exame
+
+```ts
+type ExamBlock = {
+  id: string;
+  documentId: string;
+  pageNumber: number;
+  titleRaw: string;
+  textRaw: string;
+  methodRaw?: string | null;
+  materialRaw?: string | null;
+  collectedAtRaw?: string | null;
+  bbox?: {
+    x: number;
+    y: number;
+    w: number;
+    h: number;
+  } | null;
+  confidence: number;
+};
+```
+
+## 7.4 Medição bruta
+
+```ts
+type RawMeasurement = {
+  id: string;
+  documentId: string;
+  blockId: string;
+  pageNumber: number;
+  rawMarkerName: string;
+  rawValue: string;
+  rawUnit?: string | null;
+  rawReference?: string | null;
+  rawMethod?: string | null;
+  rawMaterial?: string | null;
+  extractionConfidence: number;
+  extractionJson?: unknown;
+};
+```
+
+## 7.5 Medição normalizada
+
+```ts
+type NormalizedMeasurement = {
+  id: string;
+  rawMeasurementId: string;
+  biomarkerCode?: string | null;
+  biomarkerLabel?: string | null;
+  valueNumeric?: number | null;
+  comparator?: "<" | ">" | "<=" | ">=" | "=" | null;
+  unitNormalized?: string | null;
+  referenceJson?: unknown;
+  normalizationConfidence: number;
+  reviewStatus: "pending" | "not_needed" | "reviewed";
+  finalStatus: "accepted" | "rejected" | "uncertain";
+};
+```
+
+## 7.6 Revisão
+
+```ts
+type MeasurementReview = {
+  id: string;
+  normalizedMeasurementId: string;
+  previousValueJson: unknown;
+  correctedValueJson: unknown;
+  reviewerType: "user" | "admin" | "clinician";
+  reviewedAt: string;
+};
+```
+
+---
+
+# 8. Catálogo de biomarcadores
+
+Criar uma tabela mestre `biomarker_catalog`.
+
+Campos mínimos:
+
+* `code`
+* `canonical_name`
+* `aliases`
+* `category`
+* `expected_units`
+* `active`
+
+Exemplo:
+
+```ts
+type BiomarkerCatalogItem = {
+  code: string;
+  canonicalName: string;
+  aliases: string[];
+  category:
+    | "hematologic"
+    | "metabolic"
+    | "lipid"
+    | "hepatic"
+    | "renal"
+    | "hormonal"
+    | "inflammatory"
+    | "nutritional"
+    | "electrolyte";
+  expectedUnits: string[];
+  active: boolean;
+};
+```
+
+Exemplos iniciais de MVP:
+
+* hemoglobin
+* hematocrit
+* rbc
+* wbc
+* platelets
+* glucose_fasting
+* hba1c
+* vitamin_b12
+* ast
+* alt
+* ggt
+* alkaline_phosphatase
+* bilirubin_total
+* bilirubin_direct
+* bilirubin_indirect
+* cholesterol_total
+* hdl
+* ldl
+* vldl
+* non_hdl
+* triglycerides
+* sodium
+* potassium
+* tsh
+* free_t4
+
+---
+
+# 9. Regras de classificação do documento
+
+## 9.1 Regra principal
+
+Nunca classificar como “não é exame” apenas porque não há texto extraído.
+
+## 9.2 Sinais positivos de laudo laboratorial
+
+* presença de termos como `resultado`, `valor de referência`, `material`, `método`, `coleta`
+* padrão repetido de exame + valor + unidade
+* nome de laboratório
+* multipágina com blocos clínicos
+
+## 9.3 Resultado da classificação
+
+```ts
+type DocumentClassification = {
+  isLabReport: boolean;
+  confidence: number;
+  vendorName?: string;
+  reasons: string[];
+  requiresOCR: boolean;
+};
+```
+
+## 9.4 Regras operacionais
+
+* `embeddedText === ""` -> `requiresOCR = true`
+* `OCR baixo + fortes sinais visuais de exame` -> `isLabReport = true` com confiança média
+* dúvida -> não rejeitar, mandar para revisão leve
+
+---
+
+# 10. Estratégia de OCR
+
+## 10.1 Política
+
+* PDF com texto nativo: usar texto nativo
+* PDF sem texto: OCR obrigatório
+* PDF com texto ruim: OCR complementar
+* imagem enviada: OCR obrigatório
+
+## 10.2 Saída desejada do OCR
+
+Não apenas texto corrido. Preferir:
+
+* linhas
+* blocos
+* coordenadas
+* confiança
+
+Exemplo:
+
+```ts
+type OCRLine = {
+  text: string;
+  confidence: number;
+  bbox: { x: number; y: number; w: number; h: number };
+  pageNumber: number;
+};
+```
+
+## 10.3 Requisitos do OCR
+
+* português
+* números e unidades
+* layout em colunas
+* multipágina
+
+---
+
+# 11. Estratégia de segmentação
+
+## 11.1 Objetivo
+
+Transformar páginas em blocos clínicos semanticamente úteis.
+
+## 11.2 Sinais para abertura de bloco
+
+* linha em caixa alta
+* maior espaçamento acima
+* nome conhecido de biomarcador ou painel
+* presença logo abaixo de `RESULTADO`
+
+## 11.3 Casos especiais
+
+### Hemograma
+
+Um bloco único gera vários resultados.
+
+### Bilirrubinas
+
+Um bloco único gera:
+
+* direta
+* indireta
+* total
+
+### Perfil lipídico
+
+Um bloco único gera:
+
+* colesterol total
+* HDL
+* LDL
+* VLDL
+* não-HDL
+
+---
+
+# 12. Estratégia de extração
+
+Usar abordagem híbrida.
+
+## 12.1 Camada 1 — Regras determinísticas
+
+Para padrões como:
+
+* `RESULTADO: 87 mg/dL`
+* `VALOR DE REFERÊNCIA: DE 60 A 99 mg/dL`
+
+## 12.2 Camada 2 — Catálogo + fuzzy matching
+
+Para nomes variantes:
+
+* `TRANSAMINASE PIRUVICA` -> ALT
+* `TSH ULTRA SENSÍVEL` -> TSH
+
+## 12.3 Camada 3 — fallback semântico
+
+Para:
+
+* tabelas
+* textos quebrados
+* OCR imperfeito
+* vendors novos
+
+---
+
+# 13. Regras de normalização
+
+## 13.1 Nomes
+
+Mapear aliases para biomarcador canônico.
+
+## 13.2 Unidades
+
+Padronizar:
+
+* `mg/dL`
+* `g/dL`
+* `pg/mL`
+* `U/L`
+* `mEq/L`
+* `%`
+* `ng/dL`
+* `microUI/mL`
+
+## 13.3 Valores numéricos
+
+Tratar:
+
+* vírgula decimal
+* pontos de milhar
+* OCR confuso
+* valores com comparador
+
+Exemplos:
+
+* `102,5` -> `102.5`
+* `4.640.000` -> `4640000`
+* `inferior a 41` -> comparator `<=`, value `41`
+
+---
+
+# 14. Parsing de referência
+
+## 14.1 Estrutura alvo
+
+```ts
+type ReferenceRange = {
+  type: "interval" | "upper_bound" | "lower_bound" | "categorical" | "table" | "unknown";
+  rawText: string;
+  lower?: number;
+  upper?: number;
+  unit?: string;
+  sex?: "female" | "male";
+  ageMin?: number;
+  ageMax?: number;
+  pregnancyTrimester?: 1 | 2 | 3;
+  notes?: string[];
+};
+```
+
+## 14.2 O que o MVP deve conseguir
+
+* intervalos simples
+* limite superior
+* limite inferior
+* referências explícitas para adultos
+* referências simples por sexo
+
+## 14.3 O que pode ficar bruto no MVP
+
+* tabelas complexas
+* risco cardiovascular detalhado
+* faixas pediátricas extensas
+* referências muito verbosas
+
+Regra:
+
+* guardar sempre `rawText`
+* estruturar só quando houver confiança
+
+---
+
+# 15. Score de confiança
+
+## 15.1 Por medição
+
+Cada medição recebe score com base em:
+
+* match do marcador
+* qualidade do valor
+* coerência da unidade
+* qualidade da referência
+* qualidade do layout
+* confiança do OCR
+
+## 15.2 Estrutura
+
+```ts
+type ConfidenceBreakdown = {
+  markerMatch: number;
+  valueRead: number;
+  unitMatch: number;
+  referenceRead: number;
+  layoutConsistency: number;
+  ocrConfidence: number;
+  overall: number;
+};
+```
+
+## 15.3 Regras operacionais
+
+* `overall >= 0.9` -> aceitar automático
+* `0.7 <= overall < 0.9` -> aceitar com flag discreta ou revisar em lote
+* `< 0.7` -> revisão manual
+
+---
+
+# 16. UX do produto
+
+## 16.1 Mensagens corretas
+
+Nunca dizer:
+
+* “isso não é um exame” sem evidência forte
+
+Usar:
+
+* “Não conseguimos ler automaticamente este arquivo.”
+* “O documento parece estar escaneado. Vamos tentar uma leitura avançada.”
+* “Alguns resultados podem precisar de revisão.”
+
+## 16.2 Fluxo ideal
+
+1. upload
+2. status: “Lendo documento…”
+3. status: “Detectamos um PDF escaneado”
+4. status: “Extraindo resultados…”
+5. mostrar resultados encontrados
+6. pedir revisão só do que estiver duvidoso
+7. importar
+
+## 16.3 Revisão leve
+
+Mostrar:
+
+* nome sugerido
+* valor
+* unidade
+* referência
+* mini-recorte da página
+
+---
+
+# 17. Endpoints sugeridos
+
+## 17.1 Upload
+
+`POST /api/lab-documents/upload`
+
+Retorno:
+
+```json
+{
+  "documentId": "doc_123",
+  "status": "uploaded"
+}
+```
+
+## 17.2 Iniciar processamento
+
+`POST /api/lab-documents/:documentId/process`
+
+Retorno:
+
+```json
+{
+  "documentId": "doc_123",
+  "status": "processing"
+}
+```
+
+## 17.3 Consultar status
+
+`GET /api/lab-documents/:documentId/status`
+
+Retorno:
+
+```json
+{
+  "documentId": "doc_123",
+  "status": "needs_review",
+  "classification": {
+    "isLabReport": true,
+    "confidence": 0.98,
+    "vendorName": "Hermes Pardini"
+  }
+}
+```
+
+## 17.4 Obter resultados extraídos
+
+`GET /api/lab-documents/:documentId/results`
+
+Retorno:
+
+```json
+{
+  "document": {
+    "id": "doc_123",
+    "vendor": "Hermes Pardini",
+    "isLabReport": true,
+    "confidence": 0.98
+  },
+  "measurements": []
+}
+```
+
+## 17.5 Confirmar revisão
+
+`POST /api/lab-documents/:documentId/review`
+
+Payload:
+
+```json
+{
+  "items": [
+    {
+      "measurementId": "m_1",
+      "biomarkerCode": "glucose_fasting",
+      "valueNumeric": 87,
+      "unitNormalized": "mg/dL"
+    }
+  ]
+}
+```
+
+## 17.6 Importar para o domínio clínico
+
+`POST /api/lab-documents/:documentId/import`
+
+Retorno:
+
+```json
+{
+  "documentId": "doc_123",
+  "importedCount": 14,
+  "status": "imported"
+}
+```
+
+---
+
+# 18. Contrato de saída canônico
+
+```json
+{
+  "document": {
+    "vendor": "Hermes Pardini",
+    "is_lab_report": true,
+    "confidence": 0.98,
+    "collected_at": "2025-09-20T08:52:00"
+  },
+  "measurements": [
+    {
+      "raw_marker_name": "GLICOSE - JEJUM",
+      "biomarker_code": "glucose_fasting",
+      "value_numeric": 87,
+      "unit": "mg/dL",
+      "reference": {
+        "type": "interval",
+        "lower": 60,
+        "upper": 99,
+        "unit": "mg/dL"
+      },
+      "confidence": 0.99,
+      "page": 2
+    }
+  ],
+  "review_required": false
+}
+```
+
+---
+
+# 19. Regras críticas de negócio
+
+## 19.1 Nunca rejeitar só por ausência de texto
+
+Isso precisa virar regra formal.
+
+## 19.2 Importação parcial é permitida
+
+Se 14 marcadores foram lidos bem e 3 não, importar os 14.
+
+## 19.3 Revisão é por item, não por documento inteiro
+
+Não travar o exame inteiro por causa de um campo ruim.
+
+## 19.4 Sempre guardar bruto + normalizado
+
+Para auditoria e melhoria futura.
+
+## 19.5 Todo item precisa de confiança
+
+Sem score, não existe governança do parser.
+
+---
+
+# 20. Backlog MVP
+
+## Sprint 1 — corrigir o gargalo atual
+
+* detectar PDF sem texto
+* rodar OCR obrigatório
+* trocar mensagem de erro
+* impedir falso negativo “não é exame”
+
+## Sprint 2 — pipeline básico funcional
+
+* renderização por página
+* OCR
+* classificação
+* persistência de bruto
+* endpoint de status
+
+## Sprint 3 — extração dos principais marcadores
+
+* glicose
+* HbA1c
+* colesterol e frações
+* triglicerídeos
+* TGO/TGP/GGT
+* sódio/potássio
+* TSH/T4 livre
+* B12
+* hemograma básico
+
+## Sprint 4 — normalização e confiança
+
+* catálogo de biomarcadores
+* normalização de unidades
+* parsing numérico
+* confidence score por item
+
+## Sprint 5 — revisão assistida
+
+* UI de revisão leve
+* importação parcial
+* auditoria de correções
+
+---
+
+# 21. KPIs de sucesso
+
+## Produto
+
+* taxa de upload concluído
+* taxa de documentos aceitos
+* taxa de falso negativo de “não é exame”
+* tempo até exame utilizável
+
+## Parser
+
+* precisão por biomarcador
+* recall por biomarcador
+* taxa de OCR vazio
+* taxa de revisão manual
+* taxa de importação parcial bem-sucedida
+
+## Operação
+
+* performance por laboratório
+* performance por tipo de arquivo
+* principais causas de falha
+
+---
+
+# 22. Estratégia técnica recomendada
+
+Para MVP realista:
+
+* **OCR + regras + catálogo canônico**
+* não começar por LLM-only
+* usar heurísticas determinísticas onde der
+* usar fallback semântico só onde precisar
+
+Sequência ideal:
+
+1. extrair
+2. normalizar
+3. validar
+4. revisar o que faltar
+
+Não:
+
+1. mandar tudo para interpretação livre
+2. tentar “adivinhar” exame inteiro
+
+---
+
+# 23. Critérios de aceite do MVP
+
+O MVP está pronto quando conseguir:
+
+* aceitar PDF escaneado como o seu
+* identificar corretamente que é exame laboratorial
+* extrair ao menos os principais marcadores com alta confiança
+* importar parcialmente sem travar tudo
+* pedir revisão apenas nos itens duvidosos
+* nunca exibir a mensagem falsa de “não parece ser um laudo” em exames reais escaneados
+
+---
+
+# 24. Decisão de produto
+
+A filosofia oficial deve ser esta:
+
+> **Extrair o máximo possível com transparência de confiança, em vez de rejeitar documentos imperfeitos.**
+
+Essa decisão precisa ser explícita no time.
+
+Porque ela muda:
+
+* backend
+* UX
+* mensagens
+* QA
+* métricas
+* credibilidade clínica
+
+---
+
+# 25. Recomendação final para o Longevi
+
+Se eu fosse cravar a versão certa do MVP, seria:
+
+* ingestão multimodal
+* OCR obrigatório para scan
+* classificação robusta sem falso negativo bobo
+* extração híbrida
+* biomarker catalog
+* normalização de unidades
+* confiança por item
+* revisão humana leve
+* importação parcial
+* persistência bruta + normalizada
+
+Esse é o desenho certo para sair de “upload frágil” e chegar em **motor de exames utilizável em produto clínico**.
+
+Posso agora converter isso em um **PRD enxuto com tickets de engenharia priorizados**, no formato:
+
+* backend
+* frontend
+* dados
+* QA
+* definição de pronto.

@@ -24,7 +24,16 @@ import { getRelevantInterventions } from "@/data/interventions";
 import { getApiUrl } from "@/utils/api";
 import { LEVELS, getProgressInLevel } from "@/data/gamification";
 import { D1ContinuityBanner } from "@/features/guided-practice/components/D1ContinuityBanner";
-import { DailyPracticeHomeCard } from "@/features/daily-practice/components/DailyPracticeHomeCard";
+import { track } from "@/utils/analytics";
+import type { Practice } from "@/context/AppContext";
+import { chooseMission } from "@/features/daily-loop/lib/chooseMission";
+import { convertMissionToPractice } from "@/features/daily-loop/lib/convertMissionToPractice";
+import { loadLastMood } from "@/features/daily-loop/lib/lastMood";
+import { MISSION_LIBRARY } from "@/features/daily-loop/data/missions";
+import {
+  getPersonalizedMission,
+  normalizeMood,
+} from "@/data/dailyMissions";
 
 function getGreeting(): string {
   const hour = new Date().getHours();
@@ -55,13 +64,45 @@ export default function TodayScreen() {
   const [expandedPractices, setExpandedPractices] = useState<Set<number>>(
     new Set()
   );
+  // Daily mission converted to Practice — replaces plan.praticas[0] in hero.
+  // Loaded async on mount; falls back to plan.praticas[0] until ready.
+  const [dailyHeroPractice, setDailyHeroPractice] = useState<Practice | null>(null);
 
   useEffect(() => {
+    track("daily_home_viewed");
     AsyncStorage.getItem("@meueu_assessments").then((val) => {
       setHasAssessment(val !== null);
     });
     AsyncStorage.getItem(CHECKINS_KEY).then((val) => {
       if (val) setPracticeCheckins(JSON.parse(val));
+    });
+
+    // Load last mood and derive today's hero practice.
+    // Primary path: getPersonalizedMission (V2 — uses normalized mood,
+    // energyLevel filter, and recent-id deduplication).
+    // Fallback path: chooseMission (legacy V1 — used if V2 returns undefined).
+    // Both paths feed convertMissionToPractice unchanged.
+    loadLastMood().then((mood) => {
+      const moodInput = mood ?? "calm";
+
+      const personalized = getPersonalizedMission({
+        mood: normalizeMood(moodInput),
+        energyLevel: "low",
+        recentMissionIds: [],
+      });
+
+      // Bridge: getPersonalizedMission returns the new DailyMission shape
+      // (data/dailyMissions.ts). convertMissionToPractice expects the legacy
+      // shape with difficulty/rewardXp defaults. MISSION_LIBRARY is already
+      // adapted, so we look up the same mission by id to get the right shape.
+      const bridged = personalized
+        ? MISSION_LIBRARY.find((m) => m.id === personalized.id)
+        : undefined;
+
+      const mission =
+        bridged ?? chooseMission({ mood: moodInput, need: "clarity" });
+
+      setDailyHeroPractice(convertMissionToPractice(mission));
     });
   }, []);
 
@@ -178,9 +219,6 @@ export default function TodayScreen() {
         <D1ContinuityBanner onDismiss={() => setShowD1Banner(false)} />
       )}
 
-      {/* ── Prática diária ──────────────────────────────────── */}
-      <DailyPracticeHomeCard />
-
       {/* ── Banner salvar progresso ────────────────────────── */}
       {!isLoggedIn && (
         <Pressable
@@ -243,9 +281,10 @@ export default function TodayScreen() {
       ════════════════════════════════════════════════════ */}
       {plan?.praticas ? (
         <>
-          {/* Hero: primeira prática em destaque */}
+          {/* Hero: missão do dia (vinda do catálogo DailyMission via adapter).
+              Fallback para plan.praticas[0] enquanto loadLastMood resolve. */}
           <HeroPracticeCard
-            practice={plan.praticas[0]}
+            practice={dailyHeroPractice ?? plan.praticas[0]}
             practiceIdx={0}
             status={practiceCheckins[0] ?? null}
             onCheckin={(s) => handleCheckin(0, s)}

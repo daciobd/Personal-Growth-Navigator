@@ -46,6 +46,10 @@ function RootLayoutNavInner() {
         <Stack.Screen name="onboarding/future" />
         <Stack.Screen name="onboarding/plan" />
         <Stack.Screen name="daily-practice" />
+        <Stack.Screen name="today/checkin" />
+        <Stack.Screen name="today/mission" />
+        <Stack.Screen name="today/run" />
+        <Stack.Screen name="today/complete" />
         <Stack.Screen name="(tabs)" />
         <Stack.Screen name="intervention/[id]" />
         <Stack.Screen name="coach/index" options={{ presentation: "modal" }} />
